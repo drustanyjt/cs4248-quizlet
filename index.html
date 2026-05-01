@@ -60,6 +60,20 @@
   .stat-pill.good { color: var(--good); }
   .stat-pill.bad { color: var(--bad); }
 
+  .lecture-filter {
+    background: rgba(255,255,255,0.05);
+    color: var(--ink);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 5px 14px;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .lecture-filter:hover { background: rgba(255,255,255,0.1); }
+  .lecture-filter:focus { outline: none; border-color: var(--accent); }
+
   /* tabs */
   nav.tabs { display: flex; gap: 6px; flex: 1; justify-content: center; }
   .tab {
@@ -471,6 +485,9 @@
     <a class="tab" data-tab="learn" href="#learn">Learn</a>
   </nav>
   <div class="stats" id="drillStats">
+    <select class="lecture-filter" id="lectureFilter" title="Filter drill by lecture">
+      <option value="">All lectures</option>
+    </select>
     <span class="stat-pill" id="progress">0 / 0</span>
     <span class="stat-pill good" id="rightCount">✓ 0</span>
     <span class="stat-pill bad" id="wrongCount">✗ 0</span>
@@ -600,17 +617,54 @@ function setActiveTab(mode) {
 window.addEventListener('hashchange', routeFromHash);
 
 // === Drill view (existing logic) ===
+let drillAllQuestions = []; // unfiltered cache from /questions
+
 async function initDrill() {
   if (drillReady) return;
-  let qs;
-  try { qs = await fetch('/questions').then(r => r.json()); }
-  catch (e) { qs = []; }
+  try { drillAllQuestions = await fetch('/questions').then(r => r.json()); }
+  catch (e) { drillAllQuestions = []; }
+  populateLectureFilter();
   const params = new URLSearchParams(window.location.search);
-  const lectureFilter = params.get('lecture');
-  allQuestions = lectureFilter ? qs.filter(q => String(q.lecture) === lectureFilter) : qs;
+  const initial = params.get('lecture') || localStorage.getItem('drill.lectureFilter') || '';
+  $('lectureFilter').value = initial;
+  applyLectureFilter(initial);
+  drillReady = true;
+}
+
+function populateLectureFilter() {
+  const sel = $('lectureFilter');
+  // Skip if already populated
+  if (sel.options.length > 1) return;
+  const lectures = [...new Set(drillAllQuestions.map(q => String(q.lecture)))]
+    .sort((a, b) => parseInt(a) - parseInt(b));
+  for (const l of lectures) {
+    const opt = document.createElement('option');
+    opt.value = l;
+    opt.textContent = `L${l} — ${LECTURE_TITLES[l] || ''}`.trim();
+    sel.appendChild(opt);
+  }
+}
+
+function applyLectureFilter(lec) {
+  // Filter, reset stats, re-shuffle, render
+  allQuestions = lec ? drillAllQuestions.filter(q => String(q.lecture) === lec) : drillAllQuestions.slice();
+  stats = { right: 0, wrong: 0 };
+  currentSelected = new Set();
+  currentInput = '';
+  // restore card structure (in case end-screen replaced it)
+  $('drillView').innerHTML = `
+    <div class="card" id="card">
+      <div class="meta" id="meta"></div>
+      <div class="question" id="qtext"></div>
+      <div id="answerArea"></div>
+      <div class="feedback" id="feedback">
+        <h3 id="feedbackTitle"></h3>
+        <div class="explanation" id="explanation"></div>
+      </div>
+    </div>
+  `;
   if (allQuestions.length === 0) {
-    $('drillView').innerHTML = `<div class="card end-screen"><h2>No drill questions available</h2><p class="muted">Switch to Learn tab.</p></div>`;
-    drillReady = true;
+    $('drillView').innerHTML = `<div class="card end-screen"><h2>No drill questions for ${lec ? 'L'+lec : 'this filter'}</h2><p class="muted">Pick a different lecture.</p></div>`;
     return;
   }
   order = allQuestions.map((_, i) => i);
@@ -619,9 +673,22 @@ async function initDrill() {
     [order[i], order[j]] = [order[j], order[i]];
   }
   currentIdx = 0;
+  // sync URL ?lecture= and localStorage
+  const url = new URL(window.location.href);
+  if (lec) {
+    url.searchParams.set('lecture', lec);
+    localStorage.setItem('drill.lectureFilter', lec);
+  } else {
+    url.searchParams.delete('lecture');
+    localStorage.removeItem('drill.lectureFilter');
+  }
+  history.replaceState(null, '', url.toString());
   renderCurrent();
-  drillReady = true;
 }
+
+document.getElementById('lectureFilter').addEventListener('change', (e) => {
+  applyLectureFilter(e.target.value);
+});
 
 function showDrillView() {
   $('drillView').hidden = false;
