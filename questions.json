@@ -1,0 +1,1922 @@
+[
+  {
+    "id": "L1-mrq-01",
+    "type": "mrq",
+    "lecture": "1",
+    "topic": "levels of NLP analysis",
+    "difficulty": "easy",
+    "q": "<p>Which of the following are <strong>levels of language analysis</strong> introduced in the lecture's \"NLP in One Slide\" hierarchy (from \"shallower\" to \"deeper\")?</p>",
+    "options": [
+      {"id": "1", "text": "Lexical analysis"},
+      {"id": "2", "text": "Phonetic analysis"},
+      {"id": "3", "text": "Syntactic analysis"},
+      {"id": "4", "text": "Semantic analysis"},
+      {"id": "5", "text": "Discourse analysis"},
+      {"id": "6", "text": "Pragmatic analysis"}
+    ],
+    "correct": ["1", "3", "4", "5", "6"],
+    "explanation": "<p>The five levels in order are: <strong>Lexical → Syntactic → Semantic → Discourse → Pragmatic</strong>. Phonetic analysis is not in this list because the lecture frames analysis for <em>written</em> language. Lexical handles characters/morphemes/words (tokenization, stemming), Syntactic organizes words into sentences (POS, parsing), Semantic deals with meaning (WSD, NER, SRL), Discourse links sentences in documents (coreference, ellipsis), Pragmatic interprets in context (entailment, intent).</p>"
+  },
+  {
+    "id": "L1-mrq-02",
+    "type": "mrq",
+    "lecture": "1",
+    "topic": "language building blocks",
+    "difficulty": "easy",
+    "q": "<p>Which statements about the lecture's <strong>hierarchy of written-language building blocks</strong> (character → morpheme → word → phrase → clause → sentence → paragraph → document → corpus) are correct?</p>",
+    "options": [
+      {"id": "1", "text": "A morpheme can be 1 or more characters."},
+      {"id": "2", "text": "A word consists of 1 or more morphemes."},
+      {"id": "3", "text": "A clause is always exactly one phrase."},
+      {"id": "4", "text": "A sentence is composed of one or more clauses."},
+      {"id": "5", "text": "A clause is a phrase containing a subject and a verb."}
+    ],
+    "correct": ["1", "2", "4", "5"],
+    "explanation": "<p>The hierarchy is composition-based: each level is <em>1..n</em> of the level below. (3) is wrong — a clause is <em>1..n</em> phrases, not exactly one. (5) is the lecture's actual definition: a clause is a phrase with subject and verb (\"his quick reaction saved him\"). A morpheme is the smallest meaning-bearing unit (1..n characters); a word is 1..n morphemes (= 1..n stems + 0..n affixes).</p>"
+  },
+  {
+    "id": "L1-mrq-03",
+    "type": "mrq",
+    "lecture": "1",
+    "topic": "morphology",
+    "difficulty": "medium",
+    "q": "<p>Mark all <strong>true</strong> statements about morphemes:</p>",
+    "options": [
+      {"id": "1", "text": "A free morpheme can stand alone as its own word (= stem)."},
+      {"id": "2", "text": "Inflectional morphemes in English are always suffixes."},
+      {"id": "3", "text": "Derivational morphemes can change the part of speech of the affected word."},
+      {"id": "4", "text": "Prefixes are always inflectional and suffixes are always derivational."},
+      {"id": "5", "text": "Inflectional morphemes assign grammatical properties (tense, number, possession, comparison)."}
+    ],
+    "correct": ["1", "2", "3", "5"],
+    "explanation": "<p>(1)–(3), (5) are textbook definitions from the lecture. (2): the lecture explicitly labels inflectional morphemes as suffixes in English (-s, -ed, -ing, -en). (3): \"hope\" (noun) + \"-less\" → \"hopeless\" (adj) changes POS. (4) is backward — derivational morphemes can be prefixes (un-, de-) or suffixes (-ly, -ness); inflectional ones happen to be suffixes only.</p>"
+  },
+  {
+    "id": "L1-mrq-04",
+    "type": "mrq",
+    "lecture": "1",
+    "topic": "morpheme decomposition",
+    "difficulty": "medium",
+    "q": "<p>Which words contain <strong>at least one derivational morpheme</strong>? (Recall: derivational morphemes change semantic meaning or POS; inflectional only change grammatical properties like tense/number/possession.)</p>",
+    "options": [
+      {"id": "1", "text": "<em>unhappy</em> (un- + happy)"},
+      {"id": "2", "text": "<em>walked</em> (walk + -ed)"},
+      {"id": "3", "text": "<em>hopelessness</em> (hope + -less + -ness)"},
+      {"id": "4", "text": "<em>dogs</em> (dog + -s)"},
+      {"id": "5", "text": "<em>imperfection</em> (im- + perfect + -ion)"}
+    ],
+    "correct": ["1", "3", "5"],
+    "explanation": "<p>(1) <em>un-</em> is a derivational prefix (negation). (3) both <em>-less</em> and <em>-ness</em> are derivational. (5) both <em>im-</em> and <em>-ion</em> are derivational. (2) <em>-ed</em> is inflectional (past tense, no POS change). (4) <em>-s</em> is inflectional (plural number, no POS change). Rule of thumb: if the affix changes part of speech or core meaning → derivational; if only grammatical role → inflectional.</p>"
+  },
+  {
+    "id": "L1-mrq-05",
+    "type": "mrq",
+    "lecture": "1",
+    "topic": "lexical analysis tasks",
+    "difficulty": "easy",
+    "q": "<p>Which tasks belong to <strong>lexical analysis</strong> as introduced in the lecture?</p>",
+    "options": [
+      {"id": "1", "text": "Tokenization"},
+      {"id": "2", "text": "Stemming"},
+      {"id": "3", "text": "Lemmatization"},
+      {"id": "4", "text": "Part-of-Speech tagging"},
+      {"id": "5", "text": "Normalization"},
+      {"id": "6", "text": "Named Entity Recognition"}
+    ],
+    "correct": ["1", "2", "3", "5"],
+    "explanation": "<p>Lexical analysis = understanding structure & meaning of <em>words</em>: tokenization, stemming, lemmatization, normalization. POS tagging is <strong>syntactic</strong>; NER is <strong>semantic</strong>. The lecture explicitly groups them in the \"NLP in One Slide\" diagram.</p>"
+  },
+  {
+    "id": "L1-mrq-06",
+    "type": "mrq",
+    "lecture": "1",
+    "topic": "tokenization granularity",
+    "difficulty": "medium",
+    "q": "<p>For the sentence <em>\"She's driving faster than allowed.\"</em>, which are valid <strong>tokenization granularities</strong> discussed in lecture?</p>",
+    "options": [
+      {"id": "1", "text": "Character-based: 'S', 'h', 'e', \"'\", 's', ' ', 'd', 'r', ..."},
+      {"id": "2", "text": "Subword-based: 'She', \"'s\", 'driv', 'ing', 'fast', 'er', 'than', 'allow', 'ed', '.'"},
+      {"id": "3", "text": "Word-based: \"She's\", 'driving', 'faster', 'than', 'allowed', '.'"},
+      {"id": "4", "text": "Phoneme-based (IPA segments)"},
+      {"id": "5", "text": "Sentence-based: the whole input as a single token"}
+    ],
+    "correct": ["1", "2", "3"],
+    "explanation": "<p>The lecture introduces three granularities: <strong>character / subword / word</strong>. Phoneme-based is for speech, not written text. Sentence-as-a-token defeats the purpose of tokenization (\"splitting into meaningful/useful units\"). Subword tokenization (BPE, WordPiece) is the dominant choice for modern LMs.</p>"
+  },
+  {
+    "id": "L1-mrq-07",
+    "type": "mrq",
+    "lecture": "1",
+    "topic": "semantic analysis tasks",
+    "difficulty": "medium",
+    "q": "<p>Which tasks fall under <strong>semantic analysis</strong> (meaning of words and sentences)?</p>",
+    "options": [
+      {"id": "1", "text": "Word Sense Disambiguation (WSD)"},
+      {"id": "2", "text": "Named Entity Recognition (NER)"},
+      {"id": "3", "text": "Semantic Role Labeling (SRL)"},
+      {"id": "4", "text": "Coreference resolution"},
+      {"id": "5", "text": "Dependency parsing"}
+    ],
+    "correct": ["1", "2", "3"],
+    "explanation": "<p>Semantic analysis covers WSD (\"bank\" = financial institution or river edge?), NER (Person/Org/Loc/Money), and SRL (predicate-argument: who did what to whom). Coreference is <strong>discourse</strong> (linking entities across sentences). Dependency parsing is <strong>syntactic</strong> (grammatical structure).</p>"
+  },
+  {
+    "id": "L1-mrq-08",
+    "type": "mrq",
+    "lecture": "1",
+    "topic": "discourse vs pragmatic",
+    "difficulty": "medium",
+    "q": "<p>Which tasks belong to <strong>discourse analysis</strong> (and not pragmatic analysis)?</p>",
+    "options": [
+      {"id": "1", "text": "Coreference / anaphora resolution"},
+      {"id": "2", "text": "Ellipsis resolution"},
+      {"id": "3", "text": "Stance detection"},
+      {"id": "4", "text": "Textual entailment"},
+      {"id": "5", "text": "Intent recognition"}
+    ],
+    "correct": ["1", "2", "3"],
+    "explanation": "<p>Discourse = meaning of sentences in documents → coreference (\"the car\" ≡ \"it\"), ellipsis (recovering omitted words), stance detection. Pragmatic = interpreting in context using world knowledge → textual entailment (does t imply h?) and intent recognition (\"I'm hungry\" → search for restaurants). Rule of thumb: discourse is internal to the text; pragmatic requires external context/world knowledge.</p>"
+  },
+  {
+    "id": "L1-mrq-09",
+    "type": "mrq",
+    "lecture": "1",
+    "topic": "ambiguity types",
+    "difficulty": "medium",
+    "q": "<p>Which are <strong>genuine forms of ambiguity</strong> raised in the \"Why is NLP Hard?\" section?</p>",
+    "options": [
+      {"id": "1", "text": "Word-sense ambiguity (e.g., <em>bank</em> = financial institute or river edge)"},
+      {"id": "2", "text": "Part-of-speech ambiguity (e.g., <em>run</em> verb or noun, <em>fast</em> verb/noun/adj/adv)"},
+      {"id": "3", "text": "Syntactic ambiguity (e.g., \"I see the man with a telescope\" — who has the telescope?)"},
+      {"id": "4", "text": "Anaphoric ambiguity (Winograd-schema-style: \"The box didn't fit in the car because <em>it</em> was too big\")"},
+      {"id": "5", "text": "Pragmatic ambiguity (\"Do you know what time it is?\" — yes/no, time, or scolding?)"},
+      {"id": "6", "text": "Cryptographic ambiguity (encoded ciphertexts having multiple decodings)"}
+    ],
+    "correct": ["1", "2", "3", "4", "5"],
+    "explanation": "<p>All five linguistic types are explicitly raised in lecture. (6) is not an NLP concept. The Winograd schema (4) is the canonical hard case — same surface form, opposite resolution depending on world knowledge (\"it was too big\" → box; \"too small\" → car).</p>"
+  },
+  {
+    "id": "L1-mrq-10",
+    "type": "mrq",
+    "lecture": "1",
+    "topic": "why NLP is hard",
+    "difficulty": "medium",
+    "q": "<p>Which are listed as <strong>main challenges</strong> that make NLP hard, per the lecture?</p>",
+    "options": [
+      {"id": "1", "text": "Ambiguity"},
+      {"id": "2", "text": "Expressivity (same meaning, many forms)"},
+      {"id": "3", "text": "Variation (~6,500 languages, domains, cultures)"},
+      {"id": "4", "text": "Scale (large vocabularies — ~470k words in English dictionary, >1M on the web)"},
+      {"id": "5", "text": "Sparsity (Zipf's tail of rare words)"},
+      {"id": "6", "text": "Cryptographic hardness of P vs NP"}
+    ],
+    "correct": ["1", "2", "3", "4", "5"],
+    "explanation": "<p>The lecture lists exactly these five (sometimes also \"unmodeled representation\" — meaning depends on context/world knowledge that isn't captured). (6) is unrelated to NLP. Memorize this list of five — it's a likely exam framing.</p>"
+  },
+  {
+    "id": "L1-mrq-11",
+    "type": "mrq",
+    "lecture": "1",
+    "topic": "Zipf's law / sparsity",
+    "difficulty": "medium",
+    "q": "<p>Which statements about <strong>word frequency distributions</strong> in text corpora are correct?</p>",
+    "options": [
+      {"id": "1", "text": "Word frequencies are inversely proportional to their rank — this is Zipf's Law."},
+      {"id": "2", "text": "A small number of words account for the majority of token occurrences."},
+      {"id": "3", "text": "The Zipf pattern only appears in domain-specific corpora; general web data is uniform."},
+      {"id": "4", "text": "Increasing corpus size eventually eliminates the sparsity problem."},
+      {"id": "5", "text": "Even with 14M+ word corpora (e.g., Wikipedia dump), there is still a long tail of infrequent words."}
+    ],
+    "correct": ["1", "2", "5"],
+    "explanation": "<p>Zipf: $\\text{freq} \\propto 1/\\text{rank}$ — top words (\"the\", \"of\", \"and\"...) dominate by a wide margin. (3) is wrong — Zipf holds across novels, scientific texts, and web. (4) is the lecture's punchline: <strong>regardless of size and domain, there will always be a lot of infrequent words</strong> — sparsity is inherent. This motivates smoothing in language models.</p>"
+  },
+  {
+    "id": "L1-mrq-12",
+    "type": "mrq",
+    "lecture": "1",
+    "topic": "data quality / training data",
+    "difficulty": "medium",
+    "q": "<p>Which are <strong>core strategies</strong> for filtering low-quality LLM training data, per the lecture?</p>",
+    "options": [
+      {"id": "1", "text": "Heuristic filters: length, repetition, punctuation, source-based, toxic-keyword filters"},
+      {"id": "2", "text": "Statistical/embedding-based: perplexity thresholding, outlier detection, readability scores"},
+      {"id": "3", "text": "Model-based: classifier filters, LLM-as-a-Judge, verification strategies"},
+      {"id": "4", "text": "Always prefer LLM-generated synthetic text over human-written data to maximize fluency"},
+      {"id": "5", "text": "Manually inspect every training example to guarantee quality"}
+    ],
+    "correct": ["1", "2", "3"],
+    "explanation": "<p>The three pillars from the lecture's data-quality table: heuristic, statistical, model-based — typically combined. (4) is the opposite of the recommended approach: training on LLM-generated text causes <strong>model collapse / \"AI inbreeding\"</strong>, degrading quality and amplifying biases. (5) is impossible at trillion-token scale.</p>"
+  },
+  {
+    "id": "L1-mrq-13",
+    "type": "mrq",
+    "lecture": "1",
+    "topic": "data quality concerns",
+    "difficulty": "medium",
+    "q": "<p>Which are <strong>real concerns</strong> when preparing training data for LLMs, as flagged in lecture?</p>",
+    "options": [
+      {"id": "1", "text": "Duplicate data slows training and increases memorization risk"},
+      {"id": "2", "text": "PII (names, phone numbers, emails) can be leaked verbatim by trained LLMs"},
+      {"id": "3", "text": "Test-set contamination (training on data overlapping the eval set) inflates reported accuracy"},
+      {"id": "4", "text": "\"AI inbreeding\" — training on AI-generated content causes model collapse and loss of diversity"},
+      {"id": "5", "text": "Toxicity, biases, and misinformation propagate from corpus to model"}
+    ],
+    "correct": ["1", "2", "3", "4", "5"],
+    "explanation": "<p>All five are explicit concerns in the lecture. The ProPILE example showed an LLM regurgitating a real phone number from training data given a name+email prompt. The GPT-2 paper removed Wikipedia from training to mitigate contamination (assuming Wikipedia is widely used as eval data).</p>"
+  },
+  {
+    "id": "L2-mrq-01",
+    "type": "mrq",
+    "lecture": "2",
+    "topic": "regex metacharacters",
+    "difficulty": "easy",
+    "q": "<p>Which statements about basic regex metacharacters are <strong>correct</strong>?</p>",
+    "options": [
+      {"id": "1", "text": "<code>.</code> matches any character <em>except</em> line breaks"},
+      {"id": "2", "text": "<code>^</code> matches the start of a string"},
+      {"id": "3", "text": "<code>$</code> matches the end of a string"},
+      {"id": "4", "text": "<code>\\b</code> matches a backspace character"},
+      {"id": "5", "text": "<code>\\b</code> matches a boundary between word and non-word characters"},
+      {"id": "6", "text": "<code>|</code> is logical OR between two regex sub-patterns (e.g., <code>floor|floors</code>)"}
+    ],
+    "correct": ["1", "2", "3", "5", "6"],
+    "explanation": "<p>(4) is the canonical trap: in regex, <code>\\b</code> is a <strong>word boundary</strong> assertion (zero-width — it matches a position, not a character). Inside character classes <code>[\\b]</code> it can mean backspace, but standalone <code>\\b</code> is always word boundary. (1): <code>.</code> matches any char <em>except</em> newline by default (unless DOTALL/single-line flag is set).</p>"
+  },
+  {
+    "id": "L2-mrq-02",
+    "type": "mrq",
+    "lecture": "2",
+    "topic": "predefined character classes",
+    "difficulty": "easy",
+    "q": "<p>Which equivalences for <strong>predefined regex character classes</strong> are correct?</p>",
+    "options": [
+      {"id": "1", "text": "<code>\\d</code> ≡ <code>[0-9]</code> — any digit"},
+      {"id": "2", "text": "<code>\\s</code> ≡ <code>[ \\n\\r\\t\\f]</code> — any whitespace"},
+      {"id": "3", "text": "<code>\\w</code> ≡ <code>[a-zA-Z0-9_]</code> — any word character"},
+      {"id": "4", "text": "<code>\\D</code> ≡ <code>[a-zA-Z]</code> — any letter"},
+      {"id": "5", "text": "<code>\\W</code> ≡ <code>[^a-zA-Z0-9_]</code> — any non-word character"}
+    ],
+    "correct": ["1", "2", "3", "5"],
+    "explanation": "<p>(4) is wrong: <code>\\D</code> is <code>[^0-9]</code> — any non-digit, which includes punctuation, whitespace, AND letters. The capital-letter shorthand is always the negation of the lowercase one: <code>\\d/\\D</code>, <code>\\s/\\S</code>, <code>\\w/\\W</code>.</p>"
+  },
+  {
+    "id": "L2-mrq-03",
+    "type": "mrq",
+    "lecture": "2",
+    "topic": "repetition patterns",
+    "difficulty": "easy",
+    "q": "<p>Match each repetition metacharacter to its <strong>correct</strong> meaning:</p>",
+    "options": [
+      {"id": "1", "text": "<code>+</code> means 1 or more occurrences"},
+      {"id": "2", "text": "<code>*</code> means 0 or more occurrences"},
+      {"id": "3", "text": "<code>?</code> means 0 or 1 occurrences"},
+      {"id": "4", "text": "<code>{n}</code> means at least n occurrences"},
+      {"id": "5", "text": "<code>{l,u}</code> means between l and u occurrences (inclusive)"},
+      {"id": "6", "text": "<code>{l,}</code> is unbounded above (l or more)"}
+    ],
+    "correct": ["1", "2", "3", "5", "6"],
+    "explanation": "<p>(4) is wrong: <code>{n}</code> means <em>exactly</em> n occurrences. \"At least n\" is <code>{n,}</code>. The user previously got tripped up by <code>{3,6}</code> on \"words 3-6 chars\" — note that <code>{3-6}</code> is <strong>invalid syntax</strong>; you must use a comma.</p>"
+  },
+  {
+    "id": "L2-mrq-04",
+    "type": "mrq",
+    "lecture": "2",
+    "topic": "regex matching",
+    "difficulty": "medium",
+    "q": "<p>Consider the sentence: <em>\"My block has 15 floors, and I live on floor 5.\"</em>. Which regex patterns would <strong>correctly match \"floor\"</strong> (or both \"floor\" and \"floors\") as expected?</p>",
+    "options": [
+      {"id": "1", "text": "<code>\\bfloor\\b</code> matches only \"floor\" (the standalone word), not the substring inside \"floors\""},
+      {"id": "2", "text": "<code>\\b[Ff]loor[s]?\\b</code> matches both \"floor\" and \"floors\", case-insensitive on F"},
+      {"id": "3", "text": "<code>\\bfloor[s]\\b</code> matches both \"floor\" and \"floors\""},
+      {"id": "4", "text": "<code>\\bfloors?\\b</code> matches both \"floor\" and \"floors\""},
+      {"id": "5", "text": "<code>floor</code> (no boundaries) matches \"floor\" but also matches the prefix of \"floors\""}
+    ],
+    "correct": ["1", "2", "4", "5"],
+    "explanation": "<p>(3) is wrong: <code>[s]</code> is a character class containing exactly one 's' — equivalent to literal 's'. So <code>\\bfloor[s]\\b</code> requires the 's' and only matches \"floors\", not \"floor\". To make 's' optional, use <code>s?</code> as in (4). Word boundaries <code>\\b</code> prevent partial-word matches.</p>"
+  },
+  {
+    "id": "L2-mrq-05",
+    "type": "mrq",
+    "lecture": "2",
+    "topic": "lookarounds",
+    "difficulty": "medium",
+    "q": "<p>Which statements about <strong>regex lookarounds</strong> are correct?</p>",
+    "options": [
+      {"id": "1", "text": "<code>A(?=B)</code> is positive lookahead — matches A only when followed by B"},
+      {"id": "2", "text": "<code>A(?!B)</code> is negative lookahead — matches A only when NOT followed by B"},
+      {"id": "3", "text": "<code>(?<=B)A</code> is positive lookbehind — matches A only when preceded by B"},
+      {"id": "4", "text": "Lookarounds capture and consume the asserted text as part of the match"},
+      {"id": "5", "text": "<code>\\d+(?=\\s*kg)</code> can extract numbers followed by \"kg\" without including \"kg\" in the match"}
+    ],
+    "correct": ["1", "2", "3", "5"],
+    "explanation": "<p>(4) is wrong — lookarounds are <strong>zero-width assertions</strong>: they check a condition but don't consume characters or capture the assertion text. That's exactly why (5) works: the lookahead checks for \"kg\" but the match is just the digits.</p>"
+  },
+  {
+    "id": "L2-mrq-06",
+    "type": "mrq",
+    "lecture": "2",
+    "topic": "regex / FSA / Chomsky hierarchy",
+    "difficulty": "medium",
+    "q": "<p>Which statements about <strong>regular expressions, FSAs, and the Chomsky hierarchy</strong> are correct?</p>",
+    "options": [
+      {"id": "1", "text": "Regular expressions describe Regular Languages — the most restricted class in the Chomsky Hierarchy"},
+      {"id": "2", "text": "A Regular Language is exactly a language accepted by some Finite State Automaton (FSA)"},
+      {"id": "3", "text": "The language $\\{0^n 1^n \\mid n \\geq 0\\}$ can be described by a standard regex / FSA"},
+      {"id": "4", "text": "The finite language $\\{\\epsilon, 01, 0011, 000111\\}$ can be described by a regex / FSA"},
+      {"id": "5", "text": "Standard (non-recursive) regex is more powerful than context-free grammars"}
+    ],
+    "correct": ["1", "2", "4"],
+    "explanation": "<p>(3) is the classic <strong>non-regular</strong> example — with finitely many states, an FSA cannot \"remember\" an arbitrary count of 0s to match the same number of 1s. Pumping lemma proves this. (4) is fine because it's a finite language (any finite set is regular). (5) is reversed: regex < context-free in Chomsky.</p>"
+  },
+  {
+    "id": "L2-mrq-07",
+    "type": "mrq",
+    "lecture": "2",
+    "topic": "regex error types",
+    "difficulty": "medium",
+    "q": "<p>For the regex <code>the</code> applied to <em>\"There's no other way to learn the power of regex than to use them regularly. The productivity is worth the effort.\"</em>, which statements about errors are correct?</p>",
+    "options": [
+      {"id": "1", "text": "False positives (Type I) = matching strings that should NOT have matched (e.g., \"o<u>the</u>r\")"},
+      {"id": "2", "text": "False negatives (Type II) = NOT matching strings that should have matched (e.g., \"The\" if case-folding wasn't used)"},
+      {"id": "3", "text": "Reducing false positives often increases false negatives, and vice versa"},
+      {"id": "4", "text": "False positives and false negatives are equally bad in every application"},
+      {"id": "5", "text": "<code>\\b[Tt]he\\b</code> would eliminate both error types in this example"}
+    ],
+    "correct": ["1", "2", "3", "5"],
+    "explanation": "<p>(4) is wrong — the lecture's medical-test example: a sick person testing negative (FN) is much worse than a healthy person testing positive (FP). They're context-dependent. (3): a stricter regex catches fewer wrong things but also misses more valid ones. (5): word boundaries fix the substring issue, and case-folding the alternation fixes capitalization.</p>"
+  },
+  {
+    "id": "L2-mrq-08",
+    "type": "mrq",
+    "lecture": "2",
+    "topic": "tokenization tricky cases",
+    "difficulty": "medium",
+    "q": "<p>Which are tricky cases that complicate <strong>word-based tokenization</strong>?</p>",
+    "options": [
+      {"id": "1", "text": "Multiword phrases: \"New York City\" — 1 token or 3?"},
+      {"id": "2", "text": "Common contractions: \"don't\", \"I'm\""},
+      {"id": "3", "text": "Hyphenations: \"well-defined\", \"non-trivial\""},
+      {"id": "4", "text": "Acronyms with periods: \"T.V.\", \"U.S.A.\""},
+      {"id": "5", "text": "Languages without whitespace separators: Chinese, Japanese"},
+      {"id": "6", "text": "Special tokens: emails like \"chris@nus.comp.nus.sg\", emoticons like \":o)\""}
+    ],
+    "correct": ["1", "2", "3", "4", "5", "6"],
+    "explanation": "<p>All six are tokenization edge cases from the lecture. Naive whitespace+punctuation splitting (e.g., <code>\\w+|\\d+|[,.;:]</code>) handles none of these well. The Penn Treebank tokenizer separates clitics (\"don't\" → \"do\", \"n't\"), keeps hyphens, and separates punctuation.</p>"
+  },
+  {
+    "id": "L2-mrq-09",
+    "type": "mrq",
+    "lecture": "2",
+    "topic": "Maximum Matching",
+    "difficulty": "medium",
+    "q": "<p>Which statements about the <strong>Maximum Matching</strong> word-segmentation algorithm are correct?</p>",
+    "options": [
+      {"id": "1", "text": "Place a pointer at the start, find the longest dictionary word matching from the pointer, advance, repeat"},
+      {"id": "2", "text": "Surprisingly good performance on Chinese text"},
+      {"id": "3", "text": "Works well on English (\"thetabledownthere\" → \"the table down there\")"},
+      {"id": "4", "text": "Used as a baseline for languages that don't separate words with whitespace"},
+      {"id": "5", "text": "Probabilistic methods or extensions can improve over the baseline"}
+    ],
+    "correct": ["1", "2", "4", "5"],
+    "explanation": "<p>(3) is wrong — the lecture's counter-example: \"thetabledownthere\" → MaxMatch produces \"theta bled own there\" because \"theta\" is a longer dictionary word than \"the\" — greedy longest-match goes wrong. Chinese works better partly because of strong character-to-meaning correspondence and shorter typical words.</p>"
+  },
+  {
+    "id": "L2-mrq-10",
+    "type": "mrq",
+    "lecture": "2",
+    "topic": "subword tokenization motivation",
+    "difficulty": "medium",
+    "q": "<p>Which are <strong>reasons to use subword tokenization</strong> (BPE, WordPiece) over word-based tokenization?</p>",
+    "options": [
+      {"id": "1", "text": "Reduces Out-Of-Vocabulary (OOV) words by splitting unknowns into known fragments"},
+      {"id": "2", "text": "Handles rare words by composing them from frequent subword tokens"},
+      {"id": "3", "text": "Vocabulary size can be controlled via the parameter k (number of merges)"},
+      {"id": "4", "text": "Eliminates the need for tokenization altogether"},
+      {"id": "5", "text": "The learned tokens often align with morphemes (e.g., \"newest\" → \"new\", \"est\")"}
+    ],
+    "correct": ["1", "2", "3", "5"],
+    "explanation": "<p>(4) is nonsense — subword tokenization <em>is</em> tokenization. The OOV problem motivates the whole approach: a word-based tokenizer fails on \"chillax\" or \"kiasuism\"; a subword tokenizer can decompose them into known pieces.</p>"
+  },
+  {
+    "id": "L2-mrq-11",
+    "type": "mrq",
+    "lecture": "2",
+    "topic": "BPE token learner",
+    "difficulty": "medium",
+    "q": "<p>Which statements about the <strong>BPE Token Learner</strong> algorithm are correct?</p>",
+    "options": [
+      {"id": "1", "text": "Initialize vocabulary with individual characters (plus a special end-of-word marker)"},
+      {"id": "2", "text": "Repeatedly find the 2 tokens most frequently adjacent to each other and merge them into a new token"},
+      {"id": "3", "text": "Continue for exactly k merges (k is a hyperparameter); final vocab size = |V_initial| + k"},
+      {"id": "4", "text": "Always merges based on co-occurrence likelihood ratio (PMI-style)"},
+      {"id": "5", "text": "With k=0, BPE degenerates to character-based tokenization"},
+      {"id": "6", "text": "With k=∞, BPE degenerates to word-based tokenization"}
+    ],
+    "correct": ["1", "2", "3", "5", "6"],
+    "explanation": "<p>(4) describes <strong>WordPiece</strong>, not BPE. BPE uses <strong>raw frequency</strong>: pick the pair (t1, t2) with the highest count(t1, t2). The k=0 / k=∞ degenerate cases are a likely exam question.</p>"
+  },
+  {
+    "id": "L2-mrq-12",
+    "type": "mrq",
+    "lecture": "2",
+    "topic": "BPE vs WordPiece",
+    "difficulty": "hard",
+    "q": "<p>Which statements about the <strong>differences between BPE and WordPiece</strong> are correct?</p>",
+    "options": [
+      {"id": "1", "text": "BPE merges the pair with highest raw count; WordPiece merges the pair maximizing $\\frac{P(t_1, t_2)}{P(t_1)P(t_2)}$"},
+      {"id": "2", "text": "WordPiece's criterion simplifies (after dropping the corpus-size term N) to $\\frac{\\text{count}(t_1, t_2)}{\\text{count}(t_1) \\cdot \\text{count}(t_2)}$"},
+      {"id": "3", "text": "BPE marks <em>end</em>-of-word with <code>_</code>; WordPiece marks <em>continuation</em>-of-word with <code>_</code>"},
+      {"id": "4", "text": "BPE works on raw words; WordPiece works on individual characters"},
+      {"id": "5", "text": "WordPiece's criterion favors pairs whose two tokens rarely appear separately (high mutual association)"}
+    ],
+    "correct": ["1", "2", "3", "5"],
+    "explanation": "<p>(4) is wrong — both operate on character-level decompositions. The two real differences are: (a) merge criterion (frequency vs likelihood ratio), and (b) the <code>_</code> marker convention (end-of-word in BPE; word-internal-continuation in WordPiece). The likelihood ratio is essentially a non-logged PMI, which prefers tokens that strongly predict each other.</p>"
+  },
+  {
+    "id": "L2-mrq-13",
+    "type": "mrq",
+    "lecture": "2",
+    "topic": "BPE token segmenter",
+    "difficulty": "medium",
+    "q": "<p>Which statements about the <strong>BPE Token Segmenter</strong> (applying learned merges to new text) are correct?</p>",
+    "options": [
+      {"id": "1", "text": "Apply the learned merges in the same order they were learned"},
+      {"id": "2", "text": "Apply merges in reverse order of learning to maximize coverage"},
+      {"id": "3", "text": "Each merge is applied greedily everywhere it appears, then move to the next merge"},
+      {"id": "4", "text": "Segmentation is deterministic given the merge list"},
+      {"id": "5", "text": "The same word always gets the same segmentation regardless of surrounding context"}
+    ],
+    "correct": ["1", "3", "4", "5"],
+    "explanation": "<p>(2) is wrong — order matters and must match learning. Example from lecture: \"newer\" → split as chars → apply (n,e) → \"ne w e r\" → apply (ne,w) → \"new e r\" → apply (e,r) → \"new er\" → apply (er,_) → tokens \"new\", \"er_\". Reversing the order would produce different (and wrong) segmentation.</p>"
+  },
+  {
+    "id": "L2-mrq-14",
+    "type": "mrq",
+    "lecture": "2",
+    "topic": "tokenization weirdness in LLMs",
+    "difficulty": "medium",
+    "q": "<p>Which \"weirdnesses\" of LLMs are blamed on <strong>tokenization</strong> per the lecture (Karpathy quote)?</p>",
+    "options": [
+      {"id": "1", "text": "LLMs are bad at character-level tasks (spelling, reversing strings)"},
+      {"id": "2", "text": "LLMs are bad at simple arithmetic (numbers split arbitrarily across tokens — e.g., \"1900\" as one token but \"5043\" as \"50\"+\"43\")"},
+      {"id": "3", "text": "LLMs are worse on non-English (e.g., Japanese — many more tokens per same text)"},
+      {"id": "4", "text": "Different tokenizations for \"Egg\" / \"EGG\" / \"egg\" (case-sensitive splits)"},
+      {"id": "5", "text": "LLMs cannot perform matrix multiplication"}
+    ],
+    "correct": ["1", "2", "3", "4"],
+    "explanation": "<p>(5) is unrelated to tokenization. The lecture's punchline: \"What is the real root of suffering? <strong>Tokenization</strong>.\" YAML > JSON for LLMs partly because YAML uses fewer tokens for indentation. The arithmetic failure is striking: the model never sees \"5043\" as a unit, so it can't learn arithmetic on it the same way it would for \"1900\".</p>"
+  },
+  {
+    "id": "L2-mrq-15",
+    "type": "mrq",
+    "lecture": "2",
+    "topic": "normalization",
+    "difficulty": "medium",
+    "q": "<p>Which statements about <strong>text normalization</strong> are correct?</p>",
+    "options": [
+      {"id": "1", "text": "Normalization defines equivalence classes (USA = U.S.A. = US of A → \"USA\")"},
+      {"id": "2", "text": "Asymmetric expansion is an alternative — a query \"windows\" expands to {Windows, windows, window}"},
+      {"id": "3", "text": "Case folding is universally beneficial — always apply it"},
+      {"id": "4", "text": "Stopword removal is sometimes harmful (e.g., for sentiment: \"not happy\" loses \"not\")"},
+      {"id": "5", "text": "Suitable normalization steps depend on the task / application"}
+    ],
+    "correct": ["1", "2", "4", "5"],
+    "explanation": "<p>(3) is wrong — case folding hurts <strong>NER</strong> and <strong>Machine Translation</strong>. The lecture's example: \"They sent <em>us</em> a card from the <em>US</em>\" — folding loses the distinction between \"us\" (pronoun) and \"US\" (country). Stopword removal on negation words is the main pitfall for sentiment analysis.</p>"
+  },
+  {
+    "id": "L2-mrq-16",
+    "type": "mrq",
+    "lecture": "2",
+    "topic": "stemming vs lemmatization",
+    "difficulty": "medium",
+    "q": "<p>Which statements correctly distinguish <strong>stemming vs. lemmatization</strong>?</p>",
+    "options": [
+      {"id": "1", "text": "Stemming uses crude rule-based affix chopping; output may be a non-word (\"worse\" → \"wors\", \"mice\" → \"mic(e)\")"},
+      {"id": "2", "text": "Lemmatization returns dictionary headwords (\"worse\" → \"bad\" as adj, \"worse\" as verb)"},
+      {"id": "3", "text": "Lemmatization requires Part-of-Speech tags for correct results"},
+      {"id": "4", "text": "Stemming requires a curated lexicon"},
+      {"id": "5", "text": "Porter Stemmer is a series of rewrite rules in a cascade — output of each step feeds the next"},
+      {"id": "6", "text": "Stemming is fast and language-dependent; lemmatization is generally slower"}
+    ],
+    "correct": ["1", "2", "3", "5", "6"],
+    "explanation": "<p>(4) is reversed — lemmatization needs the lexicon; stemming just applies rules (no lookup table). The pros/cons trade off: stemmer is fast and lexicon-free but produces non-words; lemmatizer produces real words and handles irregulars (\"went\" → \"go\") but needs a lexicon and POS tags.</p>"
+  },
+  {
+    "id": "L2-mrq-17",
+    "type": "mrq",
+    "lecture": "2",
+    "topic": "Porter stemmer rules",
+    "difficulty": "medium",
+    "q": "<p>Which Porter Stemmer rewrite rules are listed in the lecture?</p>",
+    "options": [
+      {"id": "1", "text": "<code>sses → ss</code> (e.g., \"possesses\" → \"possess\")"},
+      {"id": "2", "text": "<code>ies → i</code> (e.g., \"cries\" → \"cri\", \"tries\" → \"tri\")"},
+      {"id": "3", "text": "<code>tional → tion</code> (e.g., \"optional\" → \"option\")"},
+      {"id": "4", "text": "<code>(*v*)ing → ε</code> — the stem must contain a vowel ('sing' stays 'sing'; 'singing' → 'sing'; 'talking' → 'talk')"},
+      {"id": "5", "text": "<code>(m>1)ement → ε</code> — stem must have length-measure >1 ('replacement' → 'replac'; 'cement' stays)"}
+    ],
+    "correct": ["1", "2", "3", "4", "5"],
+    "explanation": "<p>All five are listed. The conditions on (4) and (5) are critical: without them, you'd over-stem short words (e.g., \"sing\" → \"s\" or \"cement\" → \"c\"). The Porter stemmer applies these in cascading steps — output of one rule is the input to the next.</p>"
+  },
+  {
+    "id": "L2-mrq-18",
+    "type": "mrq",
+    "lecture": "2",
+    "topic": "sentence segmentation",
+    "difficulty": "medium",
+    "q": "<p>Which statements about <strong>sentence segmentation</strong> are correct?</p>",
+    "options": [
+      {"id": "1", "text": "The period \".\" is highly ambiguous (\"1.25\", \"U.S.A.\", \"Dr.\")"},
+      {"id": "2", "text": "\"?\" and \"!\" are relatively unambiguous as sentence terminators"},
+      {"id": "3", "text": "A simple decision tree can classify each \".\" as EndOfSentence (EOS) vs Not-EOS (N-EOS)"},
+      {"id": "4", "text": "Useful features include: blank lines after \".\", whether the next word is capitalized, whether the prior word is a known abbreviation"},
+      {"id": "5", "text": "Informal text (missing whitespaces, missing capitalization, ellipses, emoticons) makes the task harder"},
+      {"id": "6", "text": "Sentence segmentation is trivially solved by splitting on every \".\" character"}
+    ],
+    "correct": ["1", "2", "3", "4", "5"],
+    "explanation": "<p>(6) is wrong — that's exactly the naive approach that fails on the cases in (1). A more robust approach is a binary classifier (rules, regex, or ML) that uses features from (4). Modern NLP pipelines (spaCy, NLTK) use either trained models or extensive rule sets.</p>"
+  },
+  {
+    "id": "L3-mrq-01",
+    "type": "mrq",
+    "lecture": "3",
+    "topic": "language model definition",
+    "difficulty": "easy",
+    "q": "<p>Which statements correctly describe what a <strong>Language Model (LM)</strong> does?</p>",
+    "options": [
+      {"id": "1", "text": "Assigns probabilities to sequences of words (sentences, phrases)"},
+      {"id": "2", "text": "Computes $P(w_n \\mid w_1, w_2, \\ldots, w_{n-1})$ — the probability of an upcoming word given context"},
+      {"id": "3", "text": "Should assign higher probability to fluent/frequent sentences and lower probability to ungrammatical ones"},
+      {"id": "4", "text": "Useful for speech recognition, spelling correction, grammar correction, machine translation, text generation"},
+      {"id": "5", "text": "Always produces deterministic word predictions (no notion of uncertainty)"}
+    ],
+    "correct": ["1", "2", "3", "4"],
+    "explanation": "<p>(5) is the opposite of what an LM does — it's a probability distribution over next words, inherently capturing uncertainty. The two main uses (per lecture): (a) compare alternatives — pick the higher-probability sentence (spell-check, ASR), (b) sample to generate (LLMs).</p>"
+  },
+  {
+    "id": "L3-mrq-02",
+    "type": "mrq",
+    "lecture": "3",
+    "topic": "chain rule",
+    "difficulty": "medium",
+    "q": "<p>The chain rule decomposes $P(w_1, \\ldots, w_N)$. Which statements about it are correct?</p>",
+    "options": [
+      {"id": "1", "text": "$P(w_1, \\ldots, w_N) = \\prod_{i=1}^{N} P(w_i \\mid w_{1:i-1})$"},
+      {"id": "2", "text": "$P(A_1, A_2) = P(A_2 \\mid A_1) \\cdot P(A_1)$"},
+      {"id": "3", "text": "Direct MLE estimation $P(w_N \\mid w_{1:N-1})$ from raw counts is impractical for long sequences — most are unseen"},
+      {"id": "4", "text": "$P(w_1, \\ldots, w_N) = \\sum_{i=1}^{N} P(w_i \\mid w_{1:i-1})$"},
+      {"id": "5", "text": "Even small chains of unseen subsequences make $P(W) = 0$ via the product"}
+    ],
+    "correct": ["1", "2", "3", "5"],
+    "explanation": "<p>(4) is wrong — chain rule is a <strong>product</strong>, not a sum (joint probability). (3) and (5) are why we need the Markov assumption: a single zero-count factor zeros out the entire sentence probability, and most long context strings will never appear in any corpus.</p>"
+  },
+  {
+    "id": "L3-mrq-03",
+    "type": "mrq",
+    "lecture": "3",
+    "topic": "Markov assumption",
+    "difficulty": "easy",
+    "q": "<p>Which statements about the <strong>Markov assumption</strong> in n-gram language models are correct?</p>",
+    "options": [
+      {"id": "1", "text": "Probability of word $w_n$ depends only on the last $k$ words: $P(w_n \\mid w_{1:n-1}) \\approx P(w_n \\mid w_{n-k:n-1})$"},
+      {"id": "2", "text": "A unigram (1-gram) model assumes $P(w_n \\mid w_{1:n-1}) \\approx P(w_n)$ — context-free"},
+      {"id": "3", "text": "A bigram (2-gram) model conditions on the previous 1 word"},
+      {"id": "4", "text": "A trigram (3-gram) model conditions on the previous 2 words"},
+      {"id": "5", "text": "An n-gram model conditions on the previous n words"}
+    ],
+    "correct": ["1", "2", "3", "4"],
+    "explanation": "<p>(5) is off by one — an <strong>n-gram</strong> conditions on the previous <em>n−1</em> words (the n-gram is the n-token sequence including $w_n$). Easy memorization trick: \"bigram has 2 words → conditions on 1 word\". Trigram has 3 words → conditions on 2 words.</p>"
+  },
+  {
+    "id": "L3-mrq-04",
+    "type": "mrq",
+    "lecture": "3",
+    "topic": "MLE for n-grams",
+    "difficulty": "medium",
+    "q": "<p>Which Maximum Likelihood Estimation (MLE) formulas for n-gram models are <strong>correct</strong>?</p>",
+    "options": [
+      {"id": "1", "text": "Unigram: $P(w_n) = \\frac{\\text{Count}(w_n)}{N}$ where $N$ is total #words in corpus"},
+      {"id": "2", "text": "Bigram: $P(w_n \\mid w_{n-1}) = \\frac{\\text{Count}(w_{n-1} w_n)}{\\text{Count}(w_{n-1})}$"},
+      {"id": "3", "text": "Trigram: $P(w_n \\mid w_{n-2}, w_{n-1}) = \\frac{\\text{Count}(w_{n-2} w_{n-1} w_n)}{\\text{Count}(w_{n-2} w_{n-1})}$"},
+      {"id": "4", "text": "Bigram: $P(w_n \\mid w_{n-1}) = \\frac{\\text{Count}(w_{n-1} w_n)}{\\text{Count}(w_n)}$"},
+      {"id": "5", "text": "MLE estimates n-gram probabilities as relative frequencies in the training corpus"}
+    ],
+    "correct": ["1", "2", "3", "5"],
+    "explanation": "<p>(4) is wrong — denominator should be $\\text{Count}(w_{n-1})$ (the conditioning context), not $\\text{Count}(w_n)$. The general form: $P(w_n \\mid \\text{context}) = \\frac{\\text{Count}(\\text{context}, w_n)}{\\text{Count}(\\text{context})}$.</p>"
+  },
+  {
+    "id": "L3-mrq-05",
+    "type": "mrq",
+    "lecture": "3",
+    "topic": "bigram computation",
+    "difficulty": "medium",
+    "q": "<p>Corpus: <code>&lt;s&gt; I am Sam &lt;/s&gt;</code>, <code>&lt;s&gt; Sam I am &lt;/s&gt;</code>, <code>&lt;s&gt; I do not like green eggs and ham &lt;/s&gt;</code>. Which bigram MLE probabilities are correct?</p>",
+    "options": [
+      {"id": "1", "text": "$P(\\text{I} \\mid \\langle s \\rangle) = 2/3$ — \"I\" appears after &lt;s&gt; in 2 of 3 sentences"},
+      {"id": "2", "text": "$P(\\text{am} \\mid \\text{I}) = 2/3$ — \"I\" appears 3 times, followed by \"am\" twice"},
+      {"id": "3", "text": "$P(\\text{Sam} \\mid \\text{am}) = 1/2$ — \"am\" appears twice, followed by \"Sam\" once"},
+      {"id": "4", "text": "$P(\\langle/s\\rangle \\mid \\text{Sam}) = 1/2$ — \"Sam\" appears twice, followed by &lt;/s&gt; once"},
+      {"id": "5", "text": "Sentence-boundary tokens &lt;s&gt; and &lt;/s&gt; are needed so the model can learn what starts and ends sentences"}
+    ],
+    "correct": ["1", "2", "3", "4", "5"],
+    "explanation": "<p>All five are correct (matches the lecture's worked example). The boundary tokens are essential — without them, an LM can't model \"how do sentences start/end\". Note we typically don't include $P(\\langle s \\rangle)$ when comparing two sentence probabilities — it's the same constant for all.</p>"
+  },
+  {
+    "id": "L3-mrq-06",
+    "type": "mrq",
+    "lecture": "3",
+    "topic": "log probabilities",
+    "difficulty": "easy",
+    "q": "<p>Why do n-gram language models compute probabilities in <strong>log space</strong>?</p>",
+    "options": [
+      {"id": "1", "text": "Each $P(w_n \\mid \\text{context})$ is small; multiplying many of them risks arithmetic underflow"},
+      {"id": "2", "text": "Logarithm is strictly monotonic — comparisons (which sentence has higher probability?) are preserved"},
+      {"id": "3", "text": "$\\log(P_1 \\cdot P_2 \\cdot \\ldots \\cdot P_N) = \\log P_1 + \\log P_2 + \\ldots + \\log P_N$, turning a product into a sum"},
+      {"id": "4", "text": "Logarithms make probabilities exactly equal across n-gram orders"},
+      {"id": "5", "text": "Floating-point addition of log-probs is more numerically stable than long products of small floats"}
+    ],
+    "correct": ["1", "2", "3", "5"],
+    "explanation": "<p>(4) is meaningless — logs preserve relative comparisons but probabilities aren't \"equalized\". The standard implementation pattern: store $\\log P$ values; sum them up across the chain; exponentiate only at the end (if a probability is needed at all).</p>"
+  },
+  {
+    "id": "L3-mrq-07",
+    "type": "mrq",
+    "lecture": "3",
+    "topic": "evaluation: extrinsic vs intrinsic",
+    "difficulty": "medium",
+    "q": "<p>Which statements about <strong>extrinsic vs intrinsic evaluation</strong> of language models are correct?</p>",
+    "options": [
+      {"id": "1", "text": "Extrinsic evaluation runs each LM through a downstream task (spell-check, ASR) and compares results"},
+      {"id": "2", "text": "Intrinsic evaluation directly evaluates each LM on a held-out test corpus using a metric like perplexity"},
+      {"id": "3", "text": "Extrinsic evaluation is generally more expensive and slower"},
+      {"id": "4", "text": "Intrinsic evaluation always perfectly predicts downstream task performance"},
+      {"id": "5", "text": "A common corpus split is 80% training / 10% development / 10% test"}
+    ],
+    "correct": ["1", "2", "3", "5"],
+    "explanation": "<p>(4) is wrong — perplexity correlates with but doesn't perfectly predict downstream performance. The dev set is for tuning hyperparameters (e.g., k in Add-k, lambdas in interpolation); never tune on test.</p>"
+  },
+  {
+    "id": "L3-mrq-08",
+    "type": "mrq",
+    "lecture": "3",
+    "topic": "perplexity definition",
+    "difficulty": "medium",
+    "q": "<p>Which statements about the <strong>perplexity</strong> $PP(W)$ of a test corpus $W = w_1 w_2 \\ldots w_N$ are correct?</p>",
+    "options": [
+      {"id": "1", "text": "$PP(W) = P(w_1, \\ldots, w_N)^{-1/N}$ — inverse probability normalized by length"},
+      {"id": "2", "text": "$PP(W) = \\sqrt[N]{\\prod_{n=1}^{N} \\frac{1}{P(w_n \\mid w_{n-1})}}$ for a bigram LM"},
+      {"id": "3", "text": "Lower perplexity = better LM"},
+      {"id": "4", "text": "Higher perplexity = better LM"},
+      {"id": "5", "text": "Minimizing perplexity is equivalent to maximizing the test-corpus probability"},
+      {"id": "6", "text": "Perplexity equals the cross-entropy directly (no exponent)"}
+    ],
+    "correct": ["1", "2", "3", "5"],
+    "explanation": "<p>(4) is reversed. (6) is wrong — perplexity is the <em>exponential</em> of cross-entropy: $PP = e^{H}$ (using natural log) or $2^{H}$ (base-2 log). The 1/N normalization makes perplexity comparable across test corpora of different lengths.</p>"
+  },
+  {
+    "id": "L3-mrq-09",
+    "type": "mrq",
+    "lecture": "3",
+    "topic": "perplexity intuition",
+    "difficulty": "medium",
+    "q": "<p>Which statements about the <strong>range and intuition</strong> of perplexity are correct (with vocabulary size $V$)?</p>",
+    "options": [
+      {"id": "1", "text": "Minimum perplexity is 1 (achieved when the LM assigns probability 1 to the test corpus — perfect prediction)"},
+      {"id": "2", "text": "Maximum perplexity is unbounded (∞) — when probabilities go to 0"},
+      {"id": "3", "text": "Maximum perplexity equals $V$ (the vocabulary size)"},
+      {"id": "4", "text": "Intuitively, perplexity = \"effective number of choices the model is uncertain among per word\""},
+      {"id": "5", "text": "A uniform LM (every word equally likely) has perplexity exactly $V$"},
+      {"id": "6", "text": "High perplexity = many low $P(w_n \\mid \\text{context})$ values across the test corpus"}
+    ],
+    "correct": ["1", "2", "4", "5", "6"],
+    "explanation": "<p>(3) is the common confusion — max is ∞, not V. The uniform LM achieves PP = V (each word has probability 1/V, so 1/(1/V) = V). PP=1 means perfect; PP=V means \"as bad as random guessing\"; PP > V means the model is even worse than uniform on this test set.</p>"
+  },
+  {
+    "id": "L3-mrq-10",
+    "type": "mrq",
+    "lecture": "3",
+    "topic": "perplexity comparison",
+    "difficulty": "medium",
+    "q": "<p>The lecture's WSJ example: Unigram=962, Bigram=170, Trigram=109. Which conclusions are correct?</p>",
+    "options": [
+      {"id": "1", "text": "Higher-order n-grams (trigram > bigram > unigram) generally achieve lower perplexity"},
+      {"id": "2", "text": "More context helps prediction (when context is reliably observed)"},
+      {"id": "3", "text": "Unigram → 962 ≈ \"effectively choosing among ~962 words per position\" (near uniform over a 20k-word vocab is far worse)"},
+      {"id": "4", "text": "The improvement saturates: doubling n always halves perplexity"},
+      {"id": "5", "text": "A uniform LM over the 20k WSJ vocabulary would have perplexity 20,000"}
+    ],
+    "correct": ["1", "2", "3", "5"],
+    "explanation": "<p>(4) is wrong — the marginal gain from increasing n diminishes quickly because data sparsity grows. Going from unigram→bigram is huge (962→170); bigram→trigram is smaller (170→109); trigram→4-gram even smaller and may eventually hurt as sparsity dominates.</p>"
+  },
+  {
+    "id": "L3-mrq-11",
+    "type": "mrq",
+    "lecture": "3",
+    "topic": "n-gram size tradeoffs",
+    "difficulty": "medium",
+    "q": "<p>What are the <strong>disadvantages of using a large n</strong> in n-gram language models?</p>",
+    "options": [
+      {"id": "1", "text": "Sparsity — most n-grams in test data were never seen during training"},
+      {"id": "2", "text": "Memory — number of possible n-grams grows like $|V|^n$"},
+      {"id": "3", "text": "Less local context (large n captures less surrounding information)"},
+      {"id": "4", "text": "Worse generalization to unseen data (overfitting to training context)"},
+      {"id": "5", "text": "More smoothing mass needs to be redistributed (huge fraction of n-grams are unseen)"}
+    ],
+    "correct": ["1", "2", "4", "5"],
+    "explanation": "<p>(3) is reversed — larger n captures <em>more</em> local context, not less. That's the <em>advantage</em>. The trade-off is: more context vs more sparsity. (You missed this one previously — note (3) is the trap option.)</p>"
+  },
+  {
+    "id": "L3-mrq-12",
+    "type": "mrq",
+    "lecture": "3",
+    "topic": "OOV handling",
+    "difficulty": "medium",
+    "q": "<p>Which are <strong>strategies for handling Out-Of-Vocabulary (OOV) words</strong>?</p>",
+    "options": [
+      {"id": "1", "text": "Use a closed vocabulary — assume all words come from a fixed set"},
+      {"id": "2", "text": "Replace OOV words with a special <code>&lt;UNK&gt;</code> token; estimate counts and probabilities for &lt;UNK&gt; like any other word"},
+      {"id": "3", "text": "Use subword tokenization (e.g., BPE) so unseen words are decomposed into known subword tokens"},
+      {"id": "4", "text": "Apply smoothing — assign nonzero probability to unseen n-grams"},
+      {"id": "5", "text": "Manually inspect every OOV word at inference time"}
+    ],
+    "correct": ["1", "2", "3", "4"],
+    "explanation": "<p>(5) is impractical. The lecture's three main approaches are explicitly listed: closed vocab assumption, &lt;UNK&gt; token, subword tokenization. Smoothing addresses the <em>unseen-n-gram</em> problem (counts of 0 for sequences of known words), which is closely related.</p>"
+  },
+  {
+    "id": "L3-mrq-13",
+    "type": "mrq",
+    "lecture": "3",
+    "topic": "Laplace smoothing",
+    "difficulty": "medium",
+    "q": "<p>Which statements about <strong>Laplace (Add-1) smoothing</strong> for bigrams are correct?</p>",
+    "options": [
+      {"id": "1", "text": "$P_{\\text{Laplace}}(w_n \\mid w_{n-1}) = \\frac{\\text{Count}(w_{n-1} w_n) + 1}{\\text{Count}(w_{n-1}) + V}$"},
+      {"id": "2", "text": "The denominator gets $+V$ (not $+1$) because we add 1 to every possible bigram extending $w_{n-1}$"},
+      {"id": "3", "text": "It's also called <em>discounting</em> — probability mass moves from frequent n-grams to unseen ones"},
+      {"id": "4", "text": "Laplace smoothing eliminates all zero probabilities"},
+      {"id": "5", "text": "It is generally optimal — no other smoothing method does better"}
+    ],
+    "correct": ["1", "2", "3", "4"],
+    "explanation": "<p>(5) is wrong — Laplace is a baseline; in practice it moves <em>too much</em> probability mass to unseen n-grams. Add-k (with $k < 1$), Kneser-Ney, and Stupid Backoff all generally beat it. Laplace is taught because it's the simplest illustration of discounting.</p>"
+  },
+  {
+    "id": "L3-mrq-14",
+    "type": "mrq",
+    "lecture": "3",
+    "topic": "Add-k smoothing",
+    "difficulty": "medium",
+    "q": "<p>Which statements about <strong>Add-k smoothing</strong> are correct?</p>",
+    "options": [
+      {"id": "1", "text": "Generalization of Add-1: add a small $k$ instead of 1, with $0 < k \\leq 1$"},
+      {"id": "2", "text": "$P_{\\text{add-}k}(w_n \\mid w_{n-1}) = \\frac{\\text{Count}(w_{n-1} w_n) + k}{\\text{Count}(w_{n-1}) + kV}$"},
+      {"id": "3", "text": "$k$ is a hyperparameter — tune on a held-out development corpus"},
+      {"id": "4", "text": "$k = 0$ recovers unsmoothed MLE"},
+      {"id": "5", "text": "A larger $k$ shifts more probability mass to unseen n-grams"}
+    ],
+    "correct": ["1", "2", "3", "4", "5"],
+    "explanation": "<p>All five correct. Add-k with $k \\ll 1$ (often k ≈ 0.01) is much less aggressive than Laplace and usually beats it. The denominator gets $+kV$ (not $+k$) for the same normalization reason as Laplace.</p>"
+  },
+  {
+    "id": "L3-mrq-15",
+    "type": "mrq",
+    "lecture": "3",
+    "topic": "backoff vs interpolation",
+    "difficulty": "medium",
+    "q": "<p>Which statements about <strong>backoff and interpolation</strong> are correct?</p>",
+    "options": [
+      {"id": "1", "text": "Backoff: if the trigram is unseen, fall back to bigram; if still insufficient, fall back to unigram"},
+      {"id": "2", "text": "Linear interpolation: $\\hat{P}(w_n \\mid w_{n-2}, w_{n-1}) = \\lambda_1 P(w_n) + \\lambda_2 P(w_n \\mid w_{n-1}) + \\lambda_3 P(w_n \\mid w_{n-2}, w_{n-1})$"},
+      {"id": "3", "text": "The interpolation weights must satisfy $\\sum_i \\lambda_i = 1$"},
+      {"id": "4", "text": "$\\lambda$s can be made context-dependent: $\\lambda_i(w_{n-2}, w_{n-1})$"},
+      {"id": "5", "text": "$\\lambda$s are typically learned by maximizing held-out corpus likelihood (e.g., via EM)"},
+      {"id": "6", "text": "In practice, backoff is generally better than interpolation"}
+    ],
+    "correct": ["1", "2", "3", "4", "5"],
+    "explanation": "<p>(6) is reversed: the lecture explicitly says interpolation is generally <em>better</em> than backoff in practice. Backoff is conditional (use higher-order if seen, else use lower); interpolation always blends all orders.</p>"
+  },
+  {
+    "id": "L3-mrq-16",
+    "type": "mrq",
+    "lecture": "3",
+    "topic": "Kneser-Ney smoothing",
+    "difficulty": "hard",
+    "q": "<p>Which statements about <strong>Kneser-Ney smoothing</strong> are correct?</p>",
+    "options": [
+      {"id": "1", "text": "Kneser-Ney = Absolute Discounting + Interpolation with a better unigram estimate"},
+      {"id": "2", "text": "Absolute discounting subtracts a fixed value $d$ (typically ~0.75) from all bigram counts"},
+      {"id": "3", "text": "$P_{KN}(w)$ measures \"how likely is $w$ to be a <em>novel continuation</em>\" — proportional to the number of distinct words $w'$ that form an existing bigram $w'w$"},
+      {"id": "4", "text": "$P_{KN}(\\text{Kong}) > P_{KN}(\\text{glasses})$, because \"Kong\" follows many different words"},
+      {"id": "5", "text": "$P_{KN}(\\text{Kong}) < P_{KN}(\\text{glasses})$, because \"Kong\" almost only follows \"Hong\""}
+    ],
+    "correct": ["1", "2", "3", "5"],
+    "explanation": "<p>(4) reverses the logic. The lecture's example: \"I can't see without my reading ___\". Raw unigram says \"Kong\" is more likely (it's frequent in \"Hong Kong\"). But \"Kong\" is preceded only by \"Hong\" — it has very <em>few</em> contexts → low novel-continuation probability. \"glasses\" follows many words (\"reading\", \"my\", \"the\", \"sun\"...) → high novel-continuation probability. KN's insight: when we back off, we want the word that's seen in many bigram contexts, not the word with high raw frequency.</p>"
+  },
+  {
+    "id": "L3-mrq-17",
+    "type": "mrq",
+    "lecture": "3",
+    "topic": "n-gram limitations",
+    "difficulty": "medium",
+    "q": "<p>Which are <strong>fundamental limitations of n-gram language models</strong> identified in lecture?</p>",
+    "options": [
+      {"id": "1", "text": "Cannot capture long-distance dependencies (e.g., \"All <em>jokes</em> totalled landed, resulting in a movie that is very ___\" needs \"jokes\" from far back to predict \"funny\")"},
+      {"id": "2", "text": "The Markov assumption discards everything beyond the previous $n-1$ words"},
+      {"id": "3", "text": "Sparsity grows quickly with n — even a 5-gram has many unseen contexts"},
+      {"id": "4", "text": "Generated text is increasingly grammatical with larger n but often incoherent"},
+      {"id": "5", "text": "n-gram LMs intrinsically support arbitrary-length context like RNNs do"}
+    ],
+    "correct": ["1", "2", "3", "4"],
+    "explanation": "<p>(5) is the opposite of (2). RNNs (in principle) propagate state across the entire sequence; transformers attend to all positions. n-gram LMs are bounded by n. The lecture motivates RNN/Transformer specifically to overcome the long-distance limitation.</p>"
+  },
+  {
+    "id": "L3-mrq-18",
+    "type": "mrq",
+    "lecture": "3",
+    "topic": "RNN / Transformer teaser",
+    "difficulty": "medium",
+    "q": "<p>Which statements about why we move beyond n-grams to <strong>RNNs and Transformers</strong> are correct?</p>",
+    "options": [
+      {"id": "1", "text": "RNNs in principle propagate hidden state across arbitrary sequence length, addressing long-distance dependencies"},
+      {"id": "2", "text": "RNNs suffer vanishing/exploding gradients on long sequences"},
+      {"id": "3", "text": "RNN processing is intrinsically sequential — no parallelization across time steps"},
+      {"id": "4", "text": "Transformers replace recurrence with attention — no sequential bottleneck, easy to parallelize"},
+      {"id": "5", "text": "Transformers always train faster than RNNs on small data"}
+    ],
+    "correct": ["1", "2", "3", "4"],
+    "explanation": "<p>(5) is overstated — the lecture explicitly notes \"this does not mean transformers are easier/faster to train\". On small data, transformers can underperform; the parallelization advantage helps at scale. The motivation chain: n-gram (bounded context) → RNN (unbounded but vanishing/sequential) → Transformer (attention, parallelizable).</p>"
+  },
+  {
+    "id": "L4-mrq-01",
+    "type": "mrq",
+    "lecture": "4",
+    "topic": "word order / motivation",
+    "difficulty": "easy",
+    "q": "<p>Why do we need <strong>sequence models</strong> beyond Bag-of-Words?</p>",
+    "options": [
+      {"id": "1", "text": "BoW discards word order — \"Bob kills mosquitoes\" and \"mosquitoes kill Bob\" become identical"},
+      {"id": "2", "text": "Word order strongly affects meaning in most languages"},
+      {"id": "3", "text": "English has fundamental rules like SVO (Subject-Verb-Object) and adjective-before-noun"},
+      {"id": "4", "text": "\"The food tastes good and does not look bad\" vs \"The food tastes bad and does not look good\" — same words, opposite meaning"},
+      {"id": "5", "text": "BoW perfectly captures word order through term frequency"}
+    ],
+    "correct": ["1", "2", "3", "4"],
+    "explanation": "<p>(5) is the opposite of (1). BoW = multiset of tokens (no positions). The lecture's motivation: word order is essential for meaning, classical models (Naive Bayes, Vector Space Model — both Lecture 5) ignore it. Sequence models keep order in their input.</p>"
+  },
+  {
+    "id": "L4-mrq-02",
+    "type": "mrq",
+    "lecture": "4",
+    "topic": "sequence task types",
+    "difficulty": "medium",
+    "q": "<p>Match the <strong>sequence task type</strong> to its description:</p>",
+    "options": [
+      {"id": "1", "text": "Many-to-One (N→1): sequence classification, e.g., sentiment analysis, document categorization"},
+      {"id": "2", "text": "Many-to-Many (N→N): sequence labeling/tagging, e.g., POS tagging, NER"},
+      {"id": "3", "text": "Many-to-Many (N→M): sequence translation, e.g., machine translation, summarization, simplification"},
+      {"id": "4", "text": "One-to-Many (1→N): sequence generation, e.g., image captioning"},
+      {"id": "5", "text": "Many-to-One (N→1): always produces a sequence of POS tags"}
+    ],
+    "correct": ["1", "2", "3", "4"],
+    "explanation": "<p>(5) confuses N→1 (one output) with N→N (sequence output). POS tagging is N→N (one tag per word). The four canonical task shapes from lecture: N→1, N→N, N→M, 1→N. Modern transformers can in principle handle any of these.</p>"
+  },
+  {
+    "id": "L4-mrq-03",
+    "type": "mrq",
+    "lecture": "4",
+    "topic": "POS tagging basics",
+    "difficulty": "easy",
+    "q": "<p>Which statements about <strong>Part-of-Speech (POS) tagging</strong> are correct?</p>",
+    "options": [
+      {"id": "1", "text": "POS tag = word class (also called syntactic category)"},
+      {"id": "2", "text": "English has 8 main parts of speech (noun, verb, adjective, adverb, pronoun, preposition, conjunction, interjection)"},
+      {"id": "3", "text": "POS tagging assigns a tag to <em>each word</em> — sequence labeling task (N→N)"},
+      {"id": "4", "text": "The Penn Treebank tag-set has 36 base POS tags + 12 punctuation tags"},
+      {"id": "5", "text": "POS tagging is a one-shot N→1 sequence-classification task"}
+    ],
+    "correct": ["1", "2", "3", "4"],
+    "explanation": "<p>(5) confuses POS tagging with sequence classification — POS produces one tag per token (N→N). The Penn Treebank tags differentiate finer subclasses: VB (base form), VBD (past tense), VBG (gerund), VBN (past participle), VBP (non-3rd-pers sing present), VBZ (3rd-pers sing present); JJ/JJR/JJS for adjectives; NN/NNS/NNP/NNPS for nouns.</p>"
+  },
+  {
+    "id": "L4-mrq-04",
+    "type": "mrq",
+    "lecture": "4",
+    "topic": "open vs closed class",
+    "difficulty": "easy",
+    "q": "<p>Which statements about <strong>open vs. closed class</strong> POS categories are correct?</p>",
+    "options": [
+      {"id": "1", "text": "Closed class = small, fixed membership; reasonably easy to enumerate"},
+      {"id": "2", "text": "Closed class examples: prepositions, pronouns, particles, determiners, conjunctions"},
+      {"id": "3", "text": "Open class examples (for most languages): nouns, verbs, adjectives, adverbs"},
+      {"id": "4", "text": "Open class words can be coined or borrowed (\"chillax\", \"selfie\", \"adulting\")"},
+      {"id": "5", "text": "Pronouns are open class because new pronouns are frequently invented"}
+    ],
+    "correct": ["1", "2", "3", "4"],
+    "explanation": "<p>(5) is wrong — pronouns are <strong>closed</strong>. The list of pronouns (I, you, he, she, it, we, they, ...) is small and stable; new ones are extremely rare. Closed-class words are typically short \"function\" words that structure sentences; open class is content words.</p>"
+  },
+  {
+    "id": "L4-mrq-05",
+    "type": "mrq",
+    "lecture": "4",
+    "topic": "POS ambiguity",
+    "difficulty": "medium",
+    "q": "<p>Which statements about <strong>POS-tagging ambiguity</strong> in English are correct?</p>",
+    "options": [
+      {"id": "1", "text": "~85% of word types are unambiguous (e.g., \"quickly\" is always an adverb, \"Alice\" always a proper noun)"},
+      {"id": "2", "text": "~15% of word types are ambiguous, BUT those tend to be very common"},
+      {"id": "3", "text": "55-65% of <em>tokens</em> in running text are ambiguous (have ≥2 possible POS tags)"},
+      {"id": "4", "text": "\"Teacher Strikes Idle Kids\" — \"Strikes\" can be either a verb (3rd person singular) or a noun (plural)"},
+      {"id": "5", "text": "Headlines are easier to tag than ordinary text because they are shorter"}
+    ],
+    "correct": ["1", "2", "3", "4"],
+    "explanation": "<p>(5) is wrong — headlines are notoriously <strong>harder</strong> due to compressed grammar (\"crash blossoms\"). The 85% types / 55-65% tokens stat captures Zipf-like behavior: ambiguous words happen to be the frequent ones (\"that\", \"to\", \"up\", \"like\"...).</p>"
+  },
+  {
+    "id": "L4-mrq-06",
+    "type": "mrq",
+    "lecture": "4",
+    "topic": "POS tagger baseline",
+    "difficulty": "medium",
+    "q": "<p>The lecture's <strong>baseline POS tagger</strong> labels each word with its most-frequent POS tag (and unknowns as nouns). Which statements are correct?</p>",
+    "options": [
+      {"id": "1", "text": "Baseline accuracy is ~92%; SOTA methods reach ~97-98%"},
+      {"id": "2", "text": "The headline accuracy is misleading — most correct predictions come from common, unambiguous words like \"the\", \"a\", \"and\""},
+      {"id": "3", "text": "POS tagging is a low-level NLP task — errors propagate to downstream tasks"},
+      {"id": "4", "text": "Labeling unknown words as nouns leverages the fact that nouns are the largest open class"},
+      {"id": "5", "text": "92% accuracy means 92% of <em>ambiguous</em> tokens are tagged correctly"}
+    ],
+    "correct": ["1", "2", "3", "4"],
+    "explanation": "<p>(5) is wrong — the 92% is over <em>all</em> tokens; the baseline does much worse on the ambiguous-token subset. That's why the baseline's accuracy is \"imbalanced\" — high overall but most gain comes from easy words. SOTA squeezes out the last 5-6 points on hard cases.</p>"
+  },
+  {
+    "id": "L4-mrq-07",
+    "type": "mrq",
+    "lecture": "4",
+    "topic": "POS tagging methods",
+    "difficulty": "medium",
+    "q": "<p>Which are <strong>supervised methods</strong> for POS tagging covered in lecture?</p>",
+    "options": [
+      {"id": "1", "text": "Hidden Markov Models (HMM)"},
+      {"id": "2", "text": "Conditional Random Fields (CRF)"},
+      {"id": "3", "text": "Neural sequence models — RNN, LSTM, Bi-LSTM, Bi-LSTM+CRF"},
+      {"id": "4", "text": "Transformer-based models (e.g., BERT)"},
+      {"id": "5", "text": "k-means clustering of word embeddings"}
+    ],
+    "correct": ["1", "2", "3", "4"],
+    "explanation": "<p>(5) is unsupervised and not used for supervised POS tagging. The lecture: \"Accuracies have reached human ceiling — POS tagging is considered a <em>solved</em> task for high-resource languages\". The remaining challenges: low-resource languages and special domains.</p>"
+  },
+  {
+    "id": "L4-mrq-08",
+    "type": "mrq",
+    "lecture": "4",
+    "topic": "HMM for POS",
+    "difficulty": "medium",
+    "q": "<p>Which statements about using a <strong>Hidden Markov Model (HMM) for POS tagging</strong> are correct (per lecture)?</p>",
+    "options": [
+      {"id": "1", "text": "States are <em>hidden</em> (not directly observable) — these correspond to POS tags"},
+      {"id": "2", "text": "Observable variables depend on the hidden states — these correspond to the words"},
+      {"id": "3", "text": "Goal: \"Given a sequence of words, find the most likely sequence of POS tags\""},
+      {"id": "4", "text": "States are the observed words; observations are the hidden POS tags"},
+      {"id": "5", "text": "HMM exploits the Markov assumption — current state depends only on a limited window of previous states"}
+    ],
+    "correct": ["1", "2", "3", "5"],
+    "explanation": "<p>(4) is reversed — words are observable, tags are hidden. We <em>see</em> the words; we want to <em>infer</em> the tag sequence. The Markov assumption mirrors n-gram LMs: limited memory of previous tags makes computation tractable.</p>"
+  },
+  {
+    "id": "L4-mrq-09",
+    "type": "mrq",
+    "lecture": "4",
+    "topic": "Bi-LSTM for POS",
+    "difficulty": "medium",
+    "q": "<p>Which statements about using <strong>RNNs / LSTMs for POS tagging</strong> are correct?</p>",
+    "options": [
+      {"id": "1", "text": "A unidirectional LSTM only sees prior context when predicting a tag — it cannot use future words"},
+      {"id": "2", "text": "Bi-LSTM combines forward and backward LSTMs so each position has access to both past and future context"},
+      {"id": "3", "text": "Bi-LSTM + CRF adds a CRF layer on top to model dependencies between output tags"},
+      {"id": "4", "text": "A vanilla LSTM softmax output ignores correlations between adjacent tags"},
+      {"id": "5", "text": "Bi-LSTM eliminates the need for any sequence-aware decoding"}
+    ],
+    "correct": ["1", "2", "3", "4"],
+    "explanation": "<p>(5) is overstated — Bi-LSTM gives strong contextual features but the per-position softmax still treats outputs independently. Adding a CRF layer (4) allows the model to penalize unlikely tag sequences (e.g., \"determiner followed by another determiner\"). This is the standard pre-Transformer recipe.</p>"
+  },
+  {
+    "id": "L4-mrq-10",
+    "type": "mrq",
+    "lecture": "4",
+    "topic": "constituent definition",
+    "difficulty": "medium",
+    "q": "<p>Which statements about <strong>constituents</strong> (in constituency parsing) are correct?</p>",
+    "options": [
+      {"id": "1", "text": "A constituent is a group of words that behaves as a single unit"},
+      {"id": "2", "text": "Sentences are described as a hierarchical structure of constituents"},
+      {"id": "3", "text": "Topicalization: only a constituent can be moved to a different position in the sentence"},
+      {"id": "4", "text": "Proform substitution: only a constituent can be replaced with \"it\", \"that\", \"there\", etc."},
+      {"id": "5", "text": "Fragment-answer test: only a constituent can answer a question while preserving meaning"},
+      {"id": "6", "text": "Any contiguous span of words is automatically a constituent"}
+    ],
+    "correct": ["1", "2", "3", "4", "5"],
+    "explanation": "<p>(6) is the trap. Lecture's quiz example: in \"All students learned about syntactic parsing this week\", \"learned about syntactic\" is NOT a constituent (you can't substitute it with \"it\" or move it as a unit), even though it's contiguous. \"learned about syntactic parsing\" IS a constituent.</p>"
+  },
+  {
+    "id": "L4-mrq-11",
+    "type": "mrq",
+    "lecture": "4",
+    "topic": "context-free grammars",
+    "difficulty": "medium",
+    "q": "<p>Which statements about <strong>Context-Free Grammars (CFGs)</strong> are correct?</p>",
+    "options": [
+      {"id": "1", "text": "A CFG is a 4-tuple $\\langle N, \\Sigma, R, S \\rangle$ — non-terminals, terminals, rules, start symbol"},
+      {"id": "2", "text": "All rules have form $A \\to \\alpha$ with $A \\in N$ and $\\alpha \\in (N \\cup \\Sigma)^*$"},
+      {"id": "3", "text": "A rule's left-hand side must be a single non-terminal — that's the \"context-free\" property"},
+      {"id": "4", "text": "Terminals can never appear on the LHS of a rule"},
+      {"id": "5", "text": "CFGs are <em>less</em> powerful than regular expressions"},
+      {"id": "6", "text": "CFGs can express recursive structure (e.g., nested noun phrases) that regex cannot"}
+    ],
+    "correct": ["1", "2", "3", "4", "6"],
+    "explanation": "<p>(5) is reversed: CFGs are <em>more</em> powerful (sit one level above regular in the Chomsky hierarchy). The two violations of CFG-ness from the lecture quiz: a rule like \"VP NP → Verb NP\" (multiple non-terminals on LHS) and \"the → Det\" (terminal on LHS) — the second blows it because LHS must be single non-terminal.</p>"
+  },
+  {
+    "id": "L4-mrq-12",
+    "type": "mrq",
+    "lecture": "4",
+    "topic": "structural ambiguity",
+    "difficulty": "medium",
+    "q": "<p>Which are types of <strong>structural ambiguity</strong> in syntactic parsing (per lecture)?</p>",
+    "options": [
+      {"id": "1", "text": "Attachment ambiguity: a constituent can be attached to the parse tree at more than one place (e.g., \"I book the flight through Singapore\" — does \"through Singapore\" attach to \"flight\" or to \"book\"?)"},
+      {"id": "2", "text": "Coordination ambiguity: phrases can be conjoined in different ways (e.g., \"the best meals and entertainment\" — does \"best\" modify both, or only \"meals\"?)"},
+      {"id": "3", "text": "Phonemic ambiguity (homophones)"},
+      {"id": "4", "text": "Lexical (word-sense) ambiguity"},
+      {"id": "5", "text": "Both attachment and coordination ambiguity produce multiple valid parse trees for the same sentence under one grammar"}
+    ],
+    "correct": ["1", "2", "5"],
+    "explanation": "<p>(3) and (4) are real ambiguity types but they are <em>not structural</em> — they're at the lexical/phonological level. Structural ambiguity specifically means the parse <em>tree</em> can take multiple shapes. PP-attachment is the canonical NLP example.</p>"
+  },
+  {
+    "id": "L4-mrq-13",
+    "type": "mrq",
+    "lecture": "4",
+    "topic": "PCFGs",
+    "difficulty": "medium",
+    "q": "<p>Which statements about <strong>Probabilistic Context-Free Grammars (PCFGs)</strong> are correct?</p>",
+    "options": [
+      {"id": "1", "text": "Each rule has an associated probability $P(A \\to \\alpha)$"},
+      {"id": "2", "text": "For any non-terminal $A$, $\\sum_\\alpha P(A \\to \\alpha) = 1$ over all rules with $A$ as LHS"},
+      {"id": "3", "text": "$P(A \\to \\alpha) = \\frac{\\text{Count}(A \\to \\alpha)}{\\text{Count}(A)}$ — relative frequency in an annotated treebank"},
+      {"id": "4", "text": "$P(\\text{parse tree}) = \\prod_i P(A_i \\to \\alpha_i)$ — product of probabilities of all rules used in the derivation"},
+      {"id": "5", "text": "In practice, sum log-probabilities to avoid arithmetic underflow"},
+      {"id": "6", "text": "PCFGs eliminate structural ambiguity by definition"}
+    ],
+    "correct": ["1", "2", "3", "4", "5"],
+    "explanation": "<p>(6) is wrong — PCFGs <em>resolve</em> ambiguity by ranking parses (pick highest-probability tree), but multiple parses still exist. The lecture's example: two parse trees for \"I book the flight through Singapore\", with probabilities 0.00000071 and 0.00000024 — the higher-probability one wins.</p>"
+  },
+  {
+    "id": "L4-mrq-14",
+    "type": "mrq",
+    "lecture": "4",
+    "topic": "constituency parsing algorithms",
+    "difficulty": "medium",
+    "q": "<p>Which statements about <strong>constituency parsing algorithms</strong> (CYK, Earley) are correct?</p>",
+    "options": [
+      {"id": "1", "text": "CYK is a bottom-up parser using dynamic programming — \"which non-terminals could have generated this substring?\""},
+      {"id": "2", "text": "Earley is a top-down parser — \"given what I've seen so far, what grammar rules might still be in progress?\""},
+      {"id": "3", "text": "Both are symbolic / rule-based — no model training is required for the parser itself"},
+      {"id": "4", "text": "Inputs are: the text + the grammar (CFG or PCFG)"},
+      {"id": "5", "text": "The parsing algorithms also <em>learn</em> the grammar from data"},
+      {"id": "6", "text": "CYK requires the grammar to be in Chomsky Normal Form (or binarized)"}
+    ],
+    "correct": ["1", "2", "3", "4", "6"],
+    "explanation": "<p>(5) is wrong — the lecture explicitly states: \"Creating or learning of grammar is NOT part of parsing algorithms!\" Grammar comes from a treebank or hand-curation. (6) is implicit in the binarization step the lecture mentions for efficient parsing.</p>"
+  },
+  {
+    "id": "L4-mrq-15",
+    "type": "mrq",
+    "lecture": "4",
+    "topic": "constituency vs dependency",
+    "difficulty": "medium",
+    "q": "<p>Which statements distinguish <strong>constituency vs dependency parsing</strong> are correct?</p>",
+    "options": [
+      {"id": "1", "text": "Constituency parsing divides a sentence into nested constituents (NP, VP, PP, ...) using a CFG/PCFG"},
+      {"id": "2", "text": "Dependency parsing expresses relationships between individual tokens — head/dependent pairs"},
+      {"id": "3", "text": "A constituency tree's leaves are words; internal nodes are phrasal categories"},
+      {"id": "4", "text": "A dependency tree has edges directly between words, labeled with relations (nsubj, dobj, amod, ...)"},
+      {"id": "5", "text": "Dependency parsing requires a CFG"},
+      {"id": "6", "text": "Universal Dependencies is a standardization effort for dependency-relation labels across languages"}
+    ],
+    "correct": ["1", "2", "3", "4", "6"],
+    "explanation": "<p>(5) is wrong — dependency parsing uses a <em>dependency grammar</em> (different formalism), and parsing typically uses supervised ML (logistic regression, SVM, neural nets). For multi-language portability, Universal Dependencies (UD) is the standard label set: nsubj, obj, det, amod, advmod, conj, cc, etc.</p>"
+  },
+  {
+    "id": "L4-mrq-16",
+    "type": "mrq",
+    "lecture": "4",
+    "topic": "dependency relationships",
+    "difficulty": "medium",
+    "q": "<p>Which statements about <strong>dependency relationships</strong> are correct?</p>",
+    "options": [
+      {"id": "1", "text": "A dependency relation is directed: from a head H to a dependent D (D modifies H)"},
+      {"id": "2", "text": "H typically determines the syntactic category of the construction; D gives semantic specification"},
+      {"id": "3", "text": "H is obligatory; D may be optional"},
+      {"id": "4", "text": "In \"Chris eats\" with relation nsubj, \"Chris\" is the head and \"eats\" is the dependent"},
+      {"id": "5", "text": "The form of D often depends on H (subject-verb agreement, case marking)"}
+    ],
+    "correct": ["1", "2", "3", "5"],
+    "explanation": "<p>(4) is reversed: <em>\"eats\"</em> is the head, <em>\"Chris\"</em> is the dependent (with relation nsubj — nominal subject). The verb is the head of the clause; arguments depend on the verb. Memorize: \"Chris depends on eats\" / \"eats governs Chris\".</p>"
+  },
+  {
+    "id": "L4-mrq-17",
+    "type": "mrq",
+    "lecture": "4",
+    "topic": "dependency types",
+    "difficulty": "medium",
+    "q": "<p>Which statements about <strong>types of dependency relationships</strong> are correct?</p>",
+    "options": [
+      {"id": "1", "text": "Head-complement: dependent is generally <em>required</em>; head alone can't represent the construction (e.g., \"drink milk\" — dobj)"},
+      {"id": "2", "text": "Head-modifier: dependent is <em>optional</em>; head alone can represent the construction (e.g., \"fresh milk\" — amod)"},
+      {"id": "3", "text": "Head-specifier: typically the determiner-noun relation (e.g., \"the milk\" — det)"},
+      {"id": "4", "text": "Coordination: head is often unclear; resolved by parser convention (e.g., \"milk and cheese\" — conj/cc)"},
+      {"id": "5", "text": "All dependents are equally optional regardless of relation type"}
+    ],
+    "correct": ["1", "2", "3", "4"],
+    "explanation": "<p>(5) is the opposite of the head-complement vs head-modifier distinction. \"drink\" without an object feels incomplete (\"drink ___\"); \"fresh\" without a noun is fine (\"fresh\" alone is just an adjective). The distinction matters for parsing scoring and downstream IE.</p>"
+  },
+  {
+    "id": "L4-mrq-18",
+    "type": "mrq",
+    "lecture": "4",
+    "topic": "Universal Dependency labels",
+    "difficulty": "medium",
+    "q": "<p>Which Universal Dependency relations are correctly described?</p>",
+    "options": [
+      {"id": "1", "text": "<code>nsubj</code> = nominal subject (subject is a noun/pronoun)"},
+      {"id": "2", "text": "<code>obj</code> / <code>dobj</code> = direct object"},
+      {"id": "3", "text": "<code>amod</code> = adjectival modifier (\"fresh milk\")"},
+      {"id": "4", "text": "<code>det</code> = determiner relation (\"the milk\")"},
+      {"id": "5", "text": "<code>cc</code> = coordinating conjunction (the \"and\" / \"or\" word itself)"},
+      {"id": "6", "text": "<code>nsubj</code> always marks the indirect object"}
+    ],
+    "correct": ["1", "2", "3", "4", "5"],
+    "explanation": "<p>(6) is wrong — indirect object is <code>iobj</code> (e.g., \"gave <em>her</em> the book\"). Memorize the UD core: nsubj/obj/iobj for arguments; amod/advmod/det for modifiers; conj/cc for coordination; aux/cop/mark for function words.</p>"
+  },
+  {
+    "id": "L4-mrq-19",
+    "type": "mrq",
+    "lecture": "4",
+    "topic": "dependency parsing pipeline",
+    "difficulty": "medium",
+    "q": "<p>Which statements about <strong>how dependency parsing is typically implemented</strong> are correct?</p>",
+    "options": [
+      {"id": "1", "text": "Two main components: a fixed parsing algorithm + a learned scoring model"},
+      {"id": "2", "text": "Different parsers mostly differ in the scoring model"},
+      {"id": "3", "text": "Classic scoring models: logistic regression, SVM"},
+      {"id": "4", "text": "Modern scoring models: FFNN, RNN/LSTM/GRU, CNN, Transformer"},
+      {"id": "5", "text": "Dependency parsing is fully unsupervised — no annotated data required"}
+    ],
+    "correct": ["1", "2", "3", "4"],
+    "explanation": "<p>(5) is wrong — supervised ML methods are standard, requiring treebanks (annotated data). Unsupervised dependency parsing exists in research but doesn't match supervised performance. spaCy uses FFN/CNN/Transformer scorers depending on which language model is loaded.</p>"
+  },
+  {
+    "id": "L4-mrq-20",
+    "type": "mrq",
+    "lecture": "4",
+    "topic": "dependency parsing applications",
+    "difficulty": "medium",
+    "q": "<p>Which are <strong>applications</strong> of dependency parsing covered in lecture?</p>",
+    "options": [
+      {"id": "1", "text": "Rule-based text simplification — remove appositions (\"Musk, the CEO of Tesla, bought Twitter\" → \"Musk bought Twitter\")"},
+      {"id": "2", "text": "Information extraction — extract (subject, predicate, object) triples for knowledge graphs"},
+      {"id": "3", "text": "Splitting complex sentences — \"Musk, the CEO of Tesla, bought Twitter\" → \"Musk bought Twitter. Musk is the CEO of Tesla.\""},
+      {"id": "4", "text": "Question answering by identifying answer-bearing constituents"},
+      {"id": "5", "text": "Image generation"}
+    ],
+    "correct": ["1", "2", "3", "4"],
+    "explanation": "<p>(5) is unrelated. The IE example: from \"Yesterday, Alice ate the tasty cake\" → triple (Alice, ate, cake) by following nsubj and dobj edges. Challenges include: handling negation (\"Alice did not eat the cake\" — extract or skip?), passive sentences, and uncertainty (\"Alice said she ate the cake\").</p>"
+  },
+  {
+    "id": "L4-mrq-21",
+    "type": "mrq",
+    "lecture": "4",
+    "topic": "constituency parsing applications",
+    "difficulty": "medium",
+    "q": "<p>Which are common <strong>downstream applications</strong> of constituency parse trees?</p>",
+    "options": [
+      {"id": "1", "text": "Grammar checking — flag ungrammatical constructs"},
+      {"id": "2", "text": "Key phrase extraction — important phrases are typically constituents"},
+      {"id": "3", "text": "Question answering — appropriate answers are usually constituents"},
+      {"id": "4", "text": "Semantic analysis — operates on phrase-level units"},
+      {"id": "5", "text": "Privacy-preserving text rewriting — remove sensitive info at the constituent level to keep the rest grammatical"},
+      {"id": "6", "text": "Replacing tokenization in modern LLMs"}
+    ],
+    "correct": ["1", "2", "3", "4", "5"],
+    "explanation": "<p>(6) is unrelated — tokenization happens at a much lower level (Lecture 2). The lecture's privacy example: \"I stayed in the Kempinski Hotel with Alice\" — to anonymize \"Kempinski Hotel\", remove the entire NP constituent (\"the Kempinski Hotel\") rather than just one word, to preserve grammaticality.</p>"
+  },
+  {
+    "id": "L4-mrq-22",
+    "type": "mrq",
+    "lecture": "4",
+    "topic": "IE challenges",
+    "difficulty": "medium",
+    "q": "<p>Which are <strong>genuine challenges</strong> when extracting (subject, predicate, object) triples from dependency parses?</p>",
+    "options": [
+      {"id": "1", "text": "Choosing the right granularity (e.g., \"Alice ate the cake\" vs \"Alice ate the tasty cake\" → which triple to extract?)"},
+      {"id": "2", "text": "Negation: \"Alice did not eat the cake\" — extract no triple, or extract (Alice, not_ate, cake)?"},
+      {"id": "3", "text": "Passive voice: \"The cake was eaten by Alice\" — naive extraction gives wrong subject"},
+      {"id": "4", "text": "Reported speech / uncertainty: \"Alice said she ate the cake\" — is the eating a fact or a claim?"},
+      {"id": "5", "text": "Verb tense (e.g., \"ate\" vs \"eats\") — should be normalized to lemma when populating a knowledge graph"},
+      {"id": "6", "text": "Dependency parses are perfectly unambiguous — IE has no challenges"}
+    ],
+    "correct": ["1", "2", "3", "4", "5"],
+    "explanation": "<p>(6) is the trap. All five real concerns are explicitly raised in lecture. Modern IE systems often combine dependency-based extraction with neural models that handle these edge cases more robustly than rule-based pipelines.</p>"
+  },
+  {
+    "id": "L5-mrq-01",
+    "type": "mrq",
+    "lecture": "5",
+    "topic": "text classification setup",
+    "difficulty": "easy",
+    "q": "<p>Which statements about the <strong>formal setup</strong> of text classification are correct?</p>",
+    "options": [
+      {"id": "1", "text": "$X$ is the set of all documents; $x \\in X$ is a single document"},
+      {"id": "2", "text": "$Y$ is the set of all classes (or class labels); $y \\in Y$ is a single class label"},
+      {"id": "3", "text": "Goal: find a hypothesis $\\hat{h}: X \\to Y$ that approximates the true (unknown) mapping $h$"},
+      {"id": "4", "text": "Each document must always belong to exactly one class"},
+      {"id": "5", "text": "Two main approaches: rule-based (decision rules) and supervised learning"}
+    ],
+    "correct": ["1", "2", "3", "5"],
+    "explanation": "<p>(4) is wrong — multilabel classification allows multiple labels per document. The lecture's example tasks all happen to be single-label (sentiment, language, spam, authorship, subject), but multilabel exists (e.g., a paper tagged with multiple ACM concepts).</p>"
+  },
+  {
+    "id": "L5-mrq-02",
+    "type": "mrq",
+    "lecture": "5",
+    "topic": "text classification applications",
+    "difficulty": "easy",
+    "q": "<p>Which are <strong>typical text classification tasks</strong> covered in lecture?</p>",
+    "options": [
+      {"id": "1", "text": "Language detection (English / Malay / Chinese / Tamil / German / ...)"},
+      {"id": "2", "text": "Spam detection (spam / not spam)"},
+      {"id": "3", "text": "Subject / genre classification (biology / chemistry / geology / ...)"},
+      {"id": "4", "text": "Authorship attribution (Stephen King / Dan Brown / J.K. Rowling / ...)"},
+      {"id": "5", "text": "Sentiment analysis (positive / negative / neutral / mixed)"},
+      {"id": "6", "text": "Image generation"}
+    ],
+    "correct": ["1", "2", "3", "4", "5"],
+    "explanation": "<p>(6) is image-to-image, not text classification. Authorship attribution is interesting — assumes \"people have unique writing styles\" (vocabulary, frequent phrases, sentence lengths, typos). It's used in linguistic forensics on anonymous documents.</p>"
+  },
+  {
+    "id": "L5-mrq-03",
+    "type": "mrq",
+    "lecture": "5",
+    "topic": "Naive Bayes intuition",
+    "difficulty": "medium",
+    "q": "<p>Which statements about the <strong>Naive Bayes classifier</strong> derivation are correct?</p>",
+    "options": [
+      {"id": "1", "text": "Apply Bayes rule: $P(y_i \\mid x) = \\frac{P(x \\mid y_i) P(y_i)}{P(x)}$"},
+      {"id": "2", "text": "Predict $y_{NB} = \\arg\\max_{y_i \\in Y} P(y_i \\mid x)$"},
+      {"id": "3", "text": "The marginal $P(x)$ can be dropped when comparing classes — same denominator for all $y_i$"},
+      {"id": "4", "text": "After dropping the marginal: $P(y \\mid x) \\propto P(x \\mid y) P(y)$"},
+      {"id": "5", "text": "$P(y_i \\mid x)$ must be exactly normalized as a probability before $\\arg\\max$"}
+    ],
+    "correct": ["1", "2", "3", "4"],
+    "explanation": "<p>(5) is wrong — for $\\arg\\max$ over $y_i$ we only care about <em>relative</em> magnitudes, not exact probabilities. Dropping the marginal $P(x)$ is the standard simplification: it's a constant w.r.t. $y$.</p>"
+  },
+  {
+    "id": "L5-mrq-04",
+    "type": "mrq",
+    "lecture": "5",
+    "topic": "naive assumption",
+    "difficulty": "medium",
+    "q": "<p>What does the <strong>\"naive\" assumption</strong> in Naive Bayes give us, and what are its consequences?</p>",
+    "options": [
+      {"id": "1", "text": "The naive assumption is: words $w_1, w_2, \\ldots, w_n$ are conditionally independent given the class $y$"},
+      {"id": "2", "text": "$P(w_1, \\ldots, w_n \\mid y) = \\prod_{i=1}^{n} P(w_i \\mid y)$"},
+      {"id": "3", "text": "Combined with priors: $P(y \\mid w_1, \\ldots, w_n) \\propto P(y) \\prod_{i=1}^{n} P(w_i \\mid y)$"},
+      {"id": "4", "text": "The assumption is realistic — words really are independent given the topic"},
+      {"id": "5", "text": "Despite being false, the assumption works surprisingly well in practice (especially for text classification)"}
+    ],
+    "correct": ["1", "2", "3", "5"],
+    "explanation": "<p>(4) is the lecture's main caveat — the assumption \"obviously does not hold\" (\"new\" + \"york\" are highly correlated, etc.) but the simplification makes the math tractable AND empirically yields good results. The lecture explicitly notes this is one of NB's biggest pros: simplicity + good performance for low effort.</p>"
+  },
+  {
+    "id": "L5-mrq-05",
+    "type": "mrq",
+    "lecture": "5",
+    "topic": "NB MLE formulas",
+    "difficulty": "medium",
+    "q": "<p>Which Maximum Likelihood Estimates for Naive Bayes are correct?</p>",
+    "options": [
+      {"id": "1", "text": "Prior: $\\hat{P}(y) = \\frac{N_y}{N}$ — fraction of documents in class $y$"},
+      {"id": "2", "text": "Likelihood: $\\hat{P}(w_i \\mid y) = \\frac{\\text{Count}(w_i, y)}{\\sum_{w \\in V} \\text{Count}(w, y)}$ — fraction of $w_i$ tokens among all tokens in class-$y$ documents"},
+      {"id": "3", "text": "Likelihood: $\\hat{P}(w_i \\mid y) = \\frac{\\text{Count}(w_i, y)}{\\text{Count}(y)}$ where $\\text{Count}(y)$ is the # of documents in class $y$"},
+      {"id": "4", "text": "The likelihood formula resembles the n-gram MLE — Naive Bayes is essentially a class-specific unigram language model"},
+      {"id": "5", "text": "Without smoothing, an unseen test word can zero out the entire class probability"}
+    ],
+    "correct": ["1", "2", "4", "5"],
+    "explanation": "<p>(3) is wrong — the denominator must be total <em>token</em> count in class-$y$ documents, not document count. (5) is why we need smoothing: a single unseen word makes one factor 0 and the entire product 0.</p>"
+  },
+  {
+    "id": "L5-mrq-06",
+    "type": "mrq",
+    "lecture": "5",
+    "topic": "NB with Add-k smoothing",
+    "difficulty": "medium",
+    "q": "<p>Which statements about <strong>Add-k smoothing in Naive Bayes</strong> are correct?</p>",
+    "options": [
+      {"id": "1", "text": "Smoothed likelihood: $\\hat{P}(w_i \\mid y) = \\frac{\\text{Count}(w_i, y) + k}{\\sum_{w \\in V} \\text{Count}(w, y) + k |V|}$"},
+      {"id": "2", "text": "Smoothed prior: $\\hat{P}(y) = \\frac{N_y + k}{N + k |Y|}$"},
+      {"id": "3", "text": "$k = 1$ is Laplace smoothing"},
+      {"id": "4", "text": "Smoothing prevents OOV words from making class probabilities exactly zero"},
+      {"id": "5", "text": "The denominator gets $+k$ (not $+k|V|$) for the likelihood"}
+    ],
+    "correct": ["1", "2", "3", "4"],
+    "explanation": "<p>(5) is wrong — denominator gets $+k|V|$ to maintain proper normalization (we add $k$ to <em>each</em> of $|V|$ word counts, so the total adds $k|V|$). Same logic for the prior: $+k|Y|$ in the denominator.</p>"
+  },
+  {
+    "id": "L5-mrq-07",
+    "type": "mrq",
+    "lecture": "5",
+    "topic": "NB log probabilities",
+    "difficulty": "easy",
+    "q": "<p>Which statements about computing Naive Bayes in <strong>log space</strong> are correct?</p>",
+    "options": [
+      {"id": "1", "text": "$P(y \\mid w_1, \\ldots, w_n) \\propto P(y) \\prod_i P(w_i \\mid y)$ — products of small numbers risk underflow"},
+      {"id": "2", "text": "Take log: $\\log P(y \\mid w_1, \\ldots, w_n) \\propto \\log P(y) + \\sum_i \\log P(w_i \\mid y)$"},
+      {"id": "3", "text": "Logarithm is monotonic — preserves the $\\arg\\max$"},
+      {"id": "4", "text": "Log-space addition is more numerically stable than long-product multiplication"},
+      {"id": "5", "text": "Logs change the prediction (different class wins after log transform)"}
+    ],
+    "correct": ["1", "2", "3", "4"],
+    "explanation": "<p>(5) is the misconception. Logs are monotonic: $\\log a > \\log b \\iff a > b$. Same class wins. The win is purely numerical: floating-point sums of log-probs avoid underflow.</p>"
+  },
+  {
+    "id": "L5-mrq-08",
+    "type": "mrq",
+    "lecture": "5",
+    "topic": "NB worked example",
+    "difficulty": "hard",
+    "q": "<p>Sentiment training corpus has $N=7$ reviews ($N_{\\text{pos}}=4, N_{\\text{neg}}=3$), vocabulary $V = \\{\\text{funny, boring, movie, cast, good}\\}$ ($|V|=5$). Total tokens: 11 in pos docs, 9 in neg docs. \"funny\" appears 3 times in pos docs and 0 times in neg docs. With <strong>Add-1 (Laplace) smoothing</strong>, which values are correct?</p>",
+    "options": [
+      {"id": "1", "text": "$P(\\text{pos}) = \\frac{4+1}{7+2} = \\frac{5}{9}$"},
+      {"id": "2", "text": "$P(\\text{neg}) = \\frac{3+1}{7+2} = \\frac{4}{9}$"},
+      {"id": "3", "text": "$P(\\text{funny} \\mid \\text{pos}) = \\frac{3+1}{11+5} = \\frac{4}{16}$"},
+      {"id": "4", "text": "$P(\\text{funny} \\mid \\text{neg}) = \\frac{0+1}{9+5} = \\frac{1}{14}$"},
+      {"id": "5", "text": "$P(\\text{funny} \\mid \\text{pos}) = \\frac{3}{11}$ (no smoothing applied)"}
+    ],
+    "correct": ["1", "2", "3", "4"],
+    "explanation": "<p>(5) is the unsmoothed value — the question specifies Laplace, so add 1 to numerator and $|V|=5$ to denominator. Mechanics check: prior denominator = $N + k|Y| = 7 + 1 \\cdot 2 = 9$ (we have 2 classes); likelihood denominator = (total tokens in class) + $k|V|$ = 11 + 5 = 16 for pos.</p>"
+  },
+  {
+    "id": "L5-mrq-09",
+    "type": "mrq",
+    "lecture": "5",
+    "topic": "NB prediction",
+    "difficulty": "hard",
+    "q": "<p>Continuing from the previous corpus, classify the new review <em>\"a funny movie and cast\"</em> (after normalization keeps only \"funny\", \"movie\", \"cast\"). Given $P(\\text{movie} \\mid \\text{pos}) = 4/16$, $P(\\text{cast} \\mid \\text{pos}) = 3/16$, $P(\\text{movie} \\mid \\text{neg}) = 3/14$, $P(\\text{cast} \\mid \\text{neg}) = 3/14$. Which statements are correct?</p>",
+    "options": [
+      {"id": "1", "text": "$P(\\text{pos} \\mid \\text{funny, movie, cast}) \\propto \\frac{5}{9} \\cdot \\frac{4}{16} \\cdot \\frac{4}{16} \\cdot \\frac{3}{16} \\approx 0.0065$"},
+      {"id": "2", "text": "$P(\\text{neg} \\mid \\text{funny, movie, cast}) \\propto \\frac{4}{9} \\cdot \\frac{1}{14} \\cdot \\frac{3}{14} \\cdot \\frac{3}{14} \\approx 0.0015$"},
+      {"id": "3", "text": "Predicted label: <strong>pos</strong> (because the pos score is higher)"},
+      {"id": "4", "text": "Predicted label: <strong>neg</strong> (because there are more pos training docs)"},
+      {"id": "5", "text": "The predicted scores 0.0065 and 0.0015 are exact probabilities, not unnormalized scores"}
+    ],
+    "correct": ["1", "2", "3"],
+    "explanation": "<p>(4) flips the logic — having more pos docs gives a slightly higher prior but the prediction follows the highest <em>posterior</em>. (5) is wrong — these are unnormalized (we dropped the marginal $P(x)$). To get true probabilities, divide by their sum: $P(\\text{pos} \\mid x) \\approx 0.0065/(0.0065+0.0015) \\approx 0.81$.</p>"
+  },
+  {
+    "id": "L5-mrq-10",
+    "type": "mrq",
+    "lecture": "5",
+    "topic": "NB strengths and weaknesses",
+    "difficulty": "medium",
+    "q": "<p>Which are <strong>strengths and weaknesses</strong> of Naive Bayes for text classification?</p>",
+    "options": [
+      {"id": "1", "text": "Pro: simple to understand and implement"},
+      {"id": "2", "text": "Pro: fast to train, low storage requirements, not very data-hungry"},
+      {"id": "3", "text": "Pro: results are interpretable (class-specific word probabilities)"},
+      {"id": "4", "text": "Con: assumption of conditional independence is generally violated"},
+      {"id": "5", "text": "Con: BoW representation can't handle negation, sarcasm, modals, conditionals, or idioms"},
+      {"id": "6", "text": "Pro: can model long-distance dependencies between words"}
+    ],
+    "correct": ["1", "2", "3", "4", "5"],
+    "explanation": "<p>(6) is the opposite — the BoW representation drops word order entirely, so long-distance dependencies are invisible. The lecture's punchline: NB = class-specific unigram LM. Despite the harsh assumption, it's a strong baseline (especially for sentiment analysis where indicative words exist).</p>"
+  },
+  {
+    "id": "L5-mrq-11",
+    "type": "mrq",
+    "lecture": "5",
+    "topic": "NB negation handling",
+    "difficulty": "medium",
+    "q": "<p>Which statements about handling <strong>negation</strong> in NB+BoW sentiment analysis are correct?</p>",
+    "options": [
+      {"id": "1", "text": "BoW alone treats \"the movie is very funny\" and \"the movie is not very funny\" almost identically"},
+      {"id": "2", "text": "Heuristic fix: prefix \"NOT_\" to every word between a negation and the next punctuation"},
+      {"id": "3", "text": "Example: \"the movie is not very funny.\" → \"the movie is not NOT_very NOT_funny.\""},
+      {"id": "4", "text": "If \"not\" is removed as a stopword, sentiment becomes essentially impossible to detect"},
+      {"id": "5", "text": "The NOT_ heuristic is perfect — handles all negation correctly"}
+    ],
+    "correct": ["1", "2", "3", "4"],
+    "explanation": "<p>(5) is overstated — the lecture explicitly notes the heuristic is \"neither trivial nor perfect — but if often works well\". It can fail on conjunctions (\"not funny but good\" — should \"good\" stay positive?) and negation that crosses punctuation. (4) is exactly why \"not\" must NEVER be in the stopword list for sentiment analysis.</p>"
+  },
+  {
+    "id": "L5-mrq-12",
+    "type": "mrq",
+    "lecture": "5",
+    "topic": "confusion matrix",
+    "difficulty": "easy",
+    "q": "<p>Which definitions of confusion-matrix terms (binary classification, positive=1) are correct?</p>",
+    "options": [
+      {"id": "1", "text": "True Positives (TP): predicted=1, actual=1 — correctly predicted positive"},
+      {"id": "2", "text": "False Positives (FP): predicted=1, actual=0 — incorrectly predicted positive"},
+      {"id": "3", "text": "False Negatives (FN): predicted=0, actual=1 — incorrectly predicted negative"},
+      {"id": "4", "text": "True Negatives (TN): predicted=0, actual=0 — correctly predicted negative"},
+      {"id": "5", "text": "False Positives are also called \"Type II errors\""}
+    ],
+    "correct": ["1", "2", "3", "4"],
+    "explanation": "<p>(5) is reversed — FP = Type I error; FN = Type II error. Memorization trick: \"The boy who cried wolf\" makes both errors — village rejects boy after FPs (Type I), then villagers fail to come when wolf actually appears (Type II/FN).</p>"
+  },
+  {
+    "id": "L5-mrq-13",
+    "type": "mrq",
+    "lecture": "5",
+    "topic": "evaluation metrics",
+    "difficulty": "medium",
+    "q": "<p>Which formulas for classification metrics are correct?</p>",
+    "options": [
+      {"id": "1", "text": "Accuracy $= \\frac{TP + TN}{TP + FP + FN + TN}$"},
+      {"id": "2", "text": "Precision $= \\frac{TP}{TP + FP}$ — \"of those predicted positive, how many really are?\""},
+      {"id": "3", "text": "Recall $= \\frac{TP}{TP + FN}$ — \"of those that really are positive, how many did we catch?\""},
+      {"id": "4", "text": "F1 $= 2 \\cdot \\frac{P \\cdot R}{P + R}$ — harmonic mean of precision and recall"},
+      {"id": "5", "text": "F1 $= \\frac{P + R}{2}$ — arithmetic mean"}
+    ],
+    "correct": ["1", "2", "3", "4"],
+    "explanation": "<p>(5) is the arithmetic mean, not F1. The harmonic mean penalizes extreme imbalance: if P=1 and R=0, arithmetic mean = 0.5 (looks OK) but harmonic mean = 0 (correctly flags as bad). Memorize: F1 punishes you for being good at one but bad at the other.</p>"
+  },
+  {
+    "id": "L5-mrq-14",
+    "type": "mrq",
+    "lecture": "5",
+    "topic": "accuracy on imbalanced data",
+    "difficulty": "medium",
+    "q": "<p>For a COVID-19 test where 200 of 10,200 people are infected, a \"useless\" classifier always predicts negative. Which statements are correct?</p>",
+    "options": [
+      {"id": "1", "text": "Confusion matrix: TP=0, FP=0, FN=200, TN=10000"},
+      {"id": "2", "text": "Accuracy = 10000/10200 ≈ 98%"},
+      {"id": "3", "text": "Despite high accuracy, the test is useless — never identifies a real case"},
+      {"id": "4", "text": "Recall = 0/(0+200) = 0 — no positives caught"},
+      {"id": "5", "text": "Precision = 0/0 (undefined when never predicting positive)"},
+      {"id": "6", "text": "High accuracy here means the classifier is genuinely good"}
+    ],
+    "correct": ["1", "2", "3", "4", "5"],
+    "explanation": "<p>(6) is the trap that motivates F1/precision/recall. Accuracy is misleading on heavily imbalanced data — always favoring the majority class gives high accuracy with zero useful behavior. This is also why F1 (which doesn't reward TN) is preferred for imbalanced tasks.</p>"
+  },
+  {
+    "id": "L5-mrq-15",
+    "type": "mrq",
+    "lecture": "5",
+    "topic": "precision vs recall trade-offs",
+    "difficulty": "medium",
+    "q": "<p>Which statements about <strong>when to favor precision vs recall</strong> are correct?</p>",
+    "options": [
+      {"id": "1", "text": "Suicide prediction: missing a high-risk person is much worse than flagging a healthy one → favor RECALL"},
+      {"id": "2", "text": "News article categorization (e.g., Google News): showing wrong articles is worse than missing one → favor PRECISION"},
+      {"id": "3", "text": "Reducing false positives often increases false negatives, and vice versa"},
+      {"id": "4", "text": "Spam detection: a legitimate email in spam folder (FP) is usually worse than spam in inbox (FN) → favor PRECISION"},
+      {"id": "5", "text": "F1 always picks the right balance regardless of application"}
+    ],
+    "correct": ["1", "2", "3", "4"],
+    "explanation": "<p>(5) is wrong — F1 weights P and R equally; when costs are asymmetric, use $F_\\beta$ score (e.g., $F_2$ favors recall, $F_{0.5}$ favors precision) or design metrics directly from cost matrices.</p>"
+  },
+  {
+    "id": "L5-mrq-16",
+    "type": "mrq",
+    "lecture": "5",
+    "topic": "micro vs macro averaging",
+    "difficulty": "medium",
+    "q": "<p>For <strong>multi-class evaluation</strong> using one-vs-rest confusion matrices, which statements are correct?</p>",
+    "options": [
+      {"id": "1", "text": "Micro-averaging: average over TP/FP/FN/TN counts across classes, then compute the metric"},
+      {"id": "2", "text": "Macro-averaging: compute the metric per class, then average over classes"},
+      {"id": "3", "text": "Micro-averaging favors larger classes (since it averages counts)"},
+      {"id": "4", "text": "Macro-averaging treats all classes equally (since metrics are normalized per class)"},
+      {"id": "5", "text": "Micro and macro always produce the same value"}
+    ],
+    "correct": ["1", "2", "3", "4"],
+    "explanation": "<p>(5) is wrong — they differ unless classes are balanced or per-class metrics are equal. The lecture's example: micro-F1 = 0.68, macro-F1 = 0.67 (close but not identical). Use macro when minority-class performance matters; use micro when overall instance-level performance matters.</p>"
+  },
+  {
+    "id": "L5-mrq-17",
+    "type": "mrq",
+    "lecture": "5",
+    "topic": "vector space model",
+    "difficulty": "medium",
+    "q": "<p>Which statements about the <strong>Vector Space Model</strong> for documents are correct?</p>",
+    "options": [
+      {"id": "1", "text": "Each document becomes a vector in a $|V|$-dimensional space (one axis per vocabulary term)"},
+      {"id": "2", "text": "All documents in a corpus form a Document-Term Matrix"},
+      {"id": "3", "text": "Document vectors are typically very sparse — most entries are 0"},
+      {"id": "4", "text": "Three common weighting schemes: binary (0/1), raw term frequency, TF-IDF"},
+      {"id": "5", "text": "VSM captures word semantics — \"cinema\" and \"theater\" are close in vector space"}
+    ],
+    "correct": ["1", "2", "3", "4"],
+    "explanation": "<p>(5) is wrong — classic VSM treats each word as an <em>independent dimension</em>. \"cinema\" and \"theater\" are completely orthogonal axes. This is the major limitation that motivates word embeddings (Lecture 7) where similar words have similar dense vectors.</p>"
+  },
+  {
+    "id": "L5-mrq-18",
+    "type": "mrq",
+    "lecture": "5",
+    "topic": "TF-IDF formula",
+    "difficulty": "medium",
+    "q": "<p>Which statements about the <strong>TF-IDF</strong> weighting (lecture's standard form) are correct?</p>",
+    "options": [
+      {"id": "1", "text": "$w_{t,d} = (1 + \\log_{10} tf_{t,d}) \\cdot \\log_{10} \\frac{|D|}{df_t}$"},
+      {"id": "2", "text": "$tf_{t,d}$ = number of occurrences of term $t$ in document $d$"},
+      {"id": "3", "text": "$df_t$ = number of documents in the corpus that contain term $t$"},
+      {"id": "4", "text": "$|D|$ = total number of documents in the corpus"},
+      {"id": "5", "text": "The IDF factor is large for rare terms (high information content)"},
+      {"id": "6", "text": "$w_{t,d} = tf_{t,d} \\cdot \\log(N / df(t))$ is the simplest valid form"}
+    ],
+    "correct": ["1", "2", "3", "4", "5", "6"],
+    "explanation": "<p>All six are correct. The full lecture form (1) uses sublinear TF (logarithm to dampen the effect of repeating words). The simpler form (6) is the textbook \"raw\" TF-IDF — both are accepted variants. Other variants exist (probabilistic IDF, smoothed IDF).</p>"
+  },
+  {
+    "id": "L5-mrq-19",
+    "type": "mrq",
+    "lecture": "5",
+    "topic": "TF-IDF intuition",
+    "difficulty": "medium",
+    "q": "<p>Which statements correctly describe the <strong>intuition behind TF-IDF</strong>?</p>",
+    "options": [
+      {"id": "1", "text": "TF: more frequent terms in a document are more important"},
+      {"id": "2", "text": "IDF: terms in many documents are less informative — penalize them"},
+      {"id": "3", "text": "Sublinear scaling of TF (via log) prevents 100 occurrences from being 10x more important than 10 occurrences"},
+      {"id": "4", "text": "The product of TF and IDF: \"important within this document AND distinctive of this document\""},
+      {"id": "5", "text": "TF-IDF has a deep theoretical foundation that uniquely defines its formula"}
+    ],
+    "correct": ["1", "2", "3", "4"],
+    "explanation": "<p>(5) is wrong — the lecture explicitly says \"No real theoretic underpinning, but TF-IDF works best in practice\". Many variants of TF-IDF exist (sklearn uses a slightly different normalization with smoothed IDF). Choose the one that empirically works for your task.</p>"
+  },
+  {
+    "id": "L5-mrq-20",
+    "type": "mrq",
+    "lecture": "5",
+    "topic": "dot product vs cosine",
+    "difficulty": "medium",
+    "q": "<p>Which statements distinguish <strong>dot product vs cosine similarity</strong> for documents?</p>",
+    "options": [
+      {"id": "1", "text": "Dot product: $v \\cdot w = \\sum_i v_i w_i$"},
+      {"id": "2", "text": "Dot product favors longer vectors (longer documents) — biased by length"},
+      {"id": "3", "text": "Cosine similarity = $\\frac{v \\cdot w}{|v| \\cdot |w|}$ — dot product normalized by both vector lengths"},
+      {"id": "4", "text": "Cosine measures the angle between vectors — invariant to vector length"},
+      {"id": "5", "text": "Cosine and dot product always give identical rankings"}
+    ],
+    "correct": ["1", "2", "3", "4"],
+    "explanation": "<p>(5) is wrong — they differ when documents have different lengths. Lecture's punchline: \"dot product cares about angle AND length; cosine cares only about angle\". For document similarity (where length shouldn't matter — a short and long article on the same topic should still be similar), cosine is the right choice.</p>"
+  },
+  {
+    "id": "L5-mrq-21",
+    "type": "mrq",
+    "lecture": "5",
+    "topic": "cosine similarity properties",
+    "difficulty": "medium",
+    "q": "<p>Which statements about <strong>cosine similarity</strong> are correct?</p>",
+    "options": [
+      {"id": "1", "text": "$\\cos(v, w) = 1$: vectors point in the same direction"},
+      {"id": "2", "text": "$\\cos(v, w) = 0$: vectors are orthogonal (no similarity)"},
+      {"id": "3", "text": "$\\cos(v, w) = -1$: vectors point in opposite directions"},
+      {"id": "4", "text": "For typical document vectors (TF, TF-IDF — all entries ≥ 0), cosine is in $[0, 1]$"},
+      {"id": "5", "text": "Two documents with no overlapping vocabulary have cosine 0"},
+      {"id": "6", "text": "Cosine similarity captures word semantics — synonymous documents always score high"}
+    ],
+    "correct": ["1", "2", "3", "4", "5"],
+    "explanation": "<p>(6) is the lecture's main warning. Cosine similarity over BoW vectors is purely lexical. \"The movie was funny with a heart-warming story\" vs \"The inspiring plot of the flick made it hilarious\" — same meaning, but zero overlap of content words → cosine = 0. Embeddings are needed for semantic similarity.</p>"
+  },
+  {
+    "id": "L5-mrq-22",
+    "type": "mrq",
+    "lecture": "5",
+    "topic": "VSM limitations",
+    "difficulty": "medium",
+    "q": "<p>Which are <strong>limitations of the Vector Space Model</strong> raised in lecture?</p>",
+    "options": [
+      {"id": "1", "text": "Does not consider sequential order of words within a sentence"},
+      {"id": "2", "text": "Does not capture semantic similarity between words (\"cinema\" and \"theater\" are independent dimensions)"},
+      {"id": "3", "text": "Document vectors are extremely sparse — most entries are 0"},
+      {"id": "4", "text": "Vocabulary explosion — very high-dimensional space (tens of thousands of dimensions)"},
+      {"id": "5", "text": "Bigrams/trigrams as features can partially capture local order"},
+      {"id": "6", "text": "VSM has no useful applications and has been completely replaced by embeddings"}
+    ],
+    "correct": ["1", "2", "3", "4", "5"],
+    "explanation": "<p>(6) is overstated — VSM/TF-IDF still excels at information retrieval, document clustering, and as a strong baseline. Modern systems often combine VSM with embeddings (e.g., BM25 + dense retrieval). The lecture's framing is \"limitations to know about\", not \"obsolete\".</p>"
+  },
+  {
+    "id": "L6-mrq-01",
+    "type": "mrq",
+    "lecture": "6",
+    "topic": "generative vs discriminative",
+    "difficulty": "medium",
+    "q": "<p>Which statements about <strong>generative vs discriminative classifiers</strong> are correct?</p>",
+    "options": [
+      {"id": "1", "text": "Generative classifiers learn the joint distribution $P(x, y)$ and apply Bayes Rule to get $P(y \\mid x)$"},
+      {"id": "2", "text": "Discriminative classifiers learn $P(y \\mid x)$ directly"},
+      {"id": "3", "text": "Naive Bayes is a generative classifier; Logistic Regression is a discriminative classifier"},
+      {"id": "4", "text": "Generative: model what each class \"looks like\"; Discriminative: model decision boundaries between classes"},
+      {"id": "5", "text": "Discriminative classifiers are always more accurate than generative ones"}
+    ],
+    "correct": ["1", "2", "3", "4"],
+    "explanation": "<p>(5) is overstated — generative classifiers can be better when data is limited or when the joint distribution is needed (e.g., to generate samples). Discriminative often wins in pure classification accuracy with sufficient data because it doesn't waste capacity modeling the input distribution. Key intuition: generative builds two zebra/elephant models and asks \"which fits?\"; discriminative learns \"if striped → zebra\".</p>"
+  },
+  {
+    "id": "L6-mrq-02",
+    "type": "mrq",
+    "lecture": "6",
+    "topic": "linear models / bias trick",
+    "difficulty": "easy",
+    "q": "<p>Which statements about the <strong>linear model</strong> $h_\\theta(x) = f(\\theta_0 + \\theta_1 x_1 + \\ldots + \\theta_n x_n)$ are correct?</p>",
+    "options": [
+      {"id": "1", "text": "$\\theta_0$ is the bias / offset / intercept; $\\theta_1, \\ldots, \\theta_n$ are the weights"},
+      {"id": "2", "text": "The \"bias trick\" introduces a constant feature $x_0 = 1$ so the model can be written as $h_\\theta(x) = f(\\theta^T x)$"},
+      {"id": "3", "text": "After the bias trick, $\\theta$ and $x$ become $(n+1)$-dimensional vectors"},
+      {"id": "4", "text": "$\\theta^T x$ is the dot product of weights and features"},
+      {"id": "5", "text": "Without a bias term, the decision boundary must pass through the origin"}
+    ],
+    "correct": ["1", "2", "3", "4", "5"],
+    "explanation": "<p>All five are correct. The bias is what lets the decision boundary not pass through origin. The bias trick lets us treat the model uniformly — $\\theta^T x$ — without special-casing the bias in formulas.</p>"
+  },
+  {
+    "id": "L6-mrq-03",
+    "type": "mrq",
+    "lecture": "6",
+    "topic": "sigmoid / logistic function",
+    "difficulty": "medium",
+    "q": "<p>Which statements about the <strong>sigmoid (logistic) function</strong> $\\sigma(x) = \\frac{1}{1 + e^{-x}}$ are correct?</p>",
+    "options": [
+      {"id": "1", "text": "Output range is $(0, 1)$ — strictly between 0 and 1, never reaching either"},
+      {"id": "2", "text": "$\\sigma(0) = 0.5$"},
+      {"id": "3", "text": "Monotonically increasing — larger $x$ gives larger $\\sigma(x)$"},
+      {"id": "4", "text": "The output can be interpreted as a probability"},
+      {"id": "5", "text": "Output range is $(-1, 1)$"}
+    ],
+    "correct": ["1", "2", "3", "4"],
+    "explanation": "<p>(5) confuses sigmoid with tanh (which has range $(-1, 1)$). The sigmoid maps $\\mathbb{R} \\to (0, 1)$. As $x \\to \\infty$, $\\sigma \\to 1$; as $x \\to -\\infty$, $\\sigma \\to 0$. The general form $\\frac{L}{1 + e^{-k(x-x_0)}}$ has parameters: $L$ = max value (must be 1 for probability), $k$ = steepness, $x_0$ = midpoint.</p>"
+  },
+  {
+    "id": "L6-mrq-04",
+    "type": "mrq",
+    "lecture": "6",
+    "topic": "logistic regression as probabilistic classifier",
+    "difficulty": "medium",
+    "q": "<p>Which statements about <strong>logistic regression as a probabilistic classifier</strong> are correct?</p>",
+    "options": [
+      {"id": "1", "text": "$\\hat{y} = h_\\theta(x) = \\sigma(\\theta^T x) \\in [0, 1]$"},
+      {"id": "2", "text": "$\\hat{y}$ is interpreted as $P(y = 1 \\mid x, \\theta)$ — probability of the positive class"},
+      {"id": "3", "text": "For binary classification: $P(y = 0 \\mid x, \\theta) = 1 - \\hat{y}$"},
+      {"id": "4", "text": "Classify as positive if $\\hat{y} > 0.5$"},
+      {"id": "5", "text": "Logistic regression directly outputs raw scores in $\\mathbb{R}$ without any squashing"}
+    ],
+    "correct": ["1", "2", "3", "4"],
+    "explanation": "<p>(5) is wrong — the linear part $\\theta^T x \\in \\mathbb{R}$ is the raw score, but the sigmoid squashes it into $(0,1)$ for probabilistic interpretation. The 0.5 threshold corresponds to $\\theta^T x = 0$ — the decision boundary in feature space.</p>"
+  },
+  {
+    "id": "L6-mrq-05",
+    "type": "mrq",
+    "lecture": "6",
+    "topic": "cross-entropy loss",
+    "difficulty": "medium",
+    "q": "<p>Which statements about the <strong>cross-entropy loss</strong> for binary logistic regression are correct?</p>",
+    "options": [
+      {"id": "1", "text": "$L_{CE}(\\hat{y}, y) = -[y \\log \\hat{y} + (1-y) \\log(1-\\hat{y})]$"},
+      {"id": "2", "text": "Derived as $-\\log P(y \\mid x)$ — negative log-likelihood"},
+      {"id": "3", "text": "Combines two cases via the trick $P(y \\mid x) = \\hat{y}^y \\cdot (1-\\hat{y})^{1-y}$"},
+      {"id": "4", "text": "If $y=1$, the loss reduces to $-\\log \\hat{y}$"},
+      {"id": "5", "text": "If $y=0$, the loss reduces to $-\\log(1-\\hat{y})$"},
+      {"id": "6", "text": "Loss is 0 only when $\\hat{y}$ exactly equals the true label (0 or 1)"}
+    ],
+    "correct": ["1", "2", "3", "4", "5", "6"],
+    "explanation": "<p>All six are correct. (6) is a subtle gotcha: sigmoid output is strictly in $(0,1)$, so $\\hat{y}$ can never reach 0 or 1 exactly — there's always some loss. The cross-entropy reaches 0 only in the limit. This is why \"the loss will be small\" (not 0) is the right answer for a correct prediction.</p>"
+  },
+  {
+    "id": "L6-mrq-06",
+    "type": "mrq",
+    "lecture": "6",
+    "topic": "cross-entropy intuition",
+    "difficulty": "medium",
+    "q": "<p>Which statements about the <strong>shape and intuition</strong> of cross-entropy loss are correct?</p>",
+    "options": [
+      {"id": "1", "text": "If $y = 1$ and $\\hat{y} \\to 1$: loss approaches 0 (good prediction → low loss)"},
+      {"id": "2", "text": "If $y = 1$ and $\\hat{y} \\to 0$: loss approaches $\\infty$ (very confident wrong → huge loss)"},
+      {"id": "3", "text": "If $y = 0$ and $\\hat{y} \\to 0$: loss approaches 0 (good prediction → low loss)"},
+      {"id": "4", "text": "If $y = 0$ and $\\hat{y} \\to 1$: loss approaches $\\infty$"},
+      {"id": "5", "text": "Cross-entropy heavily penalizes confident wrong predictions"},
+      {"id": "6", "text": "Cross-entropy is symmetric: same loss whether the model predicts 0.1 or 0.9 for $y=1$"}
+    ],
+    "correct": ["1", "2", "3", "4", "5"],
+    "explanation": "<p>(6) is wrong — by definition, lower predicted probability for the true class means higher loss. The asymmetric penalty is exactly what trains the model to be calibrated. The lecture's worked example: $\\hat{y} = 0.7$ → loss ≈ 0.36 if right, loss ≈ 1.2 if wrong (4× worse).</p>"
+  },
+  {
+    "id": "L6-mrq-07",
+    "type": "mrq",
+    "lecture": "6",
+    "topic": "gradient descent",
+    "difficulty": "medium",
+    "q": "<p>Which statements about <strong>gradient descent</strong> for logistic regression are correct?</p>",
+    "options": [
+      {"id": "1", "text": "Gradient $\\nabla_\\theta L$ is a vector of partial derivatives w.r.t. each $\\theta_i$"},
+      {"id": "2", "text": "Gradient points in the direction of <strong>steepest ascent</strong> — to minimize L, move in the <em>opposite</em> direction"},
+      {"id": "3", "text": "Update rule: $\\theta \\leftarrow \\theta - \\eta \\cdot \\nabla_\\theta L$, where $\\eta$ is the learning rate"},
+      {"id": "4", "text": "$L_{CE}$ for logistic regression is convex → there is a single global minimum"},
+      {"id": "5", "text": "Setting the gradient to zero yields a closed-form solution for $\\theta$ — no iteration needed"}
+    ],
+    "correct": ["1", "2", "3", "4"],
+    "explanation": "<p>(5) is wrong — $\\frac{1}{m} X^T [\\sigma(X\\theta) - y] = 0$ has no closed-form solution for $\\theta$ (the sigmoid makes it non-linear in $\\theta$). That's why gradient descent is needed. Linear regression, in contrast, has a closed-form normal equation.</p>"
+  },
+  {
+    "id": "L6-mrq-08",
+    "type": "mrq",
+    "lecture": "6",
+    "topic": "learning rate",
+    "difficulty": "medium",
+    "q": "<p>Which statements about the <strong>learning rate $\\eta$</strong> in gradient descent are correct?</p>",
+    "options": [
+      {"id": "1", "text": "Typical range: 0.0001 to 0.01"},
+      {"id": "2", "text": "Too small: very slow convergence (many iterations needed)"},
+      {"id": "3", "text": "Too large: oscillation around the minimum, possibly diverging"},
+      {"id": "4", "text": "$\\eta$ is constant and never adjusted during training"},
+      {"id": "5", "text": "For $L = x^2$, $\\eta = 1.0$ causes oscillation between two points; $\\eta > 1$ diverges"}
+    ],
+    "correct": ["1", "2", "3", "5"],
+    "explanation": "<p>(4) is too restrictive — modern training uses learning-rate schedules (cosine decay, linear warmup, ReduceLROnPlateau, etc.) AND adaptive optimizers (Adam, RMSprop) that effectively adapt $\\eta$ per parameter. The lecture's $L = x^2$ visualization shows how $\\eta$ matters: 0.2 = smooth, 0.8 = ok, 1.0 = stuck oscillating, 1.01 = diverges.</p>"
+  },
+  {
+    "id": "L6-mrq-09",
+    "type": "mrq",
+    "lecture": "6",
+    "topic": "gradient descent variants",
+    "difficulty": "medium",
+    "q": "<p>Which statements about <strong>gradient descent variants</strong> are correct?</p>",
+    "options": [
+      {"id": "1", "text": "Batch GD: compute gradient over the entire dataset before updating $\\theta$"},
+      {"id": "2", "text": "Stochastic GD (SGD): compute gradient and update $\\theta$ for <em>each</em> data sample"},
+      {"id": "3", "text": "Mini-batch GD: compute gradient over a small batch (e.g., 64 samples), update, repeat"},
+      {"id": "4", "text": "SGD has noisier descent but cheaper per-step computation"},
+      {"id": "5", "text": "Batch GD has smoother descent with fewer steps but each step is expensive"},
+      {"id": "6", "text": "Mini-batch GD is sometimes loosely referred to as \"SGD\" in practice"}
+    ],
+    "correct": ["1", "2", "3", "4", "5", "6"],
+    "explanation": "<p>All correct. Mini-batch is the practical default — exploits GPU parallelism on the batch while still keeping noise (which can help escape local minima). The trade-off: smoother (batch) ↔ noisier (SGD); the choppiness of pure SGD can ironically be helpful for non-convex problems.</p>"
+  },
+  {
+    "id": "L6-mrq-10",
+    "type": "mrq",
+    "lecture": "6",
+    "topic": "GD stop conditions",
+    "difficulty": "easy",
+    "q": "<p>Which are reasonable <strong>stopping conditions</strong> for gradient descent?</p>",
+    "options": [
+      {"id": "1", "text": "Gradient magnitude $|\\nabla_\\theta L|$ falls below a threshold"},
+      {"id": "2", "text": "Loss is small enough"},
+      {"id": "3", "text": "Change in loss between iterations is small enough"},
+      {"id": "4", "text": "Maximum number of iterations reached"},
+      {"id": "5", "text": "When the learning rate becomes negative"}
+    ],
+    "correct": ["1", "2", "3", "4"],
+    "explanation": "<p>(5) is nonsense — the learning rate is a hyperparameter that you set; it never becomes negative. Note that (1) alone has a problem on plateaus (gradient is small but you're not at the optimum) — that's why combinations of conditions are typically used.</p>"
+  },
+  {
+    "id": "L6-mrq-11",
+    "type": "mrq",
+    "lecture": "6",
+    "topic": "overfitting",
+    "difficulty": "medium",
+    "q": "<p>Which statements about <strong>overfitting</strong> are correct?</p>",
+    "options": [
+      {"id": "1", "text": "Model has too much capacity to exactly fit individual training points → poor generalization"},
+      {"id": "2", "text": "Underfitting is the opposite: model lacks capacity to capture the data's structure"},
+      {"id": "3", "text": "In NB with sparse 4-grams: each n-gram appears only in one class → an unseen review with a memorized 4-gram gets $P(\\text{wrong-class}) = 0$"},
+      {"id": "4", "text": "In LR: a feature artifact (e.g., \"all positive reviews have many pronouns\") leads to a very large weight on that feature"},
+      {"id": "5", "text": "Overfitting always shows up as low training loss AND low validation loss"},
+      {"id": "6", "text": "Symptom: low training loss + high validation loss (gap between them)"}
+    ],
+    "correct": ["1", "2", "3", "4", "6"],
+    "explanation": "<p>(5) is the opposite — overfitting shows as a <em>gap</em> between train and val loss. The classic curve-fitting illustration: $p=1$ underfits, $p=2$ generalizes well, $p=8$ wiggles through every training point but does poorly on new data.</p>"
+  },
+  {
+    "id": "L6-mrq-12",
+    "type": "mrq",
+    "lecture": "6",
+    "topic": "regularization",
+    "difficulty": "medium",
+    "q": "<p>Which statements about <strong>regularization</strong> are correct?</p>",
+    "options": [
+      {"id": "1", "text": "Add a penalty term to the loss function — penalize large $\\theta$ values"},
+      {"id": "2", "text": "L2 (Ridge): add $\\lambda \\sum_i \\theta_i^2$ — squared penalty on weights"},
+      {"id": "3", "text": "L1 (Lasso): add $\\lambda \\sum_i |\\theta_i|$ — absolute-value penalty"},
+      {"id": "4", "text": "$\\lambda$ controls regularization strength (higher = more shrinkage)"},
+      {"id": "5", "text": "Regularization can reduce <em>training</em> loss to make the model fit better"},
+      {"id": "6", "text": "L1 tends to produce sparse weights (some weights driven exactly to 0)"}
+    ],
+    "correct": ["1", "2", "3", "4", "6"],
+    "explanation": "<p>(5) is the opposite — regularization typically <em>increases</em> training loss (we're constraining the model) but <em>improves validation/test loss</em> by reducing overfitting. (6) is L1's signature feature, useful for feature selection. The gradient gets a new term: for L2, $\\frac{\\partial L}{\\partial \\theta} += \\lambda \\cdot \\frac{2}{n} \\theta$.</p>"
+  },
+  {
+    "id": "L6-mrq-13",
+    "type": "mrq",
+    "lecture": "6",
+    "topic": "softmax",
+    "difficulty": "medium",
+    "q": "<p>Which statements about the <strong>softmax</strong> function $\\text{softmax}(z)_c = \\frac{e^{z_c}}{\\sum_{i=1}^{C} e^{z_i}}$ are correct?</p>",
+    "options": [
+      {"id": "1", "text": "Outputs form a valid probability distribution: each component in $(0, 1)$ and they sum to 1"},
+      {"id": "2", "text": "Used in multiclass logistic regression to convert a vector of scores into class probabilities"},
+      {"id": "3", "text": "Monotonic: larger input score $z_c$ → larger output probability"},
+      {"id": "4", "text": "Generalization of sigmoid: with $C = 2$, multiclass softmax LR reduces to binary sigmoid LR"},
+      {"id": "5", "text": "Softmax outputs can be negative for certain inputs"}
+    ],
+    "correct": ["1", "2", "3", "4"],
+    "explanation": "<p>(5) is wrong — exponentials are always positive, and the normalization keeps everything in $(0,1)$. The user got 1+2 right earlier but missed (3) and (4) — softmax preserves order (monotonic) and reduces to sigmoid in the binary case (a key property).</p>"
+  },
+  {
+    "id": "L6-mrq-14",
+    "type": "mrq",
+    "lecture": "6",
+    "topic": "multiclass cross-entropy",
+    "difficulty": "medium",
+    "q": "<p>Which statements about <strong>generalized cross-entropy loss</strong> for multiclass logistic regression are correct?</p>",
+    "options": [
+      {"id": "1", "text": "$L_{CE}(\\hat{y}, y) = -\\sum_{i=1}^{C} y_i \\log \\hat{y}_i$"},
+      {"id": "2", "text": "$y$ is a one-hot vector: $y_i = 1$ for the correct class, 0 otherwise"},
+      {"id": "3", "text": "$\\hat{y}_i$ comes from softmax — predicted probability of class $i$"},
+      {"id": "4", "text": "When $C = 2$, this reduces to the binary cross-entropy $-[y \\log \\hat{y} + (1-y) \\log(1-\\hat{y})]$"},
+      {"id": "5", "text": "The sum is dominated by the term where $y_i = 1$ — effectively $-\\log \\hat{y}_{\\text{correct}}$"}
+    ],
+    "correct": ["1", "2", "3", "4", "5"],
+    "explanation": "<p>All correct. The clean form (5) makes it intuitive: cross-entropy = negative log-probability of the correct class. Maximize the model's confidence in the right answer.</p>"
+  },
+  {
+    "id": "L6-mrq-15",
+    "type": "mrq",
+    "lecture": "6",
+    "topic": "XOR / linear separability",
+    "difficulty": "medium",
+    "q": "<p>Which statements about the <strong>XOR problem</strong> and linear models are correct?</p>",
+    "options": [
+      {"id": "1", "text": "OR, AND, and NAND are linearly separable — solvable by a single LR / perceptron"},
+      {"id": "2", "text": "XOR is NOT linearly separable — no single line separates the (0,0) and (1,1) class from (0,1) and (1,0)"},
+      {"id": "3", "text": "XOR can be expressed as $\\text{XOR}(x_1, x_2) = \\text{AND}(\\text{OR}(x_1, x_2), \\text{NAND}(x_1, x_2))$ — solvable by stacking 3 LR units"},
+      {"id": "4", "text": "Stacking LR units (one's output as another's input) gives a feedforward neural network"},
+      {"id": "5", "text": "All real-world classification problems are linearly separable in the original feature space"}
+    ],
+    "correct": ["1", "2", "3", "4"],
+    "explanation": "<p>(5) is wrong — most are not. The XOR illustration motivates neural networks: stack linear units with non-linearities to create non-linear decision boundaries. The lecture's diagram: XOR is solved by 2 hidden units (OR and NAND) feeding into 1 output unit (AND).</p>"
+  },
+  {
+    "id": "L6-mrq-16",
+    "type": "mrq",
+    "lecture": "6",
+    "topic": "neural network architecture",
+    "difficulty": "medium",
+    "q": "<p>Which statements about <strong>feedforward neural network architecture</strong> are correct?</p>",
+    "options": [
+      {"id": "1", "text": "Layers: input layer (raw features), hidden layers, output layer (predictions)"},
+      {"id": "2", "text": "Each hidden neuron computes $a_i^{[l]} = g(\\theta_i^{[l]T} \\cdot x^{[l-1]})$ — like a logistic regression unit"},
+      {"id": "3", "text": "Forward pass: layer-wise matrix multiply + activation, exploiting GPU parallelism"},
+      {"id": "4", "text": "\"Width\" = neurons per layer; \"Depth\" = number of layers"},
+      {"id": "5", "text": "A feedforward NN contains cycles by definition"}
+    ],
+    "correct": ["1", "2", "3", "4"],
+    "explanation": "<p>(5) is the opposite — feedforward means NO cycles (data flows one way: input → hidden → output). RNNs have cycles (recurrent connections). Modern architectures: increasing both width and depth gives more capacity, but also more risk of overfitting.</p>"
+  },
+  {
+    "id": "L6-mrq-17",
+    "type": "mrq",
+    "lecture": "6",
+    "topic": "activation functions",
+    "difficulty": "medium",
+    "q": "<p>Which statements about <strong>activation functions</strong> in neural networks are correct?</p>",
+    "options": [
+      {"id": "1", "text": "Hidden-layer activations must be <strong>non-linear</strong>"},
+      {"id": "2", "text": "Common hidden-layer activations: sigmoid, tanh, ReLU, Leaky ReLU"},
+      {"id": "3", "text": "Without non-linearities, a deep network collapses to a single linear transformation: $W_3 W_2 W_1 x + \\ldots = W' x + b'$"},
+      {"id": "4", "text": "Output-layer activation depends on the task: linear (regression), sigmoid (binary classification), softmax (multiclass classification)"},
+      {"id": "5", "text": "Hidden-layer activations must produce probabilities (sum to 1)"}
+    ],
+    "correct": ["1", "2", "3", "4"],
+    "explanation": "<p>(5) is wrong — hidden activations have no probabilistic constraint. They just need to be non-linear (otherwise the network collapses, as in (3)). ReLU is the modern default for hidden layers; sigmoid persists for binary output; softmax for multiclass output. This is also why \"linear is a bad choice for hidden\".</p>"
+  },
+  {
+    "id": "L6-mrq-18",
+    "type": "mrq",
+    "lecture": "6",
+    "topic": "from LR to neural networks",
+    "difficulty": "medium",
+    "q": "<p>Which statements about <strong>going from logistic regression to deep neural networks</strong> are correct?</p>",
+    "options": [
+      {"id": "1", "text": "Conceptually nothing new: define $h_\\theta(x)$, choose a loss, run gradient descent"},
+      {"id": "2", "text": "$h_\\theta(x)$ becomes a much more complex composition of functions"},
+      {"id": "3", "text": "Computing $\\partial L / \\partial \\theta$ requires backpropagation (chain rule across layers)"},
+      {"id": "4", "text": "Loss becomes <strong>non-convex</strong> — multiple local minima → harder optimization"},
+      {"id": "5", "text": "Overfitting becomes a much bigger issue → regularization is even more important"},
+      {"id": "6", "text": "Logistic regression is no longer useful once you have a deep network"}
+    ],
+    "correct": ["1", "2", "3", "4", "5"],
+    "explanation": "<p>(6) is wrong — LR is still a strong baseline (interpretable, fast, low data requirements) and the building block of NN output layers. The key changes (4) and (5) are why training deep NNs needs care: stochastic optimization to escape local minima, dropout/L2/early stopping for overfitting.</p>"
+  }
+]

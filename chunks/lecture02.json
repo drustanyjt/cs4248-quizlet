@@ -1,0 +1,159 @@
+[
+  {
+    "lecture": "2",
+    "chunk_id": "L2-1",
+    "order": 1,
+    "title": "Regular Expressions: Patterns, Classes, Repetition, Groups, Lookarounds",
+    "content_md": "A **regular expression** (regex) is a search pattern that describes a set of strings. By default an engine returns the first match; in *global* mode it returns every non-overlapping match. Most of NLP preprocessing — tokenizing, stripping URLs, finding dates — starts with a regex, so getting fluent with the syntax pays off across the rest of the course.\n\nThink of regex as a tiny language with two kinds of symbols: literals that match themselves (so <code>cat</code> matches the three letters c-a-t), and **metacharacters** that have a special meaning. The most useful metacharacters are <code>.</code> (any single character except newline), <code>^</code> (start of string), <code>$</code> (end of string), <code>|</code> (logical OR between alternatives), and <code>\\b</code>, the **word boundary**. The boundary is the source of one of the classic exam traps: <code>\\b</code> is *zero-width*. It does not consume a character — it asserts that the position sits between a word character and a non-word character. So <code>\\bthe\\b</code> rejects the <code>the</code> inside <code>bathe</code> without eating any letters.\n\nWhen you want to match \"any one of these characters\" you write a **character class** with square brackets. <code>[aeiou]</code> matches any single vowel; <code>[^aeiou]</code> negates the set and matches any non-vowel. Several classes are so common they have shorthand: <code>\\d</code> is <code>[0-9]</code>, <code>\\s</code> is whitespace, <code>\\w</code> is <code>[a-zA-Z0-9_]</code>, and the uppercase variants <code>\\D</code>, <code>\\S</code>, <code>\\W</code> are their negations. Character classes match exactly one character, which is why we need separate machinery for repetition.\n\n**Repetition operators** attach to the previous atom: <code>+</code> means one or more, <code>*</code> means zero or more, <code>?</code> means zero or one (it makes the preceding piece optional), <code>{n}</code> means exactly $n$, and <code>{l,u}</code> means between $l$ and $u$ inclusive. Combined with a class, <code>[a-z]+</code> matches a run of one or more lowercase letters — the canonical \"a word\" pattern.\n\n**Groups** wrap a sub-pattern in parentheses, <code>(...)</code>. They serve two purposes: they let a quantifier apply to a chunk (e.g. <code>(ha)+</code> matches <code>hahaha</code>), and they *capture* the matched text into a numbered slot so you can refer back to it. A **backreference** like <code>\\1</code> means \"whatever group 1 matched, repeated literally here.\" To find words that start and end with the same letter you can write <code>\\b([a-zA-Z])\\w*\\1\\b</code> — group 1 captures the first letter, then <code>\\1</code> demands the same letter at the end.\n\nFinally, **lookarounds** are zero-width assertions that test for context without consuming it. <code>(?=B)</code> is a positive lookahead (\"only match if B follows\"), <code>(?!B)</code> is its negation, and <code>(?<=B)</code> / <code>(?<!B)</code> are the lookbehind versions. Like <code>\\b</code>, they don't move the cursor — they just constrain *where* a match is allowed.\n\nOne last vocabulary item that shows up in evaluation: **False Positive (Type I)** errors are matches you didn't want (the pattern <code>the</code> hitting <code>other</code> or <code>bathe</code>), while **False Negative (Type II)** errors are matches you missed (<code>THE</code> when you wrote <code>[the]+</code> case-sensitively). Tightening a regex to kill false positives often introduces false negatives, and vice versa — a tradeoff you'll meet again in classifier evaluation.",
+    "checks": [
+      {
+        "q": "Which statement about <code>\\b</code> in a regular expression is correct?",
+        "options": [
+          {"id": "1", "text": "It matches a literal backspace character."},
+          {"id": "2", "text": "It is a zero-width assertion that matches between a <code>\\w</code> character and a <code>\\W</code> character without consuming any input."},
+          {"id": "3", "text": "It matches one whitespace character at the start of a word."},
+          {"id": "4", "text": "It matches any non-alphabetic character."}
+        ],
+        "correct": "2",
+        "explanation": "<code>\\b</code> is a word boundary — a zero-width assertion that holds at positions where a word character meets a non-word character. It consumes no input. Option 1 is the C-string escape, not the regex meaning. Option 3 confuses it with <code>\\s</code>, and option 4 with <code>\\W</code>; both of those *do* consume a character, unlike <code>\\b</code>."
+      },
+      {
+        "q": "You loosen a regex to catch more variants of the word \"the\" and your recall goes up but precision drops. In the language of regex error types, what changed?",
+        "options": [
+          {"id": "1", "text": "Both false positives and false negatives decreased."},
+          {"id": "2", "text": "False negatives decreased but false positives increased."},
+          {"id": "3", "text": "False negatives increased but false positives decreased."},
+          {"id": "4", "text": "Neither changed; loosening a regex only affects runtime."}
+        ],
+        "correct": "2",
+        "explanation": "A looser pattern matches more strings, so it misses fewer true cases (false negatives drop, recall up) but accepts more spurious ones (false positives rise, precision down). Tightening would do the opposite. This precision-recall tradeoff is the reason option 1 is impossible without redesigning the pattern, and option 4 is wrong because match semantics, not just runtime, are affected."
+      },
+      {
+        "q": "Which regex finds words whose first and last alphabetic letter are the same, like \"level\" or \"area\"?",
+        "options": [
+          {"id": "1", "text": "<code>\\b[a-zA-Z]\\w*[a-zA-Z]\\b</code>"},
+          {"id": "2", "text": "<code>\\b([a-zA-Z])\\w*\\1\\b</code>"},
+          {"id": "3", "text": "<code>\\b(?=[a-zA-Z])\\w*(?<=[a-zA-Z])\\b</code>"},
+          {"id": "4", "text": "<code>\\b[a-zA-Z]+\\b</code>"}
+        ],
+        "correct": "2",
+        "explanation": "We need a *backreference* so the last letter equals the first. Option 2 captures the first letter in group 1 and demands the same letter at the end via <code>\\1</code>. Option 1 only requires *some* letter on each side, not the *same* one. Option 3 uses lookarounds but still doesn't tie the two letters together. Option 4 just matches any letter sequence."
+      }
+    ]
+  },
+  {
+    "lecture": "2",
+    "chunk_id": "L2-2",
+    "order": 2,
+    "title": "Regex, FSAs, and the Chomsky Hierarchy",
+    "content_md": "Why does regex have such a clean, predictable behaviour? Because every (theoretical) regular expression corresponds to a **finite-state automaton (FSA)** — a machine with a fixed, finite number of states, a start state, some accept states, and transitions labelled by characters. Feed a string in one symbol at a time; if you end in an accept state, the string is in the language. The set of strings an FSA accepts is called a **regular language**, and the foundational result is the three-way equivalence: regular expressions, FSAs, and regular languages all describe exactly the same class of string sets.\n\nThis equivalence places regex on the lowest rung of the **Chomsky hierarchy**, the classical containment chain\n\n$$\\text{regular} \\subset \\text{context-free} \\subset \\text{context-sensitive} \\subset \\text{recursively enumerable}.$$\n\nEach level can express strictly more languages than the one inside it. Regular languages are the cheapest to recognize — linear time, constant memory — but they pay for that simplicity by being unable to count.\n\nThe canonical example of something a regex *cannot* match is\n\n$$L = \\{ 0^n 1^n \\mid n \\ge 0 \\},$$\n\nthe language of balanced strings of zeros followed by an equal number of ones. To accept this you'd need to remember how many zeros you saw — an unbounded counter — and a finite-state machine has only finitely many states. Any \"regex\" you try will either accept some $0^a 1^b$ with $a \\neq b$ or miss arbitrarily large $n$. This is the classical *pumping lemma* witness, and it's a favourite exam question. By contrast, $0^n 1^n$ is easy in a context-free grammar, which is why parsing balanced parentheses lives one level up.\n\nA subtler point: any **finite** language is automatically regular. If a language has only finitely many strings, you can simply OR them together with <code>|</code>, which a regex handles trivially. So a quick-quiz like \"is $\\{\\epsilon, 01, 0011, 000111\\}$ regular?\" has answer \"Yes\" — it's finite, so regular. The infinite version $\\{0^n 1^n : n \\ge 0\\}$ is the one that escapes regularity.\n\nOne more wrinkle worth knowing for honest answers on the exam. Modern regex *engines* (PCRE, Python's <code>re</code>, etc.) include features beyond pure regular languages — backreferences, recursion, and balancing groups — that let them recognize some non-regular languages and even make matching NP-hard in pathological cases. So when the lecture says \"regex equals regular languages\", that's a statement about the *theoretical* formalism. In practice, the engine your code uses is more powerful than an FSA, but slower in the worst case. For coursework, treat \"regex\" and \"regular language\" as synonyms unless a question specifically invokes backreferences or recursive patterns.\n\nThe takeaway for the rest of the course: you reach for FSAs and regex when the structure you're matching is *local* and bounded — tokens, dates, simple morphology. As soon as you need long-range dependencies (matching parentheses, agreement across a clause, English grammar), you move up the hierarchy to context-free grammars and beyond. Tokenizers we'll see next sit firmly in regular-language territory; full syntactic parsers do not.",
+    "checks": [
+      {
+        "q": "Which language is NOT a regular language?",
+        "options": [
+          {"id": "1", "text": "$\\{\\epsilon, 01, 0011, 000111\\}$"},
+          {"id": "2", "text": "$\\{0^n 1^n \\mid n \\ge 0\\}$"},
+          {"id": "3", "text": "All strings over $\\{a, b\\}$ ending in <code>ab</code>"},
+          {"id": "4", "text": "All strings of <code>a</code>s of even length"}
+        ],
+        "correct": "2",
+        "explanation": "Option 2 needs an unbounded counter to match $n$ zeros with $n$ ones, which a finite-state machine cannot do — this is the textbook non-regular language. Option 1 is finite and therefore automatically regular (just OR the four strings). Options 3 and 4 are recognized by small FSAs, so they are regular."
+      },
+      {
+        "q": "Where do regular languages sit in the Chomsky hierarchy?",
+        "options": [
+          {"id": "1", "text": "They strictly contain context-free languages."},
+          {"id": "2", "text": "They are the largest class, containing all recursively enumerable languages."},
+          {"id": "3", "text": "They are the smallest class shown; regular $\\subset$ context-free $\\subset$ context-sensitive $\\subset$ recursively enumerable."},
+          {"id": "4", "text": "They are equivalent to context-free languages."}
+        ],
+        "correct": "3",
+        "explanation": "The hierarchy is regular $\\subset$ context-free $\\subset$ context-sensitive $\\subset$ recursively enumerable, so regular sits at the bottom. Options 1, 2, and 4 invert or flatten the containment. Each step up the hierarchy adds expressive power at the cost of more expensive recognition."
+      }
+    ]
+  },
+  {
+    "lecture": "2",
+    "chunk_id": "L2-3",
+    "order": 3,
+    "title": "Tokenization: Granularity, BPE, WordPiece, Maximum Matching",
+    "content_md": "**Tokenization** is the step that turns a raw string into a sequence of **tokens**, the atomic units the rest of your model sees. The set of unique tokens that ever appear is the **vocabulary**. Three granularities dominate.\n\n*Character-based* tokenization is trivial — every character is its own token — and the vocabulary is tiny, but each token carries almost no semantic information, forcing the model to relearn morphology from scratch. *Word-based* tokenization (a regex like <code>[a-zA-Z]+|[0-9]+|\\S</code>, often the Penn Treebank rules) gives semantically rich tokens but is language-dependent and creates an **out-of-vocabulary (OOV)** problem: any word the model never saw at training time is unknown at test time, and that includes typos, names, and rare morphology. *Subword* tokenization is the modern compromise — pieces are learned from data so that frequent words stay whole, while rare words get broken into known sub-pieces (often resembling morphemes), which means OOV essentially disappears.\n\nThe dominant subword learner is **Byte-Pair Encoding (BPE)**. The token *learner* starts with a character vocabulary, then for $k$ iterations finds the **most frequent adjacent pair** of current tokens in the corpus and merges it into a new token, recording the merge. After $k$ merges you have $|\\text{chars}| + k$ tokens and an *ordered* list of merge rules. The token *segmenter* applies those merges in **the order they were learned** to any new word. Two endpoints worth memorising: $k = 0$ degenerates to character-based tokenization, and $k = \\infty$ (merge until nothing is left to merge) degenerates to word-based.\n\nWalk through the lecture's corpus <code>low</code>×5, <code>lower</code>×2, <code>newest</code>×6, <code>widest</code>×3, <code>longer</code>×1. Pair frequencies start with <code>(e,s)</code>=9, so merge to <code>es</code>; then <code>(es,t)</code>=9 → <code>est</code>; then <code>(est,_)</code>=9 → <code>est_</code>; then <code>(l,o)</code>=8, <code>(lo,w)</code>=7, <code>(n,e)</code>=6, and so on. Now segment the unseen word <code>newer_</code>: start as <code>n e w e r _</code>, apply the learned merges in order — <code>(n,e)</code> gives <code>ne w e r _</code>, <code>(ne,w)</code> gives <code>new e r _</code>, eventually <code>(er,_)</code> gives <code>new er_</code>. Final tokens: <code>new</code> and <code>er_</code>. The trailing <code>_</code> in BPE marks **end-of-word**.\n\n**WordPiece** runs the same loop but changes the scoring rule. Instead of merging the pair with the highest joint count, it merges the pair maximising the likelihood ratio\n\n$$\\frac{P(t_1, t_2)}{P(t_1)\\,P(t_2)} \\propto \\frac{N \\cdot \\text{count}(t_1,t_2)}{\\text{count}(t_1)\\,\\text{count}(t_2)},$$\n\nwhich rewards pairs that co-occur *more than chance* — pointwise mutual information in disguise. The total token count $N$ is constant across candidates so you can drop it for ranking. WordPiece also flips the meaning of the underscore: in WordPiece <code>_</code> (or <code>##</code> in BERT) marks a *continuation* piece, the opposite of BPE's end-of-word convention. Confusing the two underscores is a perennial exam trap.\n\nFinally, **Maximum Matching** is the simple greedy baseline: place a pointer at the start, find the longest dictionary word starting there, advance the pointer past it, and repeat. It works remarkably well on Chinese, where words are short and the dictionary is dense. It fails on English: <code>thetabledownthere</code> greedily becomes <code>theta bled own there</code> instead of <code>the table down there</code>. So Maximum Matching is a *Chinese segmentation baseline*, not a universal tokenizer.",
+    "checks": [
+      {
+        "q": "What is the key difference between BPE and WordPiece's token-learning step?",
+        "options": [
+          {"id": "1", "text": "BPE merges the most frequent adjacent pair; WordPiece merges the pair that maximises $P(t_1,t_2)/(P(t_1)P(t_2))$."},
+          {"id": "2", "text": "BPE uses a likelihood ratio while WordPiece uses raw frequency."},
+          {"id": "3", "text": "BPE works on characters; WordPiece works on whole words."},
+          {"id": "4", "text": "BPE is supervised; WordPiece is unsupervised."}
+        ],
+        "correct": "1",
+        "explanation": "Both algorithms run the same merge loop on a character-level start, but they score candidate pairs differently. BPE picks the pair with the highest joint count; WordPiece picks the pair with the highest likelihood ratio (a PMI-like statistic) so co-occurrence beyond chance matters. Option 2 reverses this. Option 3 is wrong because both start from characters. Option 4 is wrong: both are unsupervised, just learned from a corpus."
+      },
+      {
+        "q": "Apply BPE merges learned in order <code>(e,s)</code>, <code>(es,t)</code>, <code>(est,_)</code>, <code>(l,o)</code>, <code>(lo,w)</code>, <code>(n,e)</code>, <code>(ne,w)</code>, <code>(new,est_)</code>, <code>(e,r)</code>, <code>(er,_)</code> to the word <code>newer_</code>. What tokens do you get?",
+        "options": [
+          {"id": "1", "text": "<code>n</code>, <code>e</code>, <code>w</code>, <code>er_</code>"},
+          {"id": "2", "text": "<code>new</code>, <code>er_</code>"},
+          {"id": "3", "text": "<code>newer_</code>"},
+          {"id": "4", "text": "<code>ne</code>, <code>wer_</code>"}
+        ],
+        "correct": "2",
+        "explanation": "Merges are applied in learning order. From <code>n e w e r _</code>: <code>(n,e)</code> → <code>ne w e r _</code>; <code>(ne,w)</code> → <code>new e r _</code>; later <code>(e,r)</code> → <code>new er _</code>; <code>(er,_)</code> → <code>new er_</code>. So the segmentation is <code>new</code> + <code>er_</code>. Options 1 and 4 stop at the wrong intermediate state. Option 3 would require a merge for the whole word, which the rules don't provide."
+      },
+      {
+        "q": "Why does Maximum Matching, which performs well on Chinese, perform poorly on English?",
+        "options": [
+          {"id": "1", "text": "English has too many out-of-vocabulary words for any segmenter."},
+          {"id": "2", "text": "English already uses whitespace, and greedy longest-match across whitespace creates errors like <code>theta bled own there</code> for <code>the table down there</code>."},
+          {"id": "3", "text": "Chinese words are usually longer than English words, which favours Maximum Matching."},
+          {"id": "4", "text": "Maximum Matching requires a Chinese-specific scoring function not available in English."}
+        ],
+        "correct": "2",
+        "explanation": "Maximum Matching is a *no-spaces* segmenter for languages like Chinese where words are short and densely covered by the dictionary. On an English string with spaces removed, the greedy longest-match grabs words like <code>theta</code> too eagerly, producing nonsense like <code>theta bled own there</code>. Option 1 is unrelated to greedy matching. Option 3 is backwards — Chinese words are typically *short* (1-2 characters). Option 4 is invented."
+      }
+    ]
+  },
+  {
+    "lecture": "2",
+    "chunk_id": "L2-4",
+    "order": 4,
+    "title": "Normalization, Stemming, Lemmatization, Sentence Segmentation",
+    "content_md": "After tokenization comes **normalization** — collapsing surface variants into a canonical form so that <code>Germany</code>, <code>GERMANY</code>, and <code>germany</code> all map to the same equivalence class. The simplest form is **case folding**: lowercase everything. This is great for information retrieval, where you want a query for <code>apple</code> to find <code>Apple</code> too, but it actively hurts named-entity recognition and machine translation, where <code>us</code> (the pronoun) and <code>US</code> (the country) carry different meanings. An alternative to symmetric folding is **asymmetric expansion**: leave the documents alone, but expand the *query* — a search for <code>window</code> retrieves both <code>window</code> and <code>windows</code>, while <code>Windows</code> stays specific. The general principle: normalize aggressively when you want recall, conservatively when you want to preserve distinctions.\n\nMorphological normalization comes in two flavours. **Stemming** is rule-based affix chopping. It is fast, requires no lexicon, and produces a *stem* that may not even be a real word — <code>mice</code> can stem to <code>mic</code>, <code>compute</code> and <code>computing</code> both stem to <code>comput</code>. The classic English implementation is the **Porter Stemmer**, a cascade of rewrite rules applied in order, e.g. <code>sses → ss</code> (so <code>caresses → caress</code>), <code>ies → i</code>, <code>(*v*)ing → \\epsilon</code> (drop <code>ing</code> if the stem contains a vowel), and <code>(m>1)ement → \\epsilon</code> (drop <code>ement</code> if the stem has measure greater than one). Knowing the cascade exists matters more than memorizing every rule.\n\n**Lemmatization** is the heavier-weight alternative: reduce a word to its dictionary headword (its **lemma**), which is always a real word. This requires a lexicon and usually part-of-speech (POS) tags, because the same surface form lemmatizes differently depending on its role. The word <code>running</code> as a noun stays <code>running</code> (the activity), as a verb becomes <code>run</code>, and as an adjective stays <code>running</code> (\"running water\"). Stemming gives you speed; lemmatization gives you accuracy and interpretability. Pick based on the downstream task — IR happily uses stems, while linguistic analysis prefers lemmas.\n\nBe wary of one-size-fits-all preprocessing. **Stop-word removal** seems cheap and helpful, but it can devastate sentiment analysis: <code>not</code>, <code>n't</code>, and <code>never</code> are stop words in many lists, yet they flip polarity. The general rule is that aggressive normalization erases information; whether that information matters depends entirely on the task.\n\n**Sentence segmentation** sounds easy and isn't. The marks <code>?</code> and <code>!</code> are nearly unambiguous sentence terminators. The period <code>.</code> is the troublemaker: it ends sentences but it also appears in <code>1.25</code>, <code>U.S.A.</code>, <code>Dr.</code>, <code>etc.</code>, and email addresses. Three approaches work in practice. First, you can write a *complex regex* that special-cases known abbreviations and number patterns — accurate up to a point but fragile. Second, you can encode hand-written **decision-tree rules** that label each period as end-of-sentence (EOS) or non-end-of-sentence (N-EOS) using features like \"is the previous token in an abbreviation list\", \"is the next token capitalized\", \"is the next token a known sentence-starter\". Third, you can train a **binary classifier** with the same kinds of features (token shape, capitalization, length, abbreviation membership) and let it learn the boundary. Modern pipelines almost always use the classifier route, but the rule-based decision tree remains a useful baseline and a clean illustration of feature engineering before you reach for ML.",
+    "checks": [
+      {
+        "q": "Which statement contrasts stemming and lemmatization correctly?",
+        "options": [
+          {"id": "1", "text": "Both produce dictionary words; stemming uses POS tags while lemmatization does not."},
+          {"id": "2", "text": "Stemming chops affixes by rules and may produce non-words; lemmatization uses a lexicon (and usually POS) to return the dictionary headword."},
+          {"id": "3", "text": "Lemmatization is faster than stemming because it doesn't need rules."},
+          {"id": "4", "text": "Stemming and lemmatization always produce the same output for English."}
+        ],
+        "correct": "2",
+        "explanation": "Stemming is a fast, rule-based affix chopper (e.g. Porter); its output is a stem that need not be a real word, and it doesn't consult POS. Lemmatization needs a lexicon and POS tags to return the proper dictionary headword, which is slower but more accurate. Option 1 swaps which one uses POS. Option 3 reverses the speed comparison. Option 4 is false — they often disagree (e.g. <code>running</code> as a noun lemmatizes to <code>running</code> but stems to <code>run</code>)."
+      },
+      {
+        "q": "Why is sentence segmentation harder than it first appears, and what is a common modern solution?",
+        "options": [
+          {"id": "1", "text": "Because <code>?</code> and <code>!</code> are ambiguous terminators; train a regex to disambiguate them."},
+          {"id": "2", "text": "Because <code>.</code> is ambiguous (abbreviations, decimals, initials); use a binary classifier or decision-tree rules over features like capitalization and abbreviation membership."},
+          {"id": "3", "text": "Because all sentences must end in lowercase letters; use a stemmer to detect them."},
+          {"id": "4", "text": "Because newlines reliably mark sentence ends; just split on <code>\\n</code>."}
+        ],
+        "correct": "2",
+        "explanation": "<code>?</code> and <code>!</code> are largely unambiguous; <code>.</code> is the troublemaker, appearing in <code>U.S.A.</code>, <code>1.25</code>, <code>Dr.</code>, etc. The standard fix is to classify each period as EOS or N-EOS using features (capitalization of next token, abbreviation list membership, token length) — either as hand-written decision-tree rules or as a learned binary classifier. Option 1 has the wrong punctuation. Option 3 is invented. Option 4 fails on any text where sentences run across lines or multiple sentences share a line."
+      },
+      {
+        "q": "Case folding (lowercasing all text) is most clearly harmful for which downstream task?",
+        "options": [
+          {"id": "1", "text": "Document retrieval (matching a user's query against a corpus)."},
+          {"id": "2", "text": "Spelling correction by edit distance."},
+          {"id": "3", "text": "Named-entity recognition, where <code>US</code> (the country) and <code>us</code> (the pronoun) must be distinguished."},
+          {"id": "4", "text": "Counting the total number of tokens in a corpus."}
+        ],
+        "correct": "3",
+        "explanation": "Case folding is great for IR because it boosts recall by collapsing capitalisation differences (option 1 *benefits*). For NER (and machine translation), case is a strong signal — losing the distinction between <code>US</code> and <code>us</code>, or between <code>Apple</code> the company and <code>apple</code> the fruit, hurts performance. Spelling correction works on form-level edits regardless of case, and counting tokens doesn't depend on case at all."
+      }
+    ]
+  }
+]

@@ -1,0 +1,212 @@
+[
+  {
+    "lecture": "9",
+    "chunk_id": "L9-1",
+    "order": 1,
+    "title": "Contextual Embeddings and ELMo",
+    "content_md": "Static word embeddings like Word2Vec and GloVe assign **one fixed vector per word type**. The word *light* gets the same vector whether it means \"not heavy,\" \"illumination,\" or \"pale-colored.\" This is fundamentally lossy: a single vector cannot simultaneously encode every sense, and downstream tasks like word-sense disambiguation, NER, or coreference resolution suffer.\n\nThe goal of **contextual word embeddings** is to produce a vector that depends on the *whole sentence in which the word appears*, including word order. The same orthographic word in two different sentences should get two different vectors, and ideally those vectors should be close when the senses are similar and far when the senses differ.\n\n**ELMo** (Embeddings from Language Models, 2018) is the canonical pre-Transformer answer. ELMo trains a 2-layer **bidirectional LSTM** as a language model on a large corpus. For each token $t$ in a sentence, the network produces three representations:\n\n- $h_t^{(0)}$: the non-contextual character-CNN embedding of the token itself.\n- $h_t^{(1)}$: the concatenation of the forward and backward hidden states of the **first** Bi-LSTM layer.\n- $h_t^{(2)}$: the concatenation of the forward and backward hidden states of the **second** Bi-LSTM layer.\n\nELMo combines all three into one final embedding via a learned weighted sum:\n\n$$emb_t = \\gamma \\sum_{j=0}^{2} s_j \\, h_t^{(j)}, \\qquad \\sum_{j=0}^{2} s_j = 1.$$\n\nHere $\\gamma$ is a single scalar that scales the whole embedding, and $s_j$ are softmax-normalized **task-specific** weights. Crucially, the $s_j$ are learned per *downstream task*: a syntactic task may put more weight on the lower layer (which captures POS-like info), while a semantic task may put more weight on the upper layer (which captures meaning).\n\nWhy ELMo matters for the Transformer story: ELMo demonstrates that contextual vectors are achievable and useful, but it inherits the **RNN limitations** that motivate Transformers:\n\n1. **Vanishing/exploding gradients** over long sequences.\n2. **Hidden-state bottleneck**: every long-range relation has to flow through one fixed-size hidden vector.\n3. **Sequential processing**: token $t$ cannot be computed before token $t-1$, so training cannot be parallelized over sequence positions.\n\nThese pain points are exactly what scaled dot-product attention will fix. A common exam trap: do not call ELMo \"a Transformer.\" ELMo is **Bi-LSTM-based** and predates the contextual-Transformer era. BERT and GPT (Lecture 10) are the Transformer-based successors.\n\nA second subtle point: ELMo's bidirectionality comes from running an *independent* forward LM and an *independent* backward LM and concatenating their hidden states at each layer. It is **not** a single network that sees both directions simultaneously the way a Transformer encoder does — the forward and backward LMs never share information during prediction, only at the concatenation step. This shallow bidirectionality is one reason BERT (with masked-language-model pretraining over a true bidirectional encoder) eventually outperformed ELMo.",
+    "checks": [
+      {
+        "q": "What architecture does ELMo use to produce contextual embeddings?",
+        "options": [
+          {"id": "1", "text": "A 2-layer bidirectional LSTM language model"},
+          {"id": "2", "text": "A 6-layer Transformer encoder"},
+          {"id": "3", "text": "A CNN with max-pooling over the sentence"},
+          {"id": "4", "text": "A masked-language-model Transformer like BERT"}
+        ],
+        "correct": "1",
+        "explanation": "ELMo (2018) is a 2-layer Bi-LSTM language model. It predates BERT and is not a Transformer."
+      },
+      {
+        "q": "In ELMo's final embedding $emb_t = \\gamma \\sum_j s_j h_t^{(j)}$, what is true about the weights $s_j$?",
+        "options": [
+          {"id": "1", "text": "They are fixed at $s_j = 1/3$ for all tasks"},
+          {"id": "2", "text": "They are softmax-normalized and learned per downstream task"},
+          {"id": "3", "text": "They are the attention scores between layers"},
+          {"id": "4", "text": "They are positional encodings"}
+        ],
+        "correct": "2",
+        "explanation": "The $s_j$ are softmax-normalized weights learned separately for each downstream task; $\\gamma$ is a single scalar that scales the whole embedding."
+      },
+      {
+        "q": "Which RNN-era limitation is NOT a motivation for moving from ELMo to Transformers?",
+        "options": [
+          {"id": "1", "text": "Sequential processing prevents parallelization across positions"},
+          {"id": "2", "text": "Hidden-state bottleneck for long-range dependencies"},
+          {"id": "3", "text": "Vanishing/exploding gradients"},
+          {"id": "4", "text": "Inability to produce different vectors for the same word in different contexts"}
+        ],
+        "correct": "4",
+        "explanation": "ELMo *does* produce context-dependent vectors — that's the whole point. The other three (sequential, bottleneck, vanishing gradients) are the actual RNN limitations Transformers fix."
+      }
+    ]
+  },
+  {
+    "lecture": "9",
+    "chunk_id": "L9-2",
+    "order": 2,
+    "title": "Positional Encoding: Why It's Needed and Why Naive Approaches Fail",
+    "content_md": "A Transformer block processes all tokens **in parallel**: it has no recurrence and no convolution, so by construction it has **no built-in notion of order**. If you take the input embeddings $(e_1, e_2, \\ldots, e_N)$ and shuffle them, the self-attention layer produces the same set of outputs (up to the same permutation). Formally, multi-head self-attention is **permutation-equivariant**, which means it is **permutation-invariant** as a *set* operation. \"The dog bit the man\" and \"The man bit the dog\" would produce identical token-level computations.\n\nTo break this symmetry we add a **positional encoding** $p_i$ to each token embedding before feeding it to the first layer:\n\n$$\\tilde{e}_i = e_i + p_i.$$\n\nThe lecture deliberately walks through two **naive PE schemes that fail**, motivating the sinusoidal fix.\n\n**Naive Approach 1: raw position index.** Set $p_i = i$ (or a constant vector with value $i$). Then for a 1000-token sequence the last token's positional vector has magnitude $\\sim 1000$, which **dominates** the word embedding (magnitudes are usually $\\mathcal{O}(1)$). The model learns to ignore the word and pay attention to the position. Worse, the magnitude **depends on $N$**: a position-500 vector means \"middle of a 1000-token doc\" or \"end of a 500-token doc\" — same number, different meaning.\n\n**Naive Approach 2: normalized position $p_i = i/(N-1)$.** This bounds values to $[0,1]$, which fixes the magnitude problem. But it introduces a different bug: the value at a *fixed absolute position* now changes with $N$. Position 5 in a length-10 sentence gets $5/9 \\approx 0.56$; position 5 in a length-100 sentence gets $5/99 \\approx 0.05$. The model cannot learn a stable meaning for \"the 5th token\" because its encoding shifts with the sequence length.\n\n**Sinusoidal fix (Vaswani et al. 2017).** Use a vector-valued positional encoding where dimension $2i$ uses a sine and dimension $2i+1$ uses a cosine, both at geometrically increasing wavelengths:\n\n$$PE_{(pos, 2i)} = \\sin\\!\\left(\\frac{pos}{10000^{2i/d_{model}}}\\right), \\qquad PE_{(pos, 2i+1)} = \\cos\\!\\left(\\frac{pos}{10000^{2i/d_{model}}}\\right).$$\n\nThis scheme ticks every box:\n\n- **Bounded**: every entry lies in $[-1, 1]$ regardless of $pos$.\n- **Unique**: each $pos$ gets a distinct vector across the whole $d_{model}$-dimensional space (different frequencies act like binary place-values).\n- **Length-independent**: $PE_{(5, \\cdot)}$ is the same vector whether the sequence has length 10 or 10{,}000 — the encoding only depends on absolute position, not on $N$.\n- **Relative-position friendly**: because $\\sin(a+b) = \\sin a \\cos b + \\cos a \\sin b$, a fixed offset $k$ corresponds to a *linear transformation* of $PE_{pos}$ into $PE_{pos+k}$, so the model can in principle learn relative offsets via a linear projection.\n\nA classic exam trap: **\"why is positional encoding needed?\"** Wrong answer: \"to encode word frequency.\" Right answer: \"because attention is permutation-invariant, the network would otherwise treat the input as a bag of tokens.\"",
+    "checks": [
+      {
+        "q": "Why does a Transformer require positional encoding?",
+        "options": [
+          {"id": "1", "text": "To make embeddings have unit norm"},
+          {"id": "2", "text": "Because self-attention is permutation-invariant and has no built-in notion of word order"},
+          {"id": "3", "text": "To encode part-of-speech tags"},
+          {"id": "4", "text": "To bound the gradient magnitudes during backprop"}
+        ],
+        "correct": "2",
+        "explanation": "Self-attention treats the input as an unordered set, so without PE the model cannot distinguish \"dog bit man\" from \"man bit dog\"."
+      },
+      {
+        "q": "What is wrong with the naive scheme $p_i = i/(N-1)$ that normalizes raw positions?",
+        "options": [
+          {"id": "1", "text": "The values are unbounded as the sequence grows"},
+          {"id": "2", "text": "It uses sines, which the model cannot learn"},
+          {"id": "3", "text": "The encoding of a fixed absolute position changes with the sequence length $N$"},
+          {"id": "4", "text": "It produces the same vector for every position"}
+        ],
+        "correct": "3",
+        "explanation": "It is bounded in $[0,1]$, but $i/(N-1)$ depends on $N$, so position 5 has a different encoding in a 10-token vs 100-token sentence."
+      },
+      {
+        "q": "Which property does the sinusoidal PE $\\sin(pos/10000^{2i/d_{model}})$ provide that the two naive schemes lack?",
+        "options": [
+          {"id": "1", "text": "Bounded values, unique per position, AND independent of sequence length"},
+          {"id": "2", "text": "It makes attention $O(N \\log N)$"},
+          {"id": "3", "text": "It eliminates the need for layer normalization"},
+          {"id": "4", "text": "It guarantees the embedding norm is exactly 1"}
+        ],
+        "correct": "1",
+        "explanation": "Sinusoidal PE is bounded in $[-1,1]$, gives a unique vector per absolute position, and crucially does not depend on $N$ — fixing both naive failure modes simultaneously."
+      }
+    ]
+  },
+  {
+    "lecture": "9",
+    "chunk_id": "L9-3",
+    "order": 3,
+    "title": "Scaled Dot-Product Attention",
+    "content_md": "Attention generalizes the L8 RNN-attention pipeline (score $\\to$ softmax $\\to$ context vector) into a single matrix expression. Each token $i$ produces three projections of its embedding $x_i \\in \\mathbb{R}^{d_{model}}$:\n\n$$q_i = W_Q x_i, \\quad k_i = W_K x_i, \\quad v_i = W_V x_i,$$\n\nwhere $W_Q, W_K \\in \\mathbb{R}^{d_k \\times d_{model}}$ and $W_V \\in \\mathbb{R}^{d_v \\times d_{model}}$. Stacking these row-wise across all $N$ tokens gives matrices $Q, K \\in \\mathbb{R}^{N \\times d_k}$ and $V \\in \\mathbb{R}^{N \\times d_v}$. The attention output is:\n\n$$\\text{Attention}(Q, K, V) = \\text{softmax}\\!\\left(\\frac{Q K^\\top}{\\sqrt{d_k}}\\right) V.$$\n\nLet's read this carefully. The product $Q K^\\top$ is an $N \\times N$ matrix whose $(i, j)$ entry is the dot product $q_i \\cdot k_j$ — an *alignment score* between query $i$ and key $j$. The softmax (taken row-wise) turns each row into a probability distribution over the $N$ keys. Multiplying by $V$ replaces each row with a convex combination of value vectors. So the output for position $i$ is a weighted average of all value vectors, with weights given by how much $q_i$ \"matches\" each $k_j$.\n\n**Why divide by $\\sqrt{d_k}$?** Suppose the entries of $q$ and $k$ are i.i.d. with mean 0 and variance 1. Then $q \\cdot k = \\sum_{l=1}^{d_k} q_l k_l$ has mean 0 and variance $d_k$ (sum of $d_k$ independent variance-1 terms). With $d_k = 64$, dot products typically have magnitudes around $\\sqrt{64} = 8$. Plugging values that large into softmax produces nearly **one-hot** outputs, which means the gradient through softmax is essentially zero for almost every entry — training stalls. Dividing by $\\sqrt{d_k}$ rescales the variance back to 1, keeping the softmax in a regime with healthy gradients. This is a subtle but heavily examined trap.\n\n**Self-attention vs cross-attention.** The notation $Q = K = V$ in self-attention refers to the **input source**, not to the projected matrices. In self-attention, all three projections come from the *same* sequence (e.g., the encoder's input). In **cross-attention** (decoder $\\to$ encoder), the queries $Q$ come from the decoder while $K$ and $V$ come from the encoder's output (the \"memory\"). So $Q \\neq K = V$ as inputs, but each still goes through its own $W_Q, W_K, W_V$.\n\n**Complexity.** $Q K^\\top$ has $N^2$ entries, each costing $O(d_k)$ to compute, so attention is $\\boxed{O(N^2 d_k)}$ in time and $O(N^2)$ in memory. The quadratic dependence on sequence length is **the** scaling bottleneck of vanilla Transformers, motivating sparse/linear/flash attention variants for long contexts.\n\n**A common confusion:** scaled dot-product attention is parameter-free in $Q, K, V$ themselves; the only learned parameters in the attention computation are the projection matrices $W_Q, W_K, W_V$ and the output projection $W_O$. The softmax and dot product have no parameters.",
+    "checks": [
+      {
+        "q": "What is the time complexity of vanilla scaled dot-product attention in the sequence length $N$?",
+        "options": [
+          {"id": "1", "text": "$O(N)$"},
+          {"id": "2", "text": "$O(N \\log N)$"},
+          {"id": "3", "text": "$O(N^2)$"},
+          {"id": "4", "text": "$O(N^3)$"}
+        ],
+        "correct": "3",
+        "explanation": "$QK^\\top$ produces an $N \\times N$ score matrix, giving $O(N^2)$ time and memory. Sparse/linear-attention variants (BigBird, Longformer, Performer) target $O(N)$ or $O(N \\log N)$."
+      },
+      {
+        "q": "Why is the dot product divided by $\\sqrt{d_k}$ before the softmax?",
+        "options": [
+          {"id": "1", "text": "To make the output have unit norm"},
+          {"id": "2", "text": "Because dot products grow with $d_k$ (variance $d_k$); large pre-softmax scores saturate the softmax and kill gradients"},
+          {"id": "3", "text": "To convert keys and queries into the same units as values"},
+          {"id": "4", "text": "Because PyTorch requires it for numerical stability"}
+        ],
+        "correct": "2",
+        "explanation": "If $q,k$ have unit-variance entries, $q\\cdot k$ has variance $d_k$. Without scaling, large scores push softmax into a near-one-hot saturated region with vanishing gradients."
+      },
+      {
+        "q": "In cross-attention from a decoder layer to encoder memory, where do $Q$, $K$, $V$ come from?",
+        "options": [
+          {"id": "1", "text": "All three come from the encoder output"},
+          {"id": "2", "text": "All three come from the decoder hidden states"},
+          {"id": "3", "text": "$Q$ from the decoder; $K$ and $V$ from the encoder output"},
+          {"id": "4", "text": "$Q$ and $K$ from the encoder; $V$ from the decoder"}
+        ],
+        "correct": "3",
+        "explanation": "Cross-attention queries the encoder's memory using the decoder's current state: $Q$ is from the decoder, $K=V$ are from the encoder output."
+      }
+    ]
+  },
+  {
+    "lecture": "9",
+    "chunk_id": "L9-4",
+    "order": 4,
+    "title": "Multi-Head Attention and the Feed-Forward Layer",
+    "content_md": "A single attention head can only learn one *kind* of relation between tokens (e.g., \"verb $\\to$ subject\"). Real language has many simultaneous relations: syntactic agreement, coreference, semantic role, etc. **Multi-head attention (MHA)** lets the model attend in $h$ different subspaces in parallel.\n\nThe construction:\n\n1. Choose $h$ heads (original paper: $h = 8$).\n2. For each head $i \\in \\{1, \\ldots, h\\}$, learn its own projections $W_Q^{(i)}, W_K^{(i)}, W_V^{(i)}$ that map $d_{model} \\to d_{q,k,v}$ where\n\n$$d_q = d_k = d_v = \\frac{d_{model}}{h}.$$\n\nWith $d_{model} = 512, h = 8$, each head has dimension $64$.\n\n3. Compute $\\text{head}_i = \\text{Attention}(Q W_Q^{(i)}, K W_K^{(i)}, V W_V^{(i)})$ in parallel.\n4. Concatenate: $\\text{Concat}(\\text{head}_1, \\ldots, \\text{head}_h) \\in \\mathbb{R}^{N \\times h d_v} = \\mathbb{R}^{N \\times d_{model}}$.\n5. Apply a final output projection $W_O \\in \\mathbb{R}^{d_{model} \\times d_{model}}$.\n\n**Why $d_{q,k,v} = d_{model}/h$?** This is the lecture's quick-quiz trap. The total parameter count of the projection matrices is\n\n$$h \\cdot 3 \\cdot d_{model} \\cdot \\frac{d_{model}}{h} = 3\\, d_{model}^2,$$\n\nwhich is **independent of $h$**. So you can dial up the number of heads (more diverse relational subspaces) *without paying any parameter cost*. If you instead kept each head at full $d_{model}$ dimension, parameters would grow linearly in $h$. This decoupling is the entire point of the design.\n\nA related trap: \"more heads = more parameters.\" False. More heads = more *parallel relational subspaces* at fixed parameter budget. The trade-off is per-head capacity ($d_{model}/h$ shrinks as $h$ grows), not total params.\n\n**The feed-forward (FF) sublayer.** After MHA, each position is independently passed through a 2-layer fully connected network with a ReLU:\n\n$$\\text{FF}(x) = \\max(0, x W_1 + b_1)\\, W_2 + b_2,$$\n\nwhere $W_1 \\in \\mathbb{R}^{d_{model} \\times d_{ff}}$ and $W_2 \\in \\mathbb{R}^{d_{ff} \\times d_{model}}$. The original paper uses $d_{ff} = 2048$, four times $d_{model}$. Two notable facts:\n\n- The FF is **position-wise**: it shares weights across positions but has no interaction between positions. All token mixing happens in the attention sublayer.\n- The FF accounts for roughly **2/3 of the parameters** of a Transformer block (each FF layer has $\\sim 2 \\cdot 512 \\cdot 2048 \\approx 2.1\\text{M}$ params; MHA has $\\sim 4 \\cdot 512^2 \\approx 1.05\\text{M}$).\n\nThe lecture flags an honest gap: the original paper does **not** give a strong theoretical justification for the FF beyond \"adds capacity and non-linearity.\" Despite consuming most of the parameter budget, FF's exact role is described as \"under-explored.\" Recent interpretability work suggests FF layers act as a kind of key-value memory, but that goes beyond CS4248.\n\n**Original-paper defaults to remember:** `num_layers=6`, `d_model=512`, `num_heads=8` (so $d_k = d_v = 64$), `d_ff=2048`, `dropout=0.1`.",
+    "checks": [
+      {
+        "q": "In multi-head attention with $d_{model}=512$ and $h=8$ heads, what is the per-head dimension $d_k$?",
+        "options": [
+          {"id": "1", "text": "512"},
+          {"id": "2", "text": "256"},
+          {"id": "3", "text": "64"},
+          {"id": "4", "text": "8"}
+        ],
+        "correct": "3",
+        "explanation": "$d_k = d_{model}/h = 512/8 = 64$. Choosing $d_{q,k,v} = d_{model}/h$ keeps total parameters independent of $h$."
+      },
+      {
+        "q": "Why is the per-head dimension chosen as $d_{model}/h$ rather than $d_{model}$?",
+        "options": [
+          {"id": "1", "text": "To keep the total number of trainable parameters in MHA independent of the number of heads"},
+          {"id": "2", "text": "Because softmax requires it"},
+          {"id": "3", "text": "To make attention $O(N)$ instead of $O(N^2)$"},
+          {"id": "4", "text": "Because the heads must each see only $1/h$ of the sequence"}
+        ],
+        "correct": "1",
+        "explanation": "Total projection params $= h \\cdot 3 \\cdot d_{model} \\cdot (d_{model}/h) = 3 d_{model}^2$, independent of $h$. Doubling heads costs no extra parameters."
+      },
+      {
+        "q": "Roughly what fraction of a Transformer block's parameters live in the position-wise feed-forward sublayer in the original paper?",
+        "options": [
+          {"id": "1", "text": "About 1/10"},
+          {"id": "2", "text": "About 1/3"},
+          {"id": "3", "text": "About 2/3"},
+          {"id": "4", "text": "About 99%"}
+        ],
+        "correct": "3",
+        "explanation": "With $d_{model}=512, d_{ff}=2048$, the FF has ~2x more params than the four MHA projections combined — about 2/3 of the block."
+      }
+    ]
+  },
+  {
+    "lecture": "9",
+    "chunk_id": "L9-5",
+    "order": 5,
+    "title": "Encoder, Decoder, and Masking",
+    "content_md": "A Transformer is a stack of identical **encoder layers** followed by a stack of identical **decoder layers** (original paper: 6 of each). Each layer wraps its sublayers in two universal patterns: **residual connections** ($x + \\text{Sublayer}(x)$) and **layer normalization**. The standard recipe is post-norm Add&Norm: $\\text{LayerNorm}(x + \\text{Sublayer}(x))$, with **dropout** applied inside.\n\n**Encoder layer.**\n\n1. Multi-head **self**-attention over the encoder input ($Q = K = V$ all from the previous layer).\n2. Add & Norm.\n3. Position-wise feed-forward.\n4. Add & Norm.\n\nThe encoder uses **only self-attention** — it has no cross-attention because there is nothing external to attend to. Every token can see every other token in both directions; this is the source of the contextual representation.\n\n**Decoder layer.** The decoder has *three* sublayers, not two:\n\n1. **Masked** multi-head self-attention over decoder input. Causal mask prevents position $t$ from attending to positions $> t$.\n2. Add & Norm.\n3. **Cross-attention** MHA: $Q$ from decoder, $K = V$ from the **encoder memory** (the final encoder layer's output). This is how the decoder reads the source sentence in machine translation.\n4. Add & Norm.\n5. Position-wise feed-forward.\n6. Add & Norm.\n\nA frequently tested trap: \"the decoder uses self-attention only.\" **False.** The decoder uses **both masked self-attention AND cross-attention to encoder memory**. Forgetting cross-attention is a classic exam mistake.\n\n**Masking — the $-\\infty$ trick.** A mask is an $N \\times N$ matrix $M$ added to the pre-softmax scores:\n\n$$\\text{softmax}\\!\\left(\\frac{QK^\\top}{\\sqrt{d_k}} + M\\right) V.$$\n\nFor positions you want to *keep*, $M_{ij} = 0$ leaves the score unchanged. For positions you want to *block*, $M_{ij} = -\\infty$ (in practice a large negative number like $-10^9$). After softmax, $e^{-\\infty} = 0$, so blocked positions get **exact zero** probability. **Critical trap:** using $0$ as the mask does nothing — $\\text{score} + 0 = \\text{score}$, so the position still gets non-zero softmax weight. The mask must be additive in **log-space** ($-\\infty$), not multiplicative in probability-space.\n\nThree main use cases:\n\n- **Padding mask.** Variable-length sentences are padded with `[PAD]` tokens; mask blocks attention to pads.\n- **MLM mask** (BERT, L10). Hide $\\sim 15\\%$ of tokens during pretraining and predict them.\n- **Causal / look-ahead mask** (GPT, decoder self-attention). Lower-triangular mask: position $t$ can only see positions $\\le t$. For \"I study at NUS\":\n\n$$M = \\begin{pmatrix} 0 & -\\infty & -\\infty & -\\infty \\\\ 0 & 0 & -\\infty & -\\infty \\\\ 0 & 0 & 0 & -\\infty \\\\ 0 & 0 & 0 & 0 \\end{pmatrix}.$$\n\nThis enforces autoregressive generation: when predicting word $t+1$, the model has not \"peeked\" at the answer.\n\n**One last subtle point.** The encoder is fully bidirectional precisely because it does *not* mask. The decoder's self-attention is unidirectional because of the causal mask. The decoder's cross-attention has no causal mask — the decoder can see the *entire* source sentence (the encoder's full output) when generating each target token; only the *target side* is masked.",
+    "checks": [
+      {
+        "q": "Which sublayer is present in a Transformer decoder layer but NOT in an encoder layer?",
+        "options": [
+          {"id": "1", "text": "Position-wise feed-forward"},
+          {"id": "2", "text": "Layer normalization"},
+          {"id": "3", "text": "Cross-attention to encoder memory"},
+          {"id": "4", "text": "Residual connections"}
+        ],
+        "correct": "3",
+        "explanation": "The decoder has masked self-attention, cross-attention (Q from decoder, K=V from encoder output), AND feed-forward. The encoder has only self-attention and feed-forward."
+      },
+      {
+        "q": "Why does the attention mask use $-\\infty$ rather than $0$ for blocked positions?",
+        "options": [
+          {"id": "1", "text": "To save memory"},
+          {"id": "2", "text": "Because $-\\infty$ becomes $0$ after softmax (exact zero attention weight); adding $0$ to the score does nothing"},
+          {"id": "3", "text": "Because PyTorch's softmax cannot handle zeros"},
+          {"id": "4", "text": "To prevent gradient explosion"}
+        ],
+        "correct": "2",
+        "explanation": "The mask is added before softmax. $\\text{score} + 0 = \\text{score}$ leaves the position active; $\\text{score} + (-\\infty) = -\\infty$, and $e^{-\\infty}=0$, giving exact zero probability."
+      },
+      {
+        "q": "Which statement about attention in encoder vs decoder layers is correct?",
+        "options": [
+          {"id": "1", "text": "Encoder uses self-attention only; decoder uses BOTH masked self-attention AND cross-attention"},
+          {"id": "2", "text": "Both encoder and decoder use only self-attention"},
+          {"id": "3", "text": "Encoder uses cross-attention only; decoder uses self-attention only"},
+          {"id": "4", "text": "Decoder uses self-attention only; encoder uses cross-attention only"}
+        ],
+        "correct": "1",
+        "explanation": "The encoder has only (unmasked) self-attention. The decoder has masked self-attention plus cross-attention to encoder memory. Forgetting the cross-attention is a classic exam trap."
+      }
+    ]
+  }
+]

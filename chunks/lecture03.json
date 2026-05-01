@@ -1,0 +1,201 @@
+[
+  {
+    "lecture": "3",
+    "chunk_id": "L3-1",
+    "order": 1,
+    "title": "Language Models, the Chain Rule, and the Markov Assumption",
+    "content_md": "A **language model (LM)** assigns a probability to a sequence of words. Equivalently, it can predict the next word given the previous ones, i.e. estimate $P(w_n \\mid w_1, \\ldots, w_{n-1})$. This single capability powers speech recognition (rank competing transcripts), spell/grammar correction (which correction is more likely?), machine translation (which English sentence is fluent?), and modern text generation.\n\nThe starting point is the **chain rule of probability**, which decomposes the joint probability of a sentence into a product of conditionals, one per token:\n\n$$P(w_1, w_2, \\ldots, w_N) = \\prod_{i=1}^{N} P(w_i \\mid w_1, \\ldots, w_{i-1}).$$\n\nThis is exact, not an approximation. The trouble is the *history* $w_1, \\ldots, w_{i-1}$: the longer it gets, the rarer the exact prefix becomes in any corpus. We will essentially never have seen the full 20-word prefix of an English sentence even once. Counts go to zero, estimates become unusable.\n\nThe fix is the **Markov assumption**: pretend that only the last $k$ words matter. Formally,\n\n$$P(w_n \\mid w_1, \\ldots, w_{n-1}) \\approx P(w_n \\mid w_{n-k}, \\ldots, w_{n-1}).$$\n\nThis is the defining trick of an **n-gram model**. Be very careful with the off-by-one: an n-gram conditions on the previous $n-1$ words, *not* $n$. So a **unigram** ($n=1$) uses no context — it just multiplies word probabilities. A **bigram** ($n=2$) conditions on **one** prior word. A **trigram** ($n=3$) conditions on **two** prior words. This is a classic exam trap.\n\nGiven the Markov assumption, how do we actually estimate the conditional probability? With **maximum likelihood estimation (MLE)**, which is just relative frequency. For a bigram:\n\n$$P(w_n \\mid w_{n-1}) = \\frac{\\text{Count}(w_{n-1} w_n)}{\\text{Count}(w_{n-1})}.$$\n\nIn words: of all the times we saw $w_{n-1}$, what fraction were followed by $w_n$? The numerator is the bigram count; the denominator is the unigram count of the conditioning word.\n\n**Common confusion 1: where does the denominator come from?** It is the count of $w_{n-1}$ as a word, *not* the row sum of a bigram-counts table indexed by $w_{n-1}$. Why? Because a token of $w_{n-1}$ might appear at the very end of a sentence, where it has no following word and contributes nothing to that row. Always pull denominators from a unigram count table.\n\n**Common confusion 2: bigger n is always better, right?** No — bigger $n$ means exponentially more parameters and exponentially sparser counts. With a vocabulary of $V=20{,}000$, a trigram has $V^3 = 8 \\times 10^{12}$ possible contexts. You will never see most of them. Choosing $n$ is a bias-variance trade-off.\n\n**Common confusion 3: is the Markov assumption true?** No. It is an approximation, and a *known wrong* one. Sentences like \"All the jokes totalled landed, resulting in a movie that is very ___\" need information that a 4-gram window cannot reach. The Markov assumption is what makes counting tractable, not what makes the model correct. It is the thing later models (RNNs, Transformers) try to relax.",
+    "checks": [
+      {
+        "q": "A trigram language model estimates $P(w_n \\mid \\text{history})$. How many previous words does it actually condition on?",
+        "options": [
+          {"id": "1", "text": "3 — same as the n in n-gram"},
+          {"id": "2", "text": "2 — n-gram conditions on n-1 prior words"},
+          {"id": "3", "text": "1 — only the immediately previous word"},
+          {"id": "4", "text": "All previous words in the sentence"}
+        ],
+        "correct": "2",
+        "explanation": "An n-gram conditions on n-1 prior words, so trigram (n=3) uses 2 prior words. Confusing n with the conditioning length is one of the most common exam traps. Option 1 is the trap; option 3 describes a bigram; option 4 ignores the Markov assumption entirely."
+      },
+      {
+        "q": "Why do we apply the Markov assumption when building n-gram language models?",
+        "options": [
+          {"id": "1", "text": "Because the chain rule is mathematically incorrect for sentences"},
+          {"id": "2", "text": "Because longer histories are rarely seen in the training corpus, so MLE counts go to zero"},
+          {"id": "3", "text": "Because it makes the model strictly more accurate than the chain rule"},
+          {"id": "4", "text": "Because language is genuinely first-order Markov"}
+        ],
+        "correct": "2",
+        "explanation": "The chain rule is exact but unusable in practice: long prefixes are unseen, so counts vanish. The Markov assumption sacrifices a little accuracy (it is wrong for long-distance dependencies) for tractable counting. Option 1 is false; option 3 is the opposite of the truth; option 4 is empirically false (the 'jokes ... funny' example shows long-range dependencies)."
+      }
+    ]
+  },
+  {
+    "lecture": "3",
+    "chunk_id": "L3-2",
+    "order": 2,
+    "title": "Sentence Boundaries, Log-Probabilities, and a Bigram Worked Example",
+    "content_md": "Once we commit to a bigram, we hit a small but important issue: how do we score the *first* word of a sentence? With no prior word, the bigram conditional $P(w_1 \\mid w_0)$ is undefined. The standard fix is to add **sentence-boundary tokens** $\\langle s \\rangle$ at the start and $\\langle /s \\rangle$ at the end of every sentence. Now $P(w_1 \\mid \\langle s \\rangle)$ is well-defined, and $P(\\langle /s \\rangle \\mid w_N)$ lets the model learn how sentences typically end. Without $\\langle /s \\rangle$, the probabilities of sentences of different lengths would not sum to 1 over the space of all sentences.\n\nLet's walk through the canonical worked example. The corpus is three sentences:\n\n1. $\\langle s \\rangle$ I am Sam $\\langle /s \\rangle$\n2. $\\langle s \\rangle$ Sam I am $\\langle /s \\rangle$\n3. $\\langle s \\rangle$ I do not like green eggs and ham $\\langle /s \\rangle$\n\nTo compute $P(\\text{I} \\mid \\langle s \\rangle)$ we count how many times $\\langle s \\rangle$ is followed by \"I\" (twice — sentences 1 and 3) and divide by the total count of $\\langle s \\rangle$ (three sentences). So $P(\\text{I} \\mid \\langle s \\rangle) = 2/3$. Similarly: $P(\\text{am} \\mid \\text{I}) = 2/3$ (\"I\" appears 3 times — once in sentence 1, once in 2, once in 3 — and is followed by \"am\" twice), $P(\\text{Sam} \\mid \\text{am}) = 1/2$, and $P(\\langle /s \\rangle \\mid \\text{Sam}) = 1/2$.\n\nThe probability of \"$\\langle s \\rangle$ I am Sam $\\langle /s \\rangle$\" is then\n\n$$P = \\frac{2}{3} \\cdot \\frac{2}{3} \\cdot \\frac{1}{2} \\cdot \\frac{1}{2} = \\frac{4}{36} \\approx 0.111.$$\n\nNotice we did **not** include a factor for $\\langle s \\rangle$ itself. $P(\\langle s \\rangle)$ is treated as a constant (effectively 1) because every sentence starts with it; it cancels when we compare two sentence probabilities.\n\n**Underflow.** Real sentences have 20+ tokens, each conditional being small (often $10^{-3}$ or smaller). Multiplying 20 such numbers gives values around $10^{-60}$, which underflow to zero in floating-point. The fix is **log-probabilities**: take the log of the joint, turning the product into a sum.\n\n$$\\log P(w_1, \\ldots, w_N) = \\sum_{i=1}^{N} \\log P(w_i \\mid \\text{history}).$$\n\nLogs are negative (since probabilities are at most 1) and add safely. Comparison of two sentences is unchanged: log is monotonic.\n\n**Common confusion: which log base?** It does not matter for ranking. Natural log, $\\log_2$, or $\\log_{10}$ all give the same ordering. $\\log_2$ is conventional when reporting cross-entropy in bits, but ranking and perplexity are base-invariant in the sense that you just have to be consistent.\n\n**Trap on bigram counts.** When you see a bigram count *table* in a question, do **not** sum a row to get the unigram count of the conditioning word. A token that appears as the last word of a sentence has no following word in the bigram table. Use a separate unigram count table for denominators (or remember to also count $w_{n-1}$ when it precedes $\\langle /s \\rangle$).",
+    "checks": [
+      {
+        "q": "In the corpus {\"$\\\\langle s \\\\rangle$ I am Sam $\\\\langle /s \\\\rangle$\", \"$\\\\langle s \\\\rangle$ Sam I am $\\\\langle /s \\\\rangle$\", \"$\\\\langle s \\\\rangle$ I do not like green eggs and ham $\\\\langle /s \\\\rangle$\"}, what is $P(\\text{am} \\mid \\text{I})$ under bigram MLE?",
+        "options": [
+          {"id": "1", "text": "1/3"},
+          {"id": "2", "text": "1/2"},
+          {"id": "3", "text": "2/3"},
+          {"id": "4", "text": "3/4"}
+        ],
+        "correct": "3",
+        "explanation": "\"I\" appears 3 times across the corpus (once in each sentence). Of those 3 occurrences, 2 are followed by \"am\" (sentences 1 and 2). So Count(I am) / Count(I) = 2/3. Option 1 wrongly divides by 6; option 2 misses one occurrence of \"I am\"; option 4 invents counts."
+      },
+      {
+        "q": "Why do we work with log-probabilities instead of raw probabilities when scoring long sentences?",
+        "options": [
+          {"id": "1", "text": "Logs make the answer mathematically more correct"},
+          {"id": "2", "text": "Products of many small probabilities underflow to zero in floating point; sums of logs do not"},
+          {"id": "3", "text": "Logs convert probabilities into integers that are easier to store"},
+          {"id": "4", "text": "Logs are required by the chain rule"}
+        ],
+        "correct": "2",
+        "explanation": "20 conditionals of size ~10^-3 multiply to ~10^-60, well below float64's smallest positive normal value (~10^-308) for longer sentences and certainly losing precision. Logs add (since log of a product is a sum of logs) and stay in a numerically friendly range. Option 1 is wrong (logs do not change the ranking); option 3 is nonsense; option 4 confuses tools with theory."
+      },
+      {
+        "q": "Why must we add $\\langle /s \\rangle$ (end-of-sentence) tokens to the training corpus, not just $\\langle s \\rangle$?",
+        "options": [
+          {"id": "1", "text": "To make the bigram counts table square"},
+          {"id": "2", "text": "So the model can learn how sentences end and so probabilities of sentences of different lengths form a proper distribution"},
+          {"id": "3", "text": "Because the chain rule requires it"},
+          {"id": "4", "text": "Only $\\langle s \\rangle$ is needed; $\\langle /s \\rangle$ is optional"}
+        ],
+        "correct": "2",
+        "explanation": "Without $\\langle /s \\rangle$, the model cannot model where sentences naturally stop, and the probabilities over sentences of different lengths do not sum to 1. Option 1 is irrelevant cosmetics; option 3 is false; option 4 is a common misconception — both boundaries matter."
+      }
+    ]
+  },
+  {
+    "lecture": "3",
+    "chunk_id": "L3-3",
+    "order": 3,
+    "title": "Evaluation: Extrinsic vs Intrinsic, and Perplexity",
+    "content_md": "How do you tell whether one language model is better than another? There are two flavours of answer.\n\n**Extrinsic evaluation** plugs the LM into a downstream task (speech recognition word error rate, MT BLEU, spell-corrector accuracy) and measures end-task performance. This is the gold standard — it asks the only question users care about — but it is expensive and slow. You need a full pipeline and a labeled task dataset.\n\n**Intrinsic evaluation** scores the LM directly on a held-out test corpus. It is cheap, it isolates the LM, and it is what we use during model development. The standard data split is **80% train / 10% dev / 10% test**: train fits the model, dev tunes hyperparameters (e.g., the smoothing $k$ or interpolation weights $\\lambda_i$), and test is touched only at the very end. Touching test during tuning leaks information and inflates results.\n\nThe canonical intrinsic metric is **perplexity**. Intuitively, perplexity is the model's *average branching factor* — at each token, how many equally-likely choices does the model effectively think it has? Formally, perplexity is the inverse probability of the test set, normalized by the number of tokens $N$:\n\n$$PP(W) = P(w_1, \\ldots, w_N)^{-1/N} = \\sqrt[N]{\\prod_{i=1}^{N} \\frac{1}{P(w_i \\mid \\text{history})}}.$$\n\nThe length normalization matters: longer corpora have smaller joint probabilities, but that is a length effect, not a quality effect. The $-1/N$ exponent removes it. In practice we compute perplexity in the log domain to avoid underflow:\n\n$$\\ln PP(W) = -\\frac{1}{N} \\sum_{i=1}^{N} \\ln P(w_i \\mid \\text{history}).$$\n\n**Lower perplexity means a better model.** Why? Because $PP \\propto 1/P$. Higher probability assigned to the test set means lower perplexity. Equivalently, a confident-and-correct model has small perplexity; a confused or wrong model has large perplexity.\n\n**Range of perplexity.** This is a textbook trap. The minimum is **1**, achieved when the model assigns probability 1 to every test token (perfect prediction). The maximum is $\\boldsymbol{\\infty}$, reached when the model assigns probability 0 to *any* test token — that token's reciprocal blows up, and so does the geometric mean. Specifically, perplexity is **not** capped at $V$ (vocabulary size); a uniform model over $V$ gives $PP = V$, but worse-than-uniform models can do worse, all the way to infinity. Many students wrongly write $PP \\in (0, V)$.\n\n**Intuitions.**\n- A uniform unigram over $V = 50{,}000$ words has $PP = 50{,}000$. That is your baseline.\n- A fluent model on English news might have $PP \\approx 100$ — it has narrowed 50k options down to roughly 100 plausible next tokens.\n- A perfect oracle has $PP = 1$.\n- A model that ever assigns probability 0 to a real token has $PP = \\infty$. This is exactly why we *must* smooth: even one zero in the test set destroys perplexity.\n\n**Common confusion: does perplexity measure 'how surprised' or 'how confident'?** Both, depending on framing. Perplexity is $2^{\\text{cross-entropy}}$ (in bits) — the exponentiated average surprisal per token. High surprise (rare events) → high perplexity. So minimizing perplexity is equivalent to maximizing the held-out log-likelihood, which is equivalent to making the test data look unsurprising to the model.",
+    "checks": [
+      {
+        "q": "What is the range of perplexity for a language model evaluated on a non-empty test corpus?",
+        "options": [
+          {"id": "1", "text": "$[0, 1]$ — it is a probability"},
+          {"id": "2", "text": "$[1, V]$ where $V$ is vocabulary size"},
+          {"id": "3", "text": "$[1, \\infty)$"},
+          {"id": "4", "text": "$(0, V]$"}
+        ],
+        "correct": "3",
+        "explanation": "Perplexity equals 1 when the model is perfectly certain and right on every token, and is unbounded above: any zero probability assigned to a real token sends perplexity to infinity. Option 1 confuses perplexity with probability; options 2 and 4 wrongly cap it at V (uniform-over-vocabulary is just one possible model — worse models exist)."
+      },
+      {
+        "q": "A new bigram model achieves lower perplexity than your old one on the same test set. What does this tell you?",
+        "options": [
+          {"id": "1", "text": "The new model assigns lower probability to the test set"},
+          {"id": "2", "text": "The new model assigns higher probability to the test set, i.e. is a better fit"},
+          {"id": "3", "text": "The new model has a smaller vocabulary"},
+          {"id": "4", "text": "Nothing — perplexity is base-dependent"}
+        ],
+        "correct": "2",
+        "explanation": "Because $PP = P^{-1/N}$, lower perplexity ↔ higher test-set probability ↔ better LM (under the intrinsic measure). Option 1 reverses the direction; option 3 is unrelated; option 4 is wrong (perplexity ranking is base-invariant as long as you are consistent)."
+      },
+      {
+        "q": "Which evaluation strategy is preferred during day-to-day LM development, and why?",
+        "options": [
+          {"id": "1", "text": "Extrinsic, because it is fastest"},
+          {"id": "2", "text": "Intrinsic (perplexity), because it is fast and isolates the LM, while extrinsic is expensive and runs at the end"},
+          {"id": "3", "text": "Test-set tuning, because it gives realistic numbers"},
+          {"id": "4", "text": "Neither — only training loss matters"}
+        ],
+        "correct": "2",
+        "explanation": "Intrinsic perplexity on held-out data is cheap and reflects the LM alone, ideal for iteration. Extrinsic evaluation is the ultimate judge but expensive; you reserve it for final reporting. Option 1 reverses speed; option 3 violates the don't-touch-test rule (the 80/10/10 split exists for this reason); option 4 ignores generalization."
+      }
+    ]
+  },
+  {
+    "lecture": "3",
+    "chunk_id": "L3-4",
+    "order": 4,
+    "title": "Smoothing: Laplace, Add-k, Backoff, Interpolation, and Kneser-Ney",
+    "content_md": "Why smooth? Because plain MLE is fragile. If even one bigram in your test corpus was never seen during training, MLE assigns it probability **zero**, and the entire sentence probability collapses to zero, and perplexity becomes $\\infty$. Test sets always contain n-grams unseen at training time. **Smoothing** (a.k.a. **discounting**) shifts probability mass from observed n-grams to unobserved ones so nothing is exactly zero.\n\n**Laplace (Add-1) smoothing** is the simplest. Pretend you saw every possible bigram one extra time:\n\n$$P_{\\text{Laplace}}(w_n \\mid w_{n-1}) = \\frac{\\text{Count}(w_{n-1} w_n) + 1}{\\text{Count}(w_{n-1}) + V}.$$\n\nThe $+V$ in the denominator (where $V$ is vocabulary size) is exactly what makes the new probabilities sum to 1 — there are $V$ possible next words, each of which got $+1$ in the numerator. The problem: $V$ is often $\\sim 10^4$ or larger, so when $\\text{Count}(w_{n-1})$ is small, Add-1 dumps a *huge* fraction of the mass onto unseen events. It over-discounts seen n-grams.\n\n**Add-k smoothing** is the natural generalization: replace 1 with a fractional $k$, $0 < k \\le 1$.\n\n$$P_{\\text{add-}k}(w_n \\mid w_{n-1}) = \\frac{\\text{Count}(w_{n-1} w_n) + k}{\\text{Count}(w_{n-1}) + kV}.$$\n\nNow $k$ is a hyperparameter tuned on the dev set. Smaller $k$ trusts MLE more. Better than Add-1 in practice but still crude.\n\nA different idea: instead of inventing fake counts, *back off* to a simpler model when needed.\n\n**Backoff**: if the trigram is unseen, fall back to the bigram; if the bigram is unseen, fall back to the unigram. This is a stepwise rule: use the highest-order n-gram you have evidence for. Care is needed to renormalize so probabilities still sum to 1.\n\n**Linear interpolation**: instead of choosing one order, *blend* them all the time:\n\n$$\\hat{P}(w_n \\mid w_{n-2}, w_{n-1}) = \\lambda_1 P(w_n) + \\lambda_2 P(w_n \\mid w_{n-1}) + \\lambda_3 P(w_n \\mid w_{n-2}, w_{n-1}),$$\n\nwith $\\sum_i \\lambda_i = 1$. The $\\lambda_i$ are learned on a held-out set (often via EM). This is generally better than backoff because it always uses unigram and bigram evidence even when a trigram is observed.\n\n**Kneser-Ney smoothing** is the state of the art for count-based LMs. It has two ingredients. First, **absolute discounting**: subtract a fixed $d$ (typically $0.75$) from every observed bigram count and redistribute the saved mass to lower orders. Second — and this is what makes KN special — replace the lower-order *unigram frequency* with a **continuation probability**:\n\n$$P_{KN}(w) = \\frac{|\\{w' : \\text{Count}(w' w) > 0\\}|}{|\\{(u, v) : \\text{Count}(u v) > 0\\}|}.$$\n\nIn words: how many *distinct* preceding words has $w$ followed? A word that appears in many different contexts is a good \"novel continuation\".\n\n**The Kong-vs-glasses intuition.** Consider \"I can't see without my reading ___\". A plain unigram says $P(\\text{Kong}) > P(\\text{glasses})$ because \"Hong Kong\" is everywhere in news data. But \"Kong\" almost only ever follows \"Hong\" — its diversity of preceding contexts is essentially 1. \"Glasses\", on the other hand, is preceded by many different words (\"reading\", \"my\", \"these\", \"sun\", \"wine\", ...). KN's continuation probability sees that \"glasses\" appears in many contexts and \"Kong\" almost never does, so $P_{KN}(\\text{glasses}) > P_{KN}(\\text{Kong})$. Insight: **what makes a good fallback word is not how *frequent* it is, but how *novel-context-friendly* it is.** Frequency overweights words that only appear in fixed phrases.\n\n**Common confusion.** The lower-order term in KN is a continuation count of *distinct preceding word types*, not the raw unigram frequency. Forgetting this loses the entire point of KN.",
+    "checks": [
+      {
+        "q": "Why does Laplace (Add-1) smoothing tend to over-discount probability from seen n-grams?",
+        "options": [
+          {"id": "1", "text": "Because it uses a too-small $k$ value"},
+          {"id": "2", "text": "Because it adds $V$ to the denominator, and with large vocabularies $V$ is huge compared to typical bigram counts, so a lot of mass is shifted to unseen n-grams"},
+          {"id": "3", "text": "Because it ignores the Markov assumption"},
+          {"id": "4", "text": "Because logs are nonlinear"}
+        ],
+        "correct": "2",
+        "explanation": "Add-1 effectively gives every unseen bigram a pseudo-count of 1, and there are $V$ unseen words, so $+V$ in the denominator dominates when $\\text{Count}(w_{n-1})$ is small. That is why Add-k with smaller $k$ tuned on dev is preferred. Option 1 is backwards (Add-1 has $k=1$, the largest; smaller $k$ smooths less); options 3 and 4 are unrelated."
+      },
+      {
+        "q": "For \"I can't see without my reading ___\", a plain unigram model favours \"Kong\" because \"Hong Kong\" is a frequent phrase, but the right answer is \"glasses\". How does Kneser-Ney's continuation probability fix this?",
+        "options": [
+          {"id": "1", "text": "By using a larger discount $d$ for frequent words"},
+          {"id": "2", "text": "By replacing unigram frequency with the number of *distinct* preceding words; \"Kong\" almost only follows \"Hong\", so its continuation probability is tiny, while \"glasses\" appears after many distinct words"},
+          {"id": "3", "text": "By backing off to a trigram instead of a bigram"},
+          {"id": "4", "text": "By smoothing with Add-1 instead of Add-k"}
+        ],
+        "correct": "2",
+        "explanation": "KN's lower-order term counts how many *distinct* word types precede $w$, not how often $w$ appears. \"Kong\" has very low diversity of preceding contexts (almost always \"Hong\"), so its continuation probability is small even though its raw frequency is high. \"Glasses\" appears after many distinct words, so its continuation probability is large. This is the headline insight of KN. Other options miss the mechanism entirely."
+      },
+      {
+        "q": "Which statement best contrasts backoff and linear interpolation?",
+        "options": [
+          {"id": "1", "text": "Backoff blends all n-gram orders simultaneously; interpolation picks one"},
+          {"id": "2", "text": "Backoff uses a higher-order n-gram only if observed and otherwise drops to a lower order; interpolation always blends multiple orders with weights $\\lambda_i$ that sum to 1"},
+          {"id": "3", "text": "They are the same algorithm under different names"},
+          {"id": "4", "text": "Interpolation requires Add-1; backoff does not"}
+        ],
+        "correct": "2",
+        "explanation": "Backoff is conditional (use higher order if evidence; otherwise step down), while interpolation always mixes orders with learned $\\lambda$ weights. Interpolation generally wins because it incorporates lower-order evidence even when higher-order counts are present. Option 1 swaps them; option 3 is wrong; option 4 is fabricated."
+      }
+    ]
+  },
+  {
+    "lecture": "3",
+    "chunk_id": "L3-5",
+    "order": 5,
+    "title": "Limitations of n-gram LMs and the Path to RNNs/Transformers",
+    "content_md": "Despite all the cleverness of smoothing, n-gram language models have fundamental limitations that no amount of count-tweaking can fix. Recognizing these motivates everything that comes after in modern NLP.\n\n**Limitation 1: long-distance dependencies.** The Markov assumption is the n-gram's defining trick and its central weakness. Consider:\n\n> *\"All the jokes totalled landed, resulting in a movie that is very ___\"*\n\nThe word that completes this sentence is almost certainly \"funny\". But the cue — \"jokes\" — sits 9 tokens back, far outside any practical 3- or 4-gram window. A 4-gram looking at \"that is very ___\" sees a generic adjective slot and might happily output \"good\", \"nice\", or \"large\". The semantic dependency is real, common in natural language, and structurally invisible to any fixed-window model. You cannot fix this by raising $n$: even at $n = 10$, you would need to have seen the *exact* 9-word prefix in training, which is essentially never.\n\n**Limitation 2: data sparsity, even with smoothing.** Useful $n$ is at most 3-5 in practice. Beyond that, almost every n-gram is unseen, and smoothing is no longer redistributing rare-event mass; it is doing the entire job of estimation. The model's effective context window is firmly short.\n\n**Limitation 3: no notion of similarity.** To an n-gram model, \"the cat sat\" and \"the dog sat\" are entirely separate events. The model has no representation that says cats and dogs are similar, or that \"sat\" and \"rested\" are near-synonyms. Every word is a discrete index. This is why n-grams need huge corpora — they cannot transfer information across similar contexts.\n\n**Limitation 4: memory blows up with $n$.** A trigram table is at most $V^3$ entries; for $V = 50{,}000$ that is $10^{14}$ potential cells. Even sparse storage is expensive at scale. Larger $n$ is exponentially worse.\n\n**Limitation 5: unigram models ignore word order entirely.** $P(\\text{\"alice saw the accident\"}) = P(\\text{\"the accident alice saw\"})$ under unigrams — they are simply permutations of the same multiset, so their probabilities are equal. Bigrams break this symmetry but only locally.\n\n**Where the field went next.** All five limitations point in the same direction: we need a model that (a) carries information across arbitrarily long contexts and (b) represents words by something richer than a discrete index.\n\n**RNNs (Recurrent Neural Networks)** address (a) by keeping a hidden state $h_t$ that summarizes the entire history $w_1, \\ldots, w_{t-1}$. Each step updates $h_t$ from $h_{t-1}$ and $w_t$. There is no fixed-window Markov assumption. RNNs also use **distributed word embeddings**, addressing (b) — \"cat\" and \"dog\" can have similar vectors and so behave similarly in similar contexts. Trade-offs: RNNs suffer from vanishing/exploding gradients (so they struggle to actually use very long history) and process tokens sequentially (no parallelism, slow training).\n\n**Transformers** replace recurrence with **self-attention**, which lets every token directly attend to every previous token in parallel. This solves both the long-range issue (no information bottleneck through a hidden state) and the parallelism issue (whole sequences in one forward pass). Modern decoder-only Transformers (the GPT family) are doing exactly the n-gram task — predicting $P(w_n \\mid \\text{history})$ — but with a context window of thousands of tokens and learned representations. The conceptual line from \"$P(w_n \\mid \\text{history})$\" through Markov-window n-grams to attention-based LMs is direct.\n\n**Common confusion.** Bigger Transformers do not abolish the language-modeling objective; they implement the *same* objective the n-gram chapter began with — assigning probability to sequences — just with a vastly more expressive function class. The chain rule is still the foundation.",
+    "checks": [
+      {
+        "q": "Why can't we fix the long-distance dependency problem of n-gram LMs simply by choosing a much larger $n$ (say, $n = 15$)?",
+        "options": [
+          {"id": "1", "text": "Because the chain rule does not apply to long sequences"},
+          {"id": "2", "text": "Because the exact 14-word prefix would essentially never have been seen during training, so MLE counts are zero almost everywhere and even smoothing cannot rescue the estimates"},
+          {"id": "3", "text": "Because perplexity is undefined for $n > 5$"},
+          {"id": "4", "text": "Because Kneser-Ney already solves long-distance dependencies"}
+        ],
+        "correct": "2",
+        "explanation": "The number of possible $n$-grams grows as $V^n$, so for any reasonable vocabulary the training data covers a vanishing fraction of long n-grams. Counts collapse and smoothing is doing 100% of the estimation. RNNs/Transformers escape this by using continuous hidden states or attention rather than discrete count tables. Option 1 is false; option 3 is invented; option 4 misunderstands KN (it solves the lower-order fallback problem, not long-range)."
+      },
+      {
+        "q": "Which property of unigram language models is illustrated by the fact that $P(\\text{\\\"alice saw the accident\\\"}) = P(\\text{\\\"the accident alice saw\\\"})$?",
+        "options": [
+          {"id": "1", "text": "Unigram models depend only on the multiset of words; word order has no effect"},
+          {"id": "2", "text": "Unigrams use the chain rule incorrectly"},
+          {"id": "3", "text": "Smoothing has been applied"},
+          {"id": "4", "text": "The two sentences have the same perplexity by coincidence"}
+        ],
+        "correct": "1",
+        "explanation": "A unigram model multiplies $P(w_i)$ for each word independently, so any permutation of a sentence has the same probability. This is a structural property — unigrams literally cannot tell word orders apart. Option 2 misuses 'chain rule'; option 3 is unrelated; option 4 implies coincidence rather than structure."
+      },
+      {
+        "q": "How do Transformer language models address both the long-range dependency problem and the parallelism problem that limit n-grams and RNNs respectively?",
+        "options": [
+          {"id": "1", "text": "By using a larger Markov window"},
+          {"id": "2", "text": "By replacing recurrence with self-attention, which lets every token directly attend to every previous token in parallel"},
+          {"id": "3", "text": "By switching from MLE to Add-k smoothing"},
+          {"id": "4", "text": "By eliminating the language-modeling objective entirely"}
+        ],
+        "correct": "2",
+        "explanation": "Self-attention removes the fixed Markov window (any token can be attended to, no matter how far back) and removes the sequential bottleneck of RNNs (every position is computed in parallel within a layer). Option 1 keeps the n-gram limitation; option 3 is irrelevant; option 4 is wrong — Transformer LMs still optimize the same next-token objective."
+      }
+    ]
+  }
+]

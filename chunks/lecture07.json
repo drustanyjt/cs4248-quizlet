@@ -1,0 +1,212 @@
+[
+  {
+    "lecture": "7",
+    "chunk_id": "L7-1",
+    "order": 1,
+    "title": "Why one-hot fails: distributional hypothesis, co-occurrence, and PPMI",
+    "content_md": "Before we can do anything interesting with words in a neural net, we need to turn them into vectors. The most naive choice is **one-hot encoding**: each word $w$ becomes a vector of length $|V|$ that is all zeros except a single 1 at the word's index. This is mathematically clean but semantically useless. Any two distinct one-hot vectors are **orthogonal**, so under cosine similarity $\\cos(v_{\\text{cat}}, v_{\\text{kitty}}) = 0$ — the model has no notion that 'cat' and 'kitty' are related, and every word is equally similar (or rather, equally dissimilar) to every other word.\n\nThe escape hatch is the **distributional hypothesis** (Firth 1957: 'You shall know a word by the company it keeps'; Harris 1954; Wittgenstein 1953). The intuition: words that appear in similar contexts tend to mean similar things. If we observe 'tesgüino is fermented from corn' and 'a glass of tesgüino', we infer tesgüino is some kind of corn-based alcoholic drink — purely from its company.\n\nA first attempt operationalises this with a **document-term matrix (DTM)**: rows are words, columns are documents, and the row of $w$ is its vector. The trouble is the 'context' is an entire document, which is far too coarse — two unrelated words in the same long document end up looking similar. This actually **violates** the spirit of the distributional hypothesis, which wants a *small* window of nearby words.\n\nThe better object is a **term–context (co-occurrence) matrix**: a $|V| \\times |V|$ matrix where entry $c_{ij}$ counts how often $w_j$ occurs inside a small window (say $\\pm 4$) around $w_i$. Each row is now a sparse word vector whose dimensions are *other words* rather than documents.\n\nRaw counts are biased toward frequent words like 'the'. We fix this with **Pointwise Mutual Information (PMI)**:\n\n$$PMI(w_i, w_j) = \\log_2 \\frac{P(w_i, w_j)}{P(w_i) P(w_j)}$$\n\nPMI asks: do these two words co-occur more than chance? PMI can be negative (the pair is *less* common than chance), but a negative number is hard to interpret as 'these words are anti-related' from sparse data. So in practice we clip:\n\n$$PPMI(w_i, w_j) = \\max\\!\\left(\\log_2 \\frac{P(w_i, w_j)}{P(w_i) P(w_j)},\\ 0\\right)$$\n\n**Worked example** (slide 16). Suppose total counts sum to 35, with $P(\\text{movie},\\text{cast}) = 1/35 \\approx 0.03$, $P(\\text{movie}) = 7/35 = 0.20$, $P(\\text{cast}) = 3/35 = 0.09$. Then $PPMI = \\log_2(0.03 / (0.20 \\cdot 0.09)) \\approx 0.74$. Common refinements include raising context probabilities to a power $<1$ (flattens the distribution, helps rare words) and Add-1 smoothing.\n\nPPMI vectors are still **sparse** ($|V|$-dim, mostly zero) and high-dimensional. They capture *some* synonymy but they are unwieldy to plug into neural nets — which motivates **dense embeddings** in the next chunk.",
+    "checks": [
+      {
+        "q": "Why does PPMI clip negative PMI values to 0?",
+        "options": [
+          {"id": "1", "text": "Negative numbers cannot be stored efficiently in sparse matrices."},
+          {"id": "2", "text": "Negative PMI (a pair appearing less than chance) has no reliable interpretation from sparse co-occurrence data."},
+          {"id": "3", "text": "Negative PMI always indicates antonymy, which we want to ignore."},
+          {"id": "4", "text": "PMI is always non-negative by construction; the clip is a no-op."}
+        ],
+        "correct": "2",
+        "explanation": "Negative PMI says the pair occurs LESS than chance, but with limited data this is unreliable noise. PPMI drops it. PMI is definitely not non-negative, so option 4 is wrong."
+      },
+      {
+        "q": "Why are document-term matrix word vectors said to violate the distributional hypothesis?",
+        "options": [
+          {"id": "1", "text": "They use binary indicators instead of counts."},
+          {"id": "2", "text": "They produce dense vectors, while the hypothesis demands sparse ones."},
+          {"id": "3", "text": "Their 'context' is an entire document — far too coarse compared with the small window of nearby words the hypothesis intends."},
+          {"id": "4", "text": "They ignore word order, which the hypothesis requires."}
+        ],
+        "correct": "3",
+        "explanation": "Distributional hypothesis is about LOCAL company — nearby words. A whole document is too broad: unrelated words co-occurring in a long document get spuriously similar vectors."
+      },
+      {
+        "q": "One-hot encoding is poor for similarity because:",
+        "options": [
+          {"id": "1", "text": "It is too low-dimensional to fit in memory."},
+          {"id": "2", "text": "Distinct words get orthogonal vectors, so cosine similarity is 0 for every distinct pair."},
+          {"id": "3", "text": "It assigns the same vector to synonyms by design."},
+          {"id": "4", "text": "It violates the triangle inequality."}
+        ],
+        "correct": "2",
+        "explanation": "Every distinct one-hot vector is orthogonal to every other, so the model has zero notion of similarity — cat and kitty are as far apart as cat and bulldozer."
+      }
+    ]
+  },
+  {
+    "lecture": "7",
+    "chunk_id": "L7-2",
+    "order": 2,
+    "title": "Word2Vec: CBOW vs Skip-gram and the two embedding matrices",
+    "content_md": "**Word2Vec** (Mikolov et al. 2013) replaces sparse PPMI vectors with **dense** embeddings of dimension $d$ (typically 100–1000), learned by a small neural network as a by-product of a word-prediction task. A crucial detail that exam questions love: Word2Vec actually learns **two embeddings per word**, stored in two matrices:\n\n- **Input matrix** $V \\in \\mathbb{R}^{|V| \\times d}$: row $v_w$ is the embedding used when $w$ acts as a *context* (CBOW) or as the *center* (Skip-gram).\n- **Output matrix** $U \\in \\mathbb{R}^{d \\times |V|}$: column $u_w$ is the embedding used when $w$ is being *predicted*.\n\nTotal parameter count (no biases) is therefore $\\boxed{2 \\cdot |V| \\cdot d}$. With $|V| = 10{,}000$ and $d=300$, that's $6{,}000{,}000$ parameters — **not** $|V|d$. The final embedding you ship is typically $u_w$, $v_w$, or their average.\n\nThere are two architectures, and **the direction is the single easiest thing to flip on an exam**:\n\n**CBOW (Continuous Bag of Words)** — *Context* predicts *center*. Given a window $w_{c-m},\\dots,w_{c-1}, w_{c+1},\\dots,w_{c+m}$, sum (or average) the input embeddings into one context vector\n\n$$\\tilde v = \\sum_{-m \\le j \\le m,\\ j \\ne 0} v_{c+j}$$\n\nthen softmax over the vocab to predict the center word $w_c$:\n\n$$P(u_c \\mid \\tilde v) = \\frac{\\exp(u_c^T \\tilde v)}{\\sum_{j=1}^{|V|} \\exp(u_j^T \\tilde v)}, \\qquad L = -\\log P(u_c \\mid \\tilde v).$$\n\nMnemonic: 'Bag of Words on the outside; we **collect** the bag and **guess what's missing in the middle**.' CBOW is **faster** to train and tends to do better on frequent words (the gradient is averaged over $2m$ contexts every step).\n\n**Skip-gram** — *Center* predicts *context*. Given the center word $w_c$, predict each surrounding word independently:\n\n$$P(u_{c+j} \\mid v_c) = \\frac{\\exp(u_{c+j}^T v_c)}{\\sum_{j=1}^{|V|} \\exp(u_j^T v_c)}, \\qquad L = -\\sum_{-m \\le j \\le m,\\ j \\ne 0} \\log P(u_{c+j} \\mid v_c).$$\n\nMnemonic: 'we **skip** away from the center and try to guess each neighbour.' Skip-gram is **slower** but learns better representations for **infrequent words**, because every occurrence of a rare center word generates $2m$ training signals rather than being averaged into a bag.\n\nSo to lock the direction in:\n\n- **CBOW**: many → one (context → center). Average → softmax → guess the missing word.\n- **Skip-gram**: one → many (center → each context word). Per-position softmax.\n\nBoth share the same ingredients ($V$, $U$, dot product, softmax) — only the conditioning direction differs.\n\nThere is one obvious problem: that softmax denominator sums over the entire vocabulary $|V|$, which is enormous. Computing and back-propagating through it for every training step is prohibitively expensive. The standard fix is **negative sampling (SGNS)**, which we cover next.",
+    "checks": [
+      {
+        "q": "In Skip-gram, what does the model predict?",
+        "options": [
+          {"id": "1", "text": "The center word, given the surrounding context words."},
+          {"id": "2", "text": "Each surrounding context word independently, given the center word."},
+          {"id": "3", "text": "The next word in the sentence, given all previous words."},
+          {"id": "4", "text": "Whether two words are synonyms."}
+        ],
+        "correct": "2",
+        "explanation": "Skip-gram: CENTER predicts CONTEXT (one-to-many). CBOW is the reverse (many-to-one). Option 1 describes CBOW — easy trap."
+      },
+      {
+        "q": "With $|V| = 10{,}000$ and embedding dimension $d = 300$, how many parameters does Word2Vec store (no biases)?",
+        "options": [
+          {"id": "1", "text": "300,000 ($|V| + d$)"},
+          {"id": "2", "text": "3,000,000 ($|V| \\cdot d$)"},
+          {"id": "3", "text": "6,000,000 ($2 \\cdot |V| \\cdot d$)"},
+          {"id": "4", "text": "9,000,000 ($3 \\cdot |V| \\cdot d$)"}
+        ],
+        "correct": "3",
+        "explanation": "Word2Vec keeps TWO matrices — input V (|V|×d) and output U (d×|V|) — so total = 2|V|d = 2·10000·300 = 6,000,000."
+      },
+      {
+        "q": "Which statement about CBOW is correct?",
+        "options": [
+          {"id": "1", "text": "It is slower than Skip-gram and better for rare words."},
+          {"id": "2", "text": "It treats the context as ordered and uses a recurrent network."},
+          {"id": "3", "text": "It sums or averages context embeddings, then predicts the center word with a softmax."},
+          {"id": "4", "text": "It avoids the softmax entirely by construction."}
+        ],
+        "correct": "3",
+        "explanation": "CBOW: context → center. The bag (sum/average) of context input embeddings forms ṽ, and a softmax over |V| picks the center. It is faster than Skip-gram (option 1 swaps them) and still uses softmax (option 4)."
+      }
+    ]
+  },
+  {
+    "lecture": "7",
+    "chunk_id": "L7-3",
+    "order": 3,
+    "title": "Negative sampling (SGNS): turning prediction into binary classification",
+    "content_md": "The full softmax in CBOW/Skip-gram has a denominator $\\sum_{j=1}^{|V|} \\exp(u_j^T v_c)$ that touches every word in the vocabulary on every training step. For $|V|$ in the hundreds of thousands this is prohibitive. **Skip-gram with Negative Sampling (SGNS)** replaces this multi-class problem with a much cheaper **binary classification**: 'is this $(\\text{center}, \\text{context})$ pair real, or did I make it up?'\n\nFor a true pair $(c, m)$ from the corpus we want a high probability of the label '+', modelled by a sigmoid on the dot product:\n\n$$P(+\\mid c, m) = \\sigma(u_m^T v_c) = \\frac{1}{1 + \\exp(-u_m^T v_c)}.$$\n\nFor each true pair we draw $k$ **negative** pairs $(c, m')$ where $m'$ is a randomly sampled word, and ask the model to push their probability of '+' down — equivalently, push $\\sigma(-u_{m'}^T v_c)$ up. The full SGNS loss over a batch is\n\n$$L = -\\!\\left[ \\sum_{(c,m) \\in B_{\\text{pos}}} \\log \\sigma(u_m^T v_c) \\;+\\; \\sum_{(c,m) \\in B_{\\text{neg}}} \\log \\sigma(-u_m^T v_c) \\right].$$\n\nNotice we no longer need a $|V|$-wide softmax: each step touches only $1 + k$ output vectors. Typical $k$ is 5–20 for small corpora, 2–5 for large ones.\n\n**How are negatives sampled?** Not uniformly, and not from the raw unigram distribution. Word2Vec uses an **$\\alpha$-weighted** unigram:\n\n$$P_\\alpha(w_i) = \\frac{\\mathrm{Count}(w_i)^\\alpha}{\\sum_{w \\in V} \\mathrm{Count}(w)^\\alpha}, \\qquad 0 < \\alpha < 1$$\n\nwith $\\alpha = 0.75$ being the canonical choice. Why $\\alpha < 1$? Raising counts to a power less than 1 **flattens** the distribution: very frequent words like 'the' get *less* relative mass than under raw unigram sampling, while rare words get *more*. This gives rare words a fairer shot at being chosen as informative negatives, and avoids the model wasting capacity perpetually pushing 'the' away from every center word.\n\nA few practical training details worth remembering for an exam:\n\n- **Window size** is typically $\\pm 2$ to $\\pm 10$. Larger windows capture more topical similarity; smaller windows capture more syntactic similarity.\n- **Subsampling of frequent words** (Mikolov et al.) drops 'the', 'of', 'and' with probability $1 - \\sqrt{t/f(w)}$ during training — a separate trick from $\\alpha$-weighted negatives.\n- After training, the standard 'embedding' you export is one of: $u_w$ alone, $v_w$ alone, or the average $(u_w + v_w)/2$.\n- SGNS has been shown (Levy & Goldberg) to *implicitly* factorise a shifted PMI matrix — connecting it back to the sparse vectors of the previous chunk.\n\nThe net effect: SGNS keeps the conceptual core of Skip-gram (center predicts context) but replaces an expensive normalisation with a cheap, sampled binary task. It is the version of Word2Vec used in essentially all practical implementations.",
+    "checks": [
+      {
+        "q": "What problem does negative sampling primarily solve?",
+        "options": [
+          {"id": "1", "text": "Polysemy: it gives each word sense its own vector."},
+          {"id": "2", "text": "The full softmax over $|V|$ is too expensive; SGNS replaces it with a cheap binary classification using $k$ sampled negatives."},
+          {"id": "3", "text": "Antonyms ending up close in vector space."},
+          {"id": "4", "text": "The need to pre-train on a tagged corpus."}
+        ],
+        "correct": "2",
+        "explanation": "SGNS swaps multi-class softmax over the whole vocabulary for binary classification: real (c,m) pair vs k sampled negatives. It does NOT fix polysemy or the antonym trap."
+      },
+      {
+        "q": "Why are negative samples drawn from $P_\\alpha(w) \\propto \\mathrm{Count}(w)^\\alpha$ with $0 < \\alpha < 1$ rather than from the raw unigram distribution?",
+        "options": [
+          {"id": "1", "text": "It makes the sampling distribution more peaked, focusing on the most frequent words."},
+          {"id": "2", "text": "It is mathematically required for the loss to be well-defined."},
+          {"id": "3", "text": "It flattens the distribution, giving rare words more chance of being sampled and preventing the model from wasting capacity on 'the', 'of', etc."},
+          {"id": "4", "text": "It guarantees the negative sample never coincides with the true context word."}
+        ],
+        "correct": "3",
+        "explanation": "Exponent α<1 (typically 0.75) FLATTENS the unigram — rare words get up-weighted relative to raw frequency, common words get down-weighted. It's a fairness/quality trick, not a correctness requirement."
+      },
+      {
+        "q": "Under SGNS, the probability that a (center, context) pair is a real positive is modelled as:",
+        "options": [
+          {"id": "1", "text": "$\\mathrm{softmax}(u_m^T v_c)$ over the full vocabulary."},
+          {"id": "2", "text": "$\\sigma(u_m^T v_c)$, a sigmoid on the dot product."},
+          {"id": "3", "text": "The cosine similarity between $u_m$ and $v_c$."},
+          {"id": "4", "text": "$1 - \\sigma(u_m^T v_c)$."}
+        ],
+        "correct": "2",
+        "explanation": "SGNS uses a sigmoid on u_m^T v_c for positives and σ(-u_m^T v_c) for negatives — pure binary logistic classification, no softmax."
+      }
+    ]
+  },
+  {
+    "lecture": "7",
+    "chunk_id": "L7-4",
+    "order": 4,
+    "title": "Properties and limitations: linear analogies and the antonym trap",
+    "content_md": "Once Word2Vec has trained, the resulting dense vectors have a remarkable and somewhat unexpected property: they exhibit **linear substructures**. Many semantic and syntactic relationships correspond to roughly constant vector offsets. The famous example is\n\n$$v(\\text{king}) - v(\\text{man}) + v(\\text{woman}) \\approx v(\\text{queen}),$$\n\nwhere we subtract a 'male' direction and add a 'female' direction. The same trick works for tense ($v(\\text{walk}) \\to v(\\text{walked})$, $v(\\text{swim}) \\to v(\\text{swam})$) and comparatives ($v(\\text{fast}) \\to v(\\text{faster}) \\to v(\\text{fastest})$). At evaluation time you find the answer to 'a is to b as c is to ?' by computing $\\arg\\max_w \\cos(v_w,\\ v_b - v_a + v_c)$ over the vocabulary (excluding $a, b, c$ themselves).\n\nThat said, the limitations are at least as exam-relevant as the wins, and the biggest one is the **antonym trap**.\n\n**The antonym trap (slide 58 — high-yield).** Distributional embeddings cannot distinguish polarity. Consider 'scary' and 'funny': both appear in *very similar contexts* — 'a ___ movie', 'a ___ scene', 'really ___', surrounded by words like 'film', 'watch', 'kids'. Because the distributional hypothesis says 'similar company ⇒ similar meaning', Word2Vec dutifully places **scary and funny close together**, even though their sentiment is opposite. Same story for 'hate' and 'love', 'good' and 'bad', 'increase' and 'decrease'. So a question like 'are scary and funny far apart in Word2Vec space?' is a classic trap — the correct answer is **no, they are close**. This is a serious problem for sentiment analysis, where polarity is exactly what you care about.\n\nOther limitations worth memorising:\n\n- **Polysemy**: a single vector per word type means 'bank' (river vs financial), 'light' (weight vs photons), 'mean' (average vs unkind) all collapse into one blended vector. Word2Vec cannot represent senses separately. (Contextual embeddings from Transformers — L9 — fix this.)\n- **Phrases / multi-word expressions**: 'New York' and 'hot dog' are not the sum of their parts ('hot' + 'dog' ≠ frankfurter). Word2Vec gives one vector per *token*, so phrases get crushed.\n- **Corpus dependence**: the vector for 'house' learned on Wikipedia differs from the one learned on Google News — neighbours change with the training corpus. Embeddings are not universal.\n- **Stemming / lemmatisation interacts badly with linear analogies**: collapsing 'walk', 'walked', 'walking' to a single token destroys the tense regularity that powers analogies.\n- **Cosine vs raw dot product**: dot product mixes direction and magnitude; for similarity comparisons, normalise first or use cosine. Once normalised, dot product and cosine agree.\n\nA useful mental summary: Word2Vec captures **distributional similarity** beautifully, but distributional similarity is *not the same as* semantic equivalence. It is symmetric, polarity-blind, sense-blind, and phrase-blind. Knowing exactly *where* it breaks is at least as important as knowing the equations.",
+    "checks": [
+      {
+        "q": "In Word2Vec embeddings trained on movie reviews, what is true of the vectors for 'scary' and 'funny'?",
+        "options": [
+          {"id": "1", "text": "They are far apart, because their sentiments are opposite."},
+          {"id": "2", "text": "They are orthogonal, because Word2Vec separates antonyms by construction."},
+          {"id": "3", "text": "They are close together, because they appear in very similar contexts."},
+          {"id": "4", "text": "Their similarity depends only on the embedding dimension, not the training data."}
+        ],
+        "correct": "3",
+        "explanation": "The antonym trap: distributional embeddings group antonyms together because they share contexts ('a ___ movie'). Polarity is invisible to the distributional hypothesis — bad news for sentiment analysis."
+      },
+      {
+        "q": "Which of the following is NOT a known limitation of Word2Vec?",
+        "options": [
+          {"id": "1", "text": "It assigns a single vector to a polysemous word like 'bank'."},
+          {"id": "2", "text": "It cannot represent multi-word phrases like 'New York' as a unit."},
+          {"id": "3", "text": "It places antonyms close together in vector space."},
+          {"id": "4", "text": "It cannot be trained without a parallel corpus in two languages."}
+        ],
+        "correct": "4",
+        "explanation": "Word2Vec is monolingual self-supervised — no parallel corpus needed. The other three (polysemy, phrases, antonym closeness) are real Word2Vec weaknesses."
+      },
+      {
+        "q": "Why do linear analogies like king − man + woman ≈ queen tend to BREAK after aggressive lemmatisation?",
+        "options": [
+          {"id": "1", "text": "Lemmatisation introduces noise that biases PMI estimates."},
+          {"id": "2", "text": "Variants like 'walk', 'walked', 'walking' collapse into a single token, so tense/inflection regularities can no longer be expressed as offsets."},
+          {"id": "3", "text": "Lemmatisation is incompatible with negative sampling."},
+          {"id": "4", "text": "Lemmatisation forces all vectors to unit norm, which destroys arithmetic."}
+        ],
+        "correct": "2",
+        "explanation": "Linear analogies rely on different surface forms living at different points in space (walk → walked is a constant offset). Collapse them to one token and the offset disappears."
+      }
+    ]
+  },
+  {
+    "lecture": "7",
+    "chunk_id": "L7-5",
+    "order": 5,
+    "title": "NLP Ethics: bias in embeddings and Bolukbasi debiasing",
+    "content_md": "Word embeddings are trained on text written by humans, and human text reflects human society — including its biases. NLP ethics in this lecture is mostly conceptual, but a few specific points are exam-fair.\n\n**Dual-use.** Many NLP capabilities are double-edged: authorship attribution can identify whistleblowers as well as plagiarists; text generation can summarise news or churn out propaganda; user analysis can recommend content or enable surveillance and censorship. The capability is neutral; the deployment is not.\n\n**The bias pipeline.** A clean way to think about this: **biased society → biased data → biased model → biased predictions**. A famous illustration is gender-neutral Hungarian: 'ő egy mérnök' has a single pronoun *ő*, but machine translation to English produces 'he is an engineer' and 'she is a homemaker' — the model has absorbed an occupational gender stereotype from its training data.\n\n**Bias inside Word2Vec.** Bolukbasi et al. (2016) showed that the same linear-analogy trick that gives us king − man + woman ≈ queen also gives us\n\n$$v(\\text{programmer}) - v(\\text{man}) + v(\\text{woman}) \\approx v(\\text{homemaker}),$$\n\nwhich encodes a real-world stereotype directly into the geometry. It also shows up in name-based sentiment (European-American names rate more positively than African-American names) and many other axes.\n\n**Bolukbasi debiasing pipeline.** The idea: identify a 'gender direction' in the embedding space and project it out of words that *should* be gender-neutral, while leaving genuinely gendered words (king, queen, mother, father) alone.\n\n1. **Measure bias.** Use she–he analogies subject to a cosine + $\\delta$ similarity constraint to surface biased word pairs (e.g. nurse / surgeon).\n2. **Identify the gender subspace via PCA.** Take a list of gendered word pairs $\\{(\\text{he, she}), (\\text{man, woman}), (\\text{father, mother}),\\dots\\}$, compute the difference vectors $v_{w_1} - v_{w_2}$, and run PCA. The top principal components span the **gender subspace** $B$ — typically $B$ is taken to be 1-dimensional (the leading PC).\n3. **Split the vocabulary.** Train a binary classifier (or use word lists) to label each word as **gender-specific** $S$ (king, queen, brother, sister) or **gender-neutral** $N$ (programmer, nurse, doctor). Only $N$ words should be debiased.\n4. **Learn a transformation $T$** that preserves the embedding geometry on $S$ while projecting away the gender component on $N$:\n\n$$\\min_T\\ \\|(TW)^T(TW) - W^T W\\|_F^2 \\;+\\; \\lambda\\, \\|(TN)^T(TB)\\|_F^2.$$\n\nThe first term keeps the overall pairwise inner-product structure of the embedding matrix $W$ (don't damage what already works). The second term, weighted by $\\lambda$, drives the projections of neutral words $N$ onto the gender subspace $B$ to zero — neutral words should have **no component** along the gender direction after transformation. Crucially, gender-specific words in $S$ are not penalised, so 'queen' keeps its gender flavour.\n\nA few caveats worth knowing: debiasing along one axis (gender) does not fix biases along other axes (race, age, nationality); residual bias often remains detectable by stronger probes even after Bolukbasi-style transformation; and removing geometric bias from the embedding does not by itself eliminate biased *behaviour* in a downstream classifier trained on biased labels.",
+    "checks": [
+      {
+        "q": "In the Bolukbasi debiasing pipeline, how is the 'gender subspace' identified?",
+        "options": [
+          {"id": "1", "text": "By taking the average of all word vectors that contain a gendered pronoun."},
+          {"id": "2", "text": "By running PCA on the difference vectors of gendered word pairs (he−she, man−woman, father−mother, …) and keeping the top components."},
+          {"id": "3", "text": "By training a separate Word2Vec model on a gender-only corpus."},
+          {"id": "4", "text": "By solving a linear system that makes the cosine similarity of all word pairs equal."}
+        ],
+        "correct": "2",
+        "explanation": "Step 2 of Bolukbasi: compute v_he − v_she, v_man − v_woman, etc., PCA the differences, and the top component(s) span the gender subspace B."
+      },
+      {
+        "q": "What is the role of the second term $\\lambda \\|(TN)^T (TB)\\|_F^2$ in the Bolukbasi loss?",
+        "options": [
+          {"id": "1", "text": "It forces gender-specific words to lose their gender component."},
+          {"id": "2", "text": "It preserves the original pairwise inner products of the embedding matrix."},
+          {"id": "3", "text": "It drives the projection of gender-neutral words $N$ onto the gender subspace $B$ to zero, removing gender bias from neutral words only."},
+          {"id": "4", "text": "It regularises the transformation $T$ to be orthogonal."}
+        ],
+        "correct": "3",
+        "explanation": "The first term preserves geometry; the second zeros out gender component on NEUTRAL words (N), leaving gender-specific words S untouched. Option 1 swaps which set is debiased."
+      },
+      {
+        "q": "Which is the best summary of how bias enters word embeddings?",
+        "options": [
+          {"id": "1", "text": "The negative sampling distribution α<1 introduces a bias toward rare, stereotyped words."},
+          {"id": "2", "text": "Embeddings learn from human-written corpora, so societal stereotypes in the data become geometric regularities in the embedding space."},
+          {"id": "3", "text": "Biases come from the random initialisation of the embedding matrices."},
+          {"id": "4", "text": "Bias only appears after fine-tuning on a downstream task."}
+        ],
+        "correct": "2",
+        "explanation": "Pipeline: biased society → biased text → biased embeddings. The model just faithfully encodes co-occurrence patterns it sees, including stereotypical ones (programmer−man+woman≈homemaker)."
+      }
+    ]
+  }
+]

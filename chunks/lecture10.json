@@ -1,0 +1,212 @@
+[
+  {
+    "lecture": "10",
+    "chunk_id": "L10-1",
+    "order": 1,
+    "title": "BERT: Encoder-Only Pretraining with MLM + NSP",
+    "content_md": "BERT (Bidirectional Encoder Representations from Transformers) is the canonical **encoder-only** transformer LLM. Unlike GPT, it has no decoder and no causal mask: every token attends to every other token in both directions. That bidirectional context is what makes BERT excellent for *understanding* tasks (classification, NER, extractive QA) and **unsuitable** for free-form text generation, which needs an autoregressive head.\n\nBERT is pretrained self-supervised on two objectives simultaneously:\n\n1. **Masked Language Modeling (MLM).** Roughly **15%** of input tokens are replaced with `[MASK]` (with the 80/10/10 split — 80% `[MASK]`, 10% random token, 10% unchanged) and the model must predict the original tokens from surrounding context: $\\mathcal{L}_{\\text{MLM}} = -\\sum_{i \\in M} \\log P(x_i \\mid x_{\\setminus M})$, where $M$ is the set of masked positions. Because every prediction can attend to tokens on both sides, BERT learns a deeply bidirectional representation — this is impossible for a left-to-right LM, which would trivially see the answer.\n\n2. **Next Sentence Prediction (NSP).** A binary classifier decides whether sentence B truly follows sentence A or is a random sentence. Loss: $\\mathcal{L}_{\\text{NSP}} = -\\log P(\\text{IsNext} \\mid [\\text{CLS}], A, [\\text{SEP}], B, [\\text{SEP}])$. The intent was to teach inter-sentence reasoning useful for entailment and QA.\n\n**Input format.** BERT consumes a single sequence shaped like `[CLS] Sentence A [SEP] Sentence B [SEP]`. Three embeddings are summed per position: token + segment (A/B) + learned absolute position. The final hidden state of `[CLS]` is the conventional sequence-level representation fed to a classifier head; `[SEP]` is purely a separator. A common exam trap is to swap `[CLS]` and `[SEP]` or to insert `[MASK]` into the format — those are wrong.\n\n**Fine-tuning paradigm.** Pretrain once on a huge generic corpus, then *fine-tune all parameters* on a small task-specific dataset by attaching a tiny head: a linear layer over `[CLS]` for sentence classification, a token-level linear layer for NER, two pointer heads (start/end) for SQuAD-style extractive QA. This \"pretrain-then-fine-tune\" pattern is what made BERT a watershed: a single backbone covers many tasks, and downstream models converge in a few epochs because the backbone already knows language.\n\n**Why bidirectionality matters.** Consider \"The bank raised its [MASK] rate.\" A left-to-right LM only sees \"The bank raised its\" and might guess \"interest\" from priors, but BERT also sees the right context \"rate\", which sharply narrows the distribution. This same property, however, is precisely why you cannot generate text autoregressively from BERT — the model assumes future tokens are visible. Generation requires causal masking (Lecture 10's GPT chunk).\n\n**Trap summary.** BERT is encoder-only with MLM+NSP — *not* autoregressive, *not* a generator. It has no `<eos>` and no decoder cross-attention. Encoder-only suits classification/NER/extractive QA; encoder-decoder (T5/BART) suits seq2seq; decoder-only (GPT) suits generation. Memorize that triad and most architecture-choice questions become trivial.",
+    "checks": [
+      {
+        "q": "Which pair of objectives is BERT pretrained on?",
+        "options": [
+          {"id": "1", "text": "Causal LM and span corruption"},
+          {"id": "2", "text": "Masked LM (~15%) and Next Sentence Prediction"},
+          {"id": "3", "text": "Denoising autoencoding and document rotation"},
+          {"id": "4", "text": "Translation and summarization"}
+        ],
+        "correct": "2",
+        "explanation": "BERT uses MLM (predict ~15% masked tokens with bidirectional context) plus NSP (does sentence B follow A?). Causal LM is GPT; denoising/rotation is BART; multi-task text-to-text is T5."
+      },
+      {
+        "q": "Why is vanilla BERT a poor choice for free-form text generation?",
+        "options": [
+          {"id": "1", "text": "Its tokenizer is too small"},
+          {"id": "2", "text": "It is encoder-only, bidirectional, and lacks an autoregressive head with causal masking"},
+          {"id": "3", "text": "Its context window is too short"},
+          {"id": "4", "text": "It uses RoPE which prevents generation"}
+        ],
+        "correct": "2",
+        "explanation": "BERT has no causal mask and no autoregressive decoder. Bidirectional attention lets every position see future tokens, which is incompatible with left-to-right generation."
+      },
+      {
+        "q": "For sentence-pair entailment with BERT, which input format is correct?",
+        "options": [
+          {"id": "1", "text": "[SEP] Sentence A [CLS] Sentence B [SEP]"},
+          {"id": "2", "text": "[MASK] Sentence A [SEP] Sentence B [MASK]"},
+          {"id": "3", "text": "[CLS] Sentence A [SEP] Sentence B [SEP]"},
+          {"id": "4", "text": "Sentence A [CLS] Sentence B [SEP]"}
+        ],
+        "correct": "3",
+        "explanation": "The canonical format is [CLS] A [SEP] B [SEP]. The final hidden state of [CLS] feeds the classifier; [SEP] separates the two segments."
+      }
+    ]
+  },
+  {
+    "lecture": "10",
+    "chunk_id": "L10-2",
+    "order": 2,
+    "title": "RoBERTa, T5, and BART: Refinements and Encoder-Decoder Denoising",
+    "content_md": "Once BERT showed pretrain-then-fine-tune worked, the next wave of papers asked: *what's actually load-bearing?* The answer reshaped how we pretrain.\n\n**RoBERTa (Robustly Optimized BERT).** Same architecture as BERT, but trained smarter. Three changes matter:\n\n- **Drops NSP.** Empirically NSP barely helps; removing it and just packing long contiguous text actually improves downstream scores. (ALBERT later replaced NSP with Sentence-Order Prediction, SOP — not the same thing.)\n- **Dynamic masking.** BERT masks tokens **once** during preprocessing (static); the same mask pattern repeats every epoch. RoBERTa **re-masks** each time a sequence is fed in, so the model sees many different masking patterns of the same sentence — more effective signal per token.\n- **More data, larger batches, longer training.** Pure scale.\n\nThe lesson: BERT was *under-trained*, and one of its objectives (NSP) was nearly useless. RoBERTa is the same encoder-only family, just MLM-only and beefier.\n\n**T5 (Text-to-Text Transfer Transformer).** T5 is **encoder-decoder**. The radical reframing is: *every* NLP task becomes text-in, text-out. Translation, classification, regression, QA — all expressed by prefixing the input with a task tag like `translate English to German:` or `stsb sentence1: ... sentence2: ...`. The output for a regression task like STS-B is a literal string `\"3.2\"`. This unifies the loss (cross-entropy over output tokens) and lets one checkpoint do everything.\n\nT5's pretraining objective is a **span-corruption denoising**: random spans of the input are replaced with sentinel tokens like `<X>`, `<Y>`, and the decoder must produce the missing spans, separated by the same sentinels. The encoder reads the corrupted input bidirectionally; the decoder generates autoregressively, with cross-attention into the encoder.\n\n**BART (Bidirectional and Auto-Regressive Transformer).** BART is also encoder-decoder, deliberately combining \"BERT encoder + GPT decoder.\" Pretraining is **document-level denoising**: corrupt the input, reconstruct the *full original document*. Corruption strategies are richer than T5's:\n\n- **Token masking** (BERT-like)\n- **Token deletion** (model must also figure out *where* tokens were)\n- **Text infilling** (mask spans of varying length with a single `[MASK]`)\n- **Sentence permutation** (shuffle sentence order)\n- **Document rotation** (rotate the document around a random token)\n\nThe loss is cross-entropy between decoder output and the original document. The diversity of corruptions is what makes BART strong on summarization and generative QA: it has been forced to recover global document structure, not just local tokens.\n\n**When to pick which?** A clean three-way split governs the exam:\n\n- *Encoder-only (BERT, RoBERTa)* → sentence/token classification, NER, extractive QA. Bidirectional context, no generation.\n- *Encoder-decoder (T5, BART)* → translation, summarization, generative QA, anything that maps a source sequence to a target sequence with both understanding and generation.\n- *Decoder-only (GPT, LLaMA)* → open-ended generation, chatbots, in-context/few-shot tasks.\n\nA classic trap is calling BART \"like BERT.\" BART *uses* a BERT-style encoder, but it is **not** encoder-only — its decoder generates autoregressively, which is why it can summarize whereas BERT cannot.",
+    "checks": [
+      {
+        "q": "Which statement about RoBERTa vs BERT is correct?",
+        "options": [
+          {"id": "1", "text": "RoBERTa adds NSP and uses static masking"},
+          {"id": "2", "text": "RoBERTa drops NSP and uses dynamic masking"},
+          {"id": "3", "text": "RoBERTa replaces MLM with causal LM"},
+          {"id": "4", "text": "RoBERTa is decoder-only"}
+        ],
+        "correct": "2",
+        "explanation": "RoBERTa keeps BERT's encoder-only architecture but drops NSP, switches to dynamic masking (re-masked each epoch), and trains on more data for longer."
+      },
+      {
+        "q": "BART's pretraining objective is best described as:",
+        "options": [
+          {"id": "1", "text": "Predict the next token given only left context"},
+          {"id": "2", "text": "Mask 15% of tokens and predict them in place"},
+          {"id": "3", "text": "Corrupt a document (mask, delete, permute, rotate, infill) and reconstruct the original"},
+          {"id": "4", "text": "Predict whether sentence B follows sentence A"}
+        ],
+        "correct": "3",
+        "explanation": "BART is an encoder-decoder denoising autoencoder: the encoder sees a corrupted document and the decoder regenerates the full original document. Multiple corruption types (deletion, sentence permutation, document rotation, text infilling) push it beyond BERT-style local masking."
+      },
+      {
+        "q": "You need to summarize long news articles into 3-sentence abstracts. Which architecture family is the most natural fit?",
+        "options": [
+          {"id": "1", "text": "Encoder-only (BERT/RoBERTa)"},
+          {"id": "2", "text": "Encoder-decoder (T5/BART)"},
+          {"id": "3", "text": "A bag-of-words classifier"},
+          {"id": "4", "text": "An n-gram language model"}
+        ],
+        "correct": "2",
+        "explanation": "Summarization is a seq2seq task: read a source document (encoder), generate a target sequence (decoder). T5 and BART are designed exactly for this. Encoder-only BERT cannot generate."
+      }
+    ]
+  },
+  {
+    "lecture": "10",
+    "chunk_id": "L10-3",
+    "order": 3,
+    "title": "GPT: Decoder-Only, Causal Masking, and the Sliding-Window Data Pipeline",
+    "content_md": "GPT (Generative Pretrained Transformer) is the **decoder-only** branch of the family tree, and post-2022 it dominates: simpler, cheaper, generative, and surprisingly good at zero-shot tasks. The architecture is a stack of transformer decoder blocks — but with the *cross-attention* sublayer removed, since there is no encoder. What remains is masked self-attention plus a feed-forward block per layer.\n\n**Causal masking.** This is the defining feature. Inside self-attention, an upper-triangular mask sets attention scores at position $t$ to $-\\infty$ for any key at position $> t$, so position $t$ can only attend to positions $\\le t$. The model thus produces $P(x_t \\mid x_{<t})$ for every position in parallel. Training loss is the standard causal/autoregressive LM loss:\n\n$$\\mathcal{L}_{\\text{CLM}} = -\\sum_{t} \\log P(x_t \\mid x_{<t}).$$\n\nA crucial trap: causal masking is required at **both training and inference**. At inference the prompt is processed all at once (so future positions must be hidden during prefill); then generation proceeds one token at a time, each new token appended to the running context. Removing the mask would let the model peek ahead, breaking the autoregressive guarantee.\n\n**Why decoder-only beats encoder-decoder for chat.** With one stack you handle both \"understanding\" the prompt and \"producing\" the answer — they are the same operation: predict the next token. There is no architectural seam between input and output. This makes few-shot prompting (Chunk 5) natural: just concatenate examples and the query into the context.\n\n**Sliding-window data preparation.** The GPT pretraining pipeline is mechanical and worth memorizing because it shows up as a worked example.\n\n1. **Stream the corpus.** Concatenate all documents into one long token stream, separated by a special `[EOS]` (end-of-sequence) token: $\\text{doc}_1 + [\\text{EOS}] + \\text{doc}_2 + [\\text{EOS}] + \\dots$. The `[EOS]` lets the model learn document boundaries — it can decide to stop generating.\n\n2. **Tokenize once.** Apply the BPE/WordPiece tokenizer to the whole stream.\n\n3. **Slide a context window.** Pick a context length $L$ (say 6 in toy demos, 2048+ in real models) and a stride. With **50% overlap**, consecutive training examples share half their tokens, which doubles the number of training contexts and lets every token appear at multiple positions. With stride = $L$ (no overlap) you get fewer, non-redundant samples.\n\n4. **Targets.** For a context window $x_1, \\dots, x_L$, the target is the same window **shifted left by one**: $x_2, \\dots, x_{L+1}$. Position $t$ predicts position $t+1$. Causal masking makes this safe: even though the whole window is fed in parallel, position $t$ cannot see $x_{t+1}$ during its computation.\n\n**Toy worked example.** 100k IMDB reviews → tokenize → join with `[EOS]` → context size 6, stride 3 (50% overlap). One window might be `[the, movie, was, surprisingly, good, [EOS]]` with target `[movie, was, surprisingly, good, [EOS], the]` (the next sample then starts with `[surprisingly, good, [EOS], the, plot, was]`).\n\n**Memory note.** Training takes far more memory than inference — not because the model is bigger, but because you must store activations for backprop, gradients, and optimizer state (Adam keeps two moments per parameter). The model itself is loaded for both. So \"more memory because the model is larger\" is a wrong rationale; the right answer points at activations + optimizer state.",
+    "checks": [
+      {
+        "q": "When is causal masking required in a GPT-style decoder-only model?",
+        "options": [
+          {"id": "1", "text": "Only during training"},
+          {"id": "2", "text": "Only during inference"},
+          {"id": "3", "text": "During both training and inference"},
+          {"id": "4", "text": "Never — it is replaced by NSP"}
+        ],
+        "correct": "3",
+        "explanation": "Causal masking is needed at both stages. At inference the prompt is processed in parallel (prefill) and future positions must still be hidden so each position predicts only from its left context."
+      },
+      {
+        "q": "In the sliding-window data pipeline, what is the target for a context window x_1, ..., x_L?",
+        "options": [
+          {"id": "1", "text": "The same window shuffled"},
+          {"id": "2", "text": "The window shifted left by one token: x_2, ..., x_{L+1}"},
+          {"id": "3", "text": "A masked copy of the window"},
+          {"id": "4", "text": "A sentence-pair label (IsNext / NotNext)"}
+        ],
+        "correct": "2",
+        "explanation": "Causal LM targets are inputs shifted left by 1 — position t predicts token t+1. Causal masking ensures position t cannot see x_{t+1} during the forward pass, so the target is not leaked."
+      },
+      {
+        "q": "Why does training a GPT need substantially more memory than inference, even when the model size is identical?",
+        "options": [
+          {"id": "1", "text": "The model parameters double during training"},
+          {"id": "2", "text": "Training stores activations for backprop, gradients, and optimizer state (e.g., Adam moments)"},
+          {"id": "3", "text": "Inference doesn't load the model"},
+          {"id": "4", "text": "Causal masking uses extra memory only at training"}
+        ],
+        "correct": "2",
+        "explanation": "Both stages load the model. Training additionally needs cached activations for the backward pass, gradient tensors, and optimizer state (Adam keeps first and second moments per parameter), which dominates the memory footprint."
+      }
+    ]
+  },
+  {
+    "lecture": "10",
+    "chunk_id": "L10-4",
+    "order": 4,
+    "title": "LLaMA Refinements: Pre-Norm, SwiGLU, and RoPE",
+    "content_md": "LLaMA is architecturally still a decoder-only transformer like GPT, but it cleans up three details that turn out to matter at scale: **where** you put LayerNorm, **which** activation the MLP uses, and **how** positions are encoded.\n\n**1. Pre-normalization.** The original Transformer applies LayerNorm *after* the residual add (post-norm): $x_{\\ell+1} = \\text{LN}(x_\\ell + \\text{Sublayer}(x_\\ell))$. LLaMA (and GPT-2/3 onward) puts LayerNorm *before* the sublayer, **inside** the residual branch: $x_{\\ell+1} = x_\\ell + \\text{Sublayer}(\\text{LN}(x_\\ell))$. With pre-norm, the residual highway is unnormalized — gradients flow more cleanly through the depth, removing the warmup-and-tuning fragility of post-norm. LLaMA also uses RMSNorm rather than full LayerNorm, but the key exam point is *pre-* vs *post-*norm.\n\n**2. SwiGLU activation.** The MLP block in vanilla transformers is $\\text{ReLU}(xW_1 + b_1)W_2 + b_2$ (or GELU). LLaMA replaces it with **SwiGLU**, a gated linear unit using the Swish activation:\n\n$$\\text{SwiGLU}(x) = (xW + b) \\otimes \\text{Swish}_\\beta(xV + c), \\quad \\text{Swish}(x) = x \\cdot \\sigma(\\beta x).$$\n\nTwo linear projections multiply elementwise; one is gated through Swish. Empirically SwiGLU gives small but consistent perplexity wins, hence its near-universal adoption in modern LLMs.\n\n**3. RoPE (Rotary Positional Embeddings).** This is the most exam-worthy refinement. Original Transformers add an *absolute* positional encoding (sinusoidal or learned) to token embeddings before the first layer. RoPE instead **rotates** the query and key vectors *inside attention* by an angle proportional to the token's position:\n\n$$\\mathbf{R}_{\\theta, m} = \\begin{bmatrix}\\cos m\\theta & -\\sin m\\theta\\\\ \\sin m\\theta & \\cos m\\theta\\end{bmatrix}$$\n\napplied to each 2-D pair inside $q$ and $k$ at position $m$. The trick: when you take the dot product $q_m^\\top k_n$ of a rotated query at position $m$ with a rotated key at position $n$, the result depends only on the **relative position** $m - n$, not on absolute $m$ and $n$ separately. So attention is *automatically* a function of relative distance — you get the benefits of relative positional encoding without an explicit relative-bias table.\n\n**Frequencies.** RoPE uses many rotation angles, one per 2-D channel pair: $\\Theta = \\{\\theta_i = B^{-2(i-1)/d}\\}$ with base $B \\approx 10000$. Low-index channels rotate fast (encode short-range distance), high-index channels rotate slowly (encode long-range distance). It's a positional Fourier basis built into attention.\n\n**Extrapolation.** Because positions enter as rotations rather than as a fixed lookup table, RoPE *extrapolates* gracefully to context lengths not seen during training (with tricks like NTK-aware scaling or YaRN, you can stretch a 4k-trained model to 32k+ without retraining). Absolute learned positional embeddings cannot do this — they have no entry for unseen positions.\n\n**Putting it together.** A LLaMA decoder block looks like: RMSNorm → Multi-Head Attention with RoPE-rotated Q/K → residual add → RMSNorm → SwiGLU MLP → residual add. Same causal mask as GPT, same autoregressive training. The combination of pre-norm + SwiGLU + RoPE is now the standard recipe (Mistral, Qwen, DeepSeek, Gemma all follow it), so memorize the trio.",
+    "checks": [
+      {
+        "q": "Where does LayerNorm sit in a LLaMA-style pre-norm transformer block?",
+        "options": [
+          {"id": "1", "text": "After the residual add, applied to the sum"},
+          {"id": "2", "text": "Inside the residual branch, before the sublayer"},
+          {"id": "3", "text": "Only on the input embedding, never inside blocks"},
+          {"id": "4", "text": "Replaced entirely by RoPE"}
+        ],
+        "correct": "2",
+        "explanation": "Pre-norm: x_{l+1} = x_l + Sublayer(LN(x_l)). LayerNorm is inside the residual branch, before the sublayer. The unnormalized residual highway gives cleaner gradients than the original post-norm design."
+      },
+      {
+        "q": "What is the central property of RoPE that makes it attractive?",
+        "options": [
+          {"id": "1", "text": "It adds a learned absolute position vector to token embeddings"},
+          {"id": "2", "text": "Rotating Q and K by position m makes the attention dot product depend only on the relative distance m - n"},
+          {"id": "3", "text": "It removes the need for self-attention"},
+          {"id": "4", "text": "It only works with bidirectional encoders"}
+        ],
+        "correct": "2",
+        "explanation": "RoPE rotates Q and K by an angle proportional to position. The dot product q_m . k_n then depends only on m - n, giving relative positional information for free, and extrapolates to lengths beyond training."
+      },
+      {
+        "q": "Which trio of refinements characterizes LLaMA relative to vanilla GPT?",
+        "options": [
+          {"id": "1", "text": "Post-norm, ReLU, learned absolute positions"},
+          {"id": "2", "text": "Pre-norm, SwiGLU, RoPE"},
+          {"id": "3", "text": "MLM objective, NSP, segment embeddings"},
+          {"id": "4", "text": "Encoder-decoder split, cross-attention, sinusoidal PE"}
+        ],
+        "correct": "2",
+        "explanation": "LLaMA's three architectural choices are pre-normalization (LN inside residual blocks), SwiGLU MLPs, and RoPE rotary positional embeddings. This is now the de-facto modern decoder-only recipe."
+      }
+    ]
+  },
+  {
+    "lecture": "10",
+    "chunk_id": "L10-5",
+    "order": 5,
+    "title": "In-Context Learning, RLHF, Data Curation, and Cost",
+    "content_md": "Once a decoder-only LLM is pretrained, you can use it without further weight updates by simply *prompting* it. This is the operating model behind ChatGPT-style apps and is the source of most modern alignment, capability, and safety questions.\n\n**In-Context Learning (ICL).** Provide demonstrations directly in the prompt:\n\n- **Zero-shot:** task description, no examples — \"Translate to French: hello →\".\n- **One-shot:** one demonstration — \"hello → bonjour\\nworld →\".\n- **Few-shot:** several demonstrations.\n\nThe model conditions on the demonstrations and produces an answer. **No parameters are updated.** ICL is an *emergent* ability — small models can't do it, but it appears past a scale threshold (roughly tens of billions of parameters).\n\nA counterintuitive empirical finding: the **correctness of demonstration labels barely matters**. What does matter:\n\n- **Label space** (the set of legal labels must appear).\n- **Input distribution** (demos should look like the query domain).\n- **Number of demos** and their **order** — there's strong **recency bias** (the last demo influences output most) and **majority-label bias**.\n\nSo \"ICL learns from the labels\" is a trap. It mostly conditions on format and label space.\n\n**Prompt engineering.** Beyond raw ICL, prompts can be structured: explicit instructions, role priming (\"You are an expert\\u2026\"), chain-of-thought (\"Let's think step by step\"), self-consistency sampling. These exploit the same conditioning machinery — no fine-tuning needed.\n\n**RLHF (Reinforcement Learning from Human Feedback).** Pretraining produces a fluent but unaligned LM. RLHF aligns it with human preferences:\n\n1. Sample several responses to a prompt.\n2. Humans **rank** the responses.\n3. Train a *reward model* on the rankings.\n4. Fine-tune the LM with PPO (or DPO) to maximize predicted reward.\n\nGPT-3.5/4, LLaMA-Chat, Claude, etc. all use a variant. RLHF teaches the model what humans *prefer*, not just what is statistically likely.\n\n**Data preparation challenges.** Internet-scale corpora are dirty, and curation choices shape model quality, safety, and legality. The standard pipeline addresses:\n\n- **Deduplication.** Near-duplicate documents bloat training and cause memorization. Tools: MinHash/LSH at the document level, suffix-array exact-match dedup at the token level.\n- **Decontamination.** Remove benchmark test sets from training data; otherwise scores are inflated by leakage.\n- **PII removal.** Strip names, addresses, phone numbers, emails — both for privacy law and to prevent the model from regurgitating personal data.\n- **Toxicity / quality filtering.** Classifier-based filtering for hate speech, spam, low-quality text.\n- **Language balancing** and **source weighting** (web vs books vs code).\n\nSkipping any of these has consequences: dedup failure causes verbatim memorization; missed test-set contamination invalidates evaluation; PII leakage triggers GDPR/lawsuits.\n\n**Environmental and economic cost.** Training a large LLM is enormously expensive. LLaMA-65B training consumed roughly **449 MWh of electricity** and emitted about **173 tCO₂eq**. *Inference* is cheaper per call but dwarfs training in aggregate: a single ChatGPT-style text generation uses an estimated **~150× the energy of a Google search**, multiplied by hundreds of millions of daily queries. Water for datacenter cooling is a separate, large impact.\n\n**Big-picture takeaways.** Decoder-only architectures dominate post-2022 because they unify understanding and generation, support ICL, and scale predictably. The frontier work has shifted from architecture to (a) data quality, (b) alignment (RLHF, constitutional AI), and (c) efficiency (quantization, distillation, MoE). \"No recurrence ⇒ easier parallelism\" is true, but it does **not** mean training is cheap — the bottleneck is data and compute, not sequential dependencies.",
+    "checks": [
+      {
+        "q": "Which statement about in-context learning (ICL) is correct?",
+        "options": [
+          {"id": "1", "text": "ICL fine-tunes a small adapter on the demonstrations"},
+          {"id": "2", "text": "ICL updates the model's weights via gradient descent on the prompt"},
+          {"id": "3", "text": "ICL performs a new task purely from prompt demonstrations with no parameter updates; it is an emergent ability"},
+          {"id": "4", "text": "ICL requires the encoder-decoder architecture"}
+        ],
+        "correct": "3",
+        "explanation": "ICL conditions on demonstrations entirely through the forward pass — no weights are updated. It is an emergent ability that appears at sufficient model scale."
+      },
+      {
+        "q": "Empirically, which property of few-shot demonstrations matters MOST for ICL performance?",
+        "options": [
+          {"id": "1", "text": "The exact correctness of demo labels"},
+          {"id": "2", "text": "The label space, input distribution, and demo count/order"},
+          {"id": "3", "text": "Whether the demos are encrypted"},
+          {"id": "4", "text": "The temperature setting alone"}
+        ],
+        "correct": "2",
+        "explanation": "Surprisingly, randomizing demo labels barely hurts ICL. What matters is exposing the legal label space, matching the input distribution, and the number/order of demos (recency and majority-label biases). Pure label correctness is not load-bearing."
+      },
+      {
+        "q": "Which step is NOT part of standard LLM data preparation?",
+        "options": [
+          {"id": "1", "text": "Deduplication of near-duplicate documents"},
+          {"id": "2", "text": "Decontamination by removing benchmark test sets"},
+          {"id": "3", "text": "PII and toxicity filtering"},
+          {"id": "4", "text": "Adding [CLS] and [SEP] tokens to enable NSP"}
+        ],
+        "correct": "4",
+        "explanation": "Dedup, decontamination, and PII/toxicity filtering are core to LLM data prep. [CLS]/[SEP] are BERT input-format tokens for NSP — they are not part of GPT-style decoder-only data preparation."
+      }
+    ]
+  }
+]

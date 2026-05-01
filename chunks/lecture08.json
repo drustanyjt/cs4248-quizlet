@@ -1,0 +1,190 @@
+[
+  {
+    "lecture": "8",
+    "chunk_id": "L8-1",
+    "order": 1,
+    "title": "RNN Basics: Hidden State, Language Modelling, and BPTT",
+    "content_md": "Recurrent Neural Networks (RNNs) exist to fix a fundamental limitation of n-gram language models: the **Markov assumption** truncates context to the last $k$ words, so anything earlier is invisible. Real language has long-distance dependencies (\"The keys *that the man who lives next door owns* **are** on the table\"), and an n-gram LM with $k=4$ simply cannot connect *keys* to *are*. RNNs sidestep this by maintaining a **hidden state** $h_t$ — a vector that, in principle, summarises everything seen so far in the sequence.\n\nThe vanilla RNN recurrence is:\n\n$h_t = \\tanh(\\theta_{hh} h_{t-1} + \\theta_{xh} x_t + b_h)$\n\nAt every time step $t$, the same parameters $\\theta_{hh}$, $\\theta_{xh}$ are reused — this **parameter sharing** is what makes the network *recurrent* and gives it a fixed parameter count regardless of sequence length. The output is $y_t = g_y(\\theta_{hy} h_t)$; for language modelling, $g_y$ is softmax over the vocabulary, producing $P(w_{t+1} \\mid w_1, \\dots, w_t)$.\n\nDimensions matter for exam-style questions. With hidden size $H$, embedding size $E$, vocab size $V$: $\\theta_{hh} \\in \\mathbb{R}^{H\\times H}$, $\\theta_{xh} \\in \\mathbb{R}^{E\\times H}$, $\\theta_{hy} \\in \\mathbb{R}^{H\\times V}$. The hidden state is initialised randomly (or to zero) and tuned via backprop.\n\nRNNs come in several **sequence patterns**: one-to-one (degenerate, just feedforward), many-to-one (sentiment classification — read a sentence, output one label), one-to-many (image captioning — one image, generate a caption), many-to-many synchronous (POS tagging, NER — one tag per token), and many-to-many asynchronous (encoder-decoder for MT and summarisation).\n\nTraining uses **Backpropagation Through Time (BPTT)**. The RNN is *unrolled* across the sequence: at each step a per-token loss $L_t$ is computed (typically cross-entropy against the next word), summed into a total loss $L = \\sum_t L_t$, and gradients are backpropagated through the entire unrolled graph. Because every time step shares the same weights, gradient contributions from all steps accumulate into one update.\n\nBPTT has two notorious problems. **Vanishing/exploding gradients**: the recurrence multiplies gradients through many time steps, so any deviation from 1 in the spectral radius of $\\theta_{hh}$ either shrinks gradients toward zero (vanishing — long-distance signal lost) or blows them up (exploding — training diverges). The second problem is **time complexity / sequential bottleneck**: the unrolled forward and backward passes are inherently sequential — step $t$ depends on $t-1$ — so RNNs cannot parallelise across time the way feedforward or attention-based models can. This is a major motivator for Transformers (L9). Note: \"huge losses\" and \"memory complexity\" are *not* the canonical answers; the lecture pinpoints vanishing/exploding gradients and sequential time complexity.\n\nMitigations covered in lecture: **truncated BPTT** (stop backpropagating after $k$ steps — essentially \"bringing back the Markov assumption\" for gradients), **gradient clipping** (rescale exploding gradients), **skip connections** (LSTM/GRU gates and attention provide gradient shortcuts), and architectural fixes like LSTM/GRU (next chunk).",
+    "checks": [
+      {
+        "q": "Which two problems does BPTT classically suffer from, per the lecture?",
+        "options": [
+          {"id": "1", "text": "Huge losses and memory complexity"},
+          {"id": "2", "text": "Vanishing/exploding gradients and sequential time complexity (no parallelisation)"},
+          {"id": "3", "text": "Overfitting and underfitting"},
+          {"id": "4", "text": "Tokenisation errors and OOV words"}
+        ],
+        "correct": "2",
+        "explanation": "Slide 28's quiz answers are A (vanishing/exploding gradients) and D (sequential time complexity). Memory and 'huge losses' are not flagged."
+      },
+      {
+        "q": "Why does the same weight matrix $\\theta_{hh}$ get reused at every time step?",
+        "options": [
+          {"id": "1", "text": "It is a regularisation hack — the model would otherwise overfit."},
+          {"id": "2", "text": "It is required for softmax to be valid."},
+          {"id": "3", "text": "Parameter sharing across time gives a fixed parameter count regardless of sequence length and is the defining feature of an RNN."},
+          {"id": "4", "text": "Different time steps have different $\\theta_{hh}$ — the lecture made an error."}
+        ],
+        "correct": "3",
+        "explanation": "RNNs share parameters across time steps; this is what makes them *recurrent* and lets them handle variable-length input with fixed parameters."
+      },
+      {
+        "q": "Which mitigation for BPTT problems essentially 'brings back the Markov assumption' for gradients?",
+        "options": [
+          {"id": "1", "text": "Skip connections"},
+          {"id": "2", "text": "Truncated BPTT"},
+          {"id": "3", "text": "Larger hidden size"},
+          {"id": "4", "text": "Beam search"}
+        ],
+        "correct": "2",
+        "explanation": "Truncated BPTT cuts off backprop after k steps, mirroring the n-gram Markov truncation but for gradient flow."
+      }
+    ]
+  },
+  {
+    "lecture": "8",
+    "chunk_id": "L8-2",
+    "order": 2,
+    "title": "LSTM/GRU Motivation and Bidirectional RNNs",
+    "content_md": "Vanilla RNNs work in theory but, in practice, struggle to learn dependencies over more than a handful of steps. The reason is the vanishing-gradient problem covered in the previous chunk: signals from far-away time steps decay (or explode) as gradients propagate through repeated multiplications by $\\theta_{hh}$. Two architectures dominate practical use to fix this — **LSTM** (Long Short-Term Memory, Hochreiter & Schmidhuber 1997) and **GRU** (Gated Recurrent Unit, Cho et al. 2014).\n\nThe lecture is explicit: **the gate equations are beyond scope.** What you need is the *motivation* and the *intuition*. Both architectures introduce **gates** — small neural networks (sigmoid + element-wise multiplication) that learn to control what information flows through. Conceptually:\n\n- **LSTM** adds a separate **cell state** $C_t$ that runs alongside the hidden state. The cell state is modified only by additive operations gated by an *input gate* (what new info to write), a *forget gate* (what old info to erase), and an *output gate* (what to expose as $h_t$). The crucial property: the cell state can carry information across many time steps with minimal interference, because the gradient path through $C_t$ is essentially additive rather than multiplicative — this is a kind of **skip connection through time**, which is why LSTMs avoid catastrophic vanishing.\n- **GRU** is a streamlined cousin with two gates (reset, update) and no separate cell state. Fewer parameters, often comparable performance.\n\nFor exam purposes, treat LSTM/GRU as black-box drop-in replacements for vanilla RNN cells whose key property is *better long-distance gradient flow*. If you see an exam question asking for the equations of the input/forget/output gates, that is out of scope here. If you see a question asking *why* LSTM/GRU help, the answer is gating + additive cell-state path → mitigates vanishing gradients → captures longer dependencies.\n\nThe second topic in this chunk is **bidirectional RNNs**. A standard RNN is *causal*: $h_t$ depends only on $x_1, \\dots, x_t$. For tasks like POS tagging, NER, or any classification where the *whole sentence is available at inference time*, this leaves future context on the table. The word *bank* in \"I deposited money at the bank\" is disambiguated only by the words that follow it.\n\nA **bidirectional RNN** runs two RNNs: a forward RNN producing $\\overrightarrow{h}_t$ from left to right, and a backward RNN producing $\\overleftarrow{h}_t$ from right to left. The representation at position $t$ is the concatenation $[\\overrightarrow{h}_t, \\overleftarrow{h}_t]$, so each token's vector incorporates both past and future context.\n\nCrucial caveat: **bidirectional RNNs require the entire sequence to be available**. They are unsuitable for *language modelling* (which is causal — predict the next word) and unsuitable for the *decoder* in seq2seq (which generates one word at a time, with no future to look at). They are common as **encoders** in seq2seq models, and they were the standard for tagging tasks before contextual embeddings (BERT-style models extend this idea with attention).\n\nA frequent exam trap: *unidirectional* RNN cannot see the future; *bidirectional* RNN can — but only when the full input is available, which is fine for an encoder, not for an autoregressive decoder.",
+    "checks": [
+      {
+        "q": "Why do LSTMs/GRUs handle long-distance dependencies better than vanilla RNNs?",
+        "options": [
+          {"id": "1", "text": "They use a softmax instead of tanh."},
+          {"id": "2", "text": "They have larger hidden states."},
+          {"id": "3", "text": "Gating mechanisms create an additive (skip-connection-like) path for information and gradients across time, mitigating vanishing gradients."},
+          {"id": "4", "text": "They use bidirectional context."}
+        ],
+        "correct": "3",
+        "explanation": "Gates plus the additive cell-state path (LSTM) provide a gradient highway, easing vanishing gradients. Lecture leaves the exact equations as out of scope."
+      },
+      {
+        "q": "In which scenario is a bidirectional RNN INAPPROPRIATE?",
+        "options": [
+          {"id": "1", "text": "Named entity recognition with the full sentence available"},
+          {"id": "2", "text": "Language modelling / autoregressive decoding (predicting the next token from past tokens only)"},
+          {"id": "3", "text": "POS tagging at inference time"},
+          {"id": "4", "text": "Encoding the source side of a machine-translation seq2seq model"}
+        ],
+        "correct": "2",
+        "explanation": "LM and decoder generation are causal — they cannot peek at future tokens. Bidirectional RNNs need the full sequence and are restricted to encoder/tagging settings."
+      }
+    ]
+  },
+  {
+    "lecture": "8",
+    "chunk_id": "L8-3",
+    "order": 3,
+    "title": "Encoder-Decoder (seq2seq) and the Bottleneck Problem",
+    "content_md": "A **conditional language model** assigns $P(w_1, \\dots, w_N \\mid c)$, where $c$ is some context: a source sentence (machine translation), an image (captioning), audio (speech recognition), or a document (summarisation). The **encoder-decoder** architecture is the standard recipe for this:\n\n1. **Encoder** maps the context to a fixed-size vector $c$. For images, a CNN. For text, an RNN (or LSTM/GRU) producing a sequence of hidden states $h_1^{enc}, \\dots, h_T^{enc}$.\n2. **Decoder** is an RNN language model conditioned on $c$ that generates the output sequence one token at a time.\n\nTwo classic instantiations are worth knowing:\n\n**Kalchbrenner & Blunsom (2013)** inject the context at every decoder step: $h_t^{dec} = \\sigma(\\theta_{hh} h_{t-1}^{dec} + \\theta_{xh} x_t + s)$, where $s = \\theta_{cs} c$. The context vector $c$ is added as a constant bias-like term throughout decoding.\n\n**Sutskever et al. (2014)** is the canonical seq2seq paper. They use *separate* encoder and decoder LSTMs. The encoder reads the source sentence and the decoder is initialised with the encoder's *final* hidden state: $h_0^{dec} = h_T^{enc}$. After that, the decoder runs as a vanilla RNN-LM, with no further injection of $c$. They also reverse the source sentence as a trick to shorten the gradient path between matched source/target words. **Important traps**: (i) the encoder and decoder are *separate networks*, not the same RNN reused; (ii) the original paper uses *LSTM*, not vanilla RNN; (iii) only the *last* encoder hidden state is passed in.\n\nThe **information bottleneck problem**: a single fixed-size vector $h_T^{enc}$ must compress *the entire source sentence*. For a 5-word German sentence this might be fine; for a 40-word legal contract, the encoder vector simply cannot retain everything. Empirically, BLEU scores degrade as source length grows. Worse, by the time the encoder reaches the end of a long sentence, the very first words may have been forgotten due to the same vanishing-gradient phenomenon affecting plain RNNs.\n\nThis bottleneck is the central motivation for **attention** (next chunk). Attention's slogan: instead of forcing all source information through a single bottleneck vector, give the decoder *direct access* to all encoder hidden states $h_s^{(1)}, \\dots, h_s^{(T)}$, and let it learn to look at the relevant ones at each decoding step.\n\nA few related distinctions to keep straight:\n- The bottleneck problem is *not* the same as the vanishing-gradient problem, though they reinforce each other in long inputs.\n- Encoder-decoder is a *family* of architectures (RNN, LSTM, Transformer all fit) — what makes it encoder-decoder is the *separation of representation and generation*, not the cell type.\n- Conditional applications (MT, image captioning, ASR, summarisation, QA) all share this skeleton; they differ in the encoder modality (text RNN, CNN, audio CNN/RNN, etc.).\n\nThe takeaway for exam questions: be ready to identify the bottleneck as the motivation for attention, distinguish Sutskever's *initialisation-only* approach from Kalchbrenner's *every-step injection*, and never claim the encoder and decoder share weights in seq2seq.",
+    "checks": [
+      {
+        "q": "What is the 'information bottleneck' in vanilla seq2seq (Sutskever 2014)?",
+        "options": [
+          {"id": "1", "text": "The decoder can only generate fixed-length outputs."},
+          {"id": "2", "text": "A single fixed-size encoder vector $h_T^{enc}$ must encode all of the source-sentence information, which fails for long inputs."},
+          {"id": "3", "text": "The softmax over the vocabulary becomes too slow."},
+          {"id": "4", "text": "GPU memory limits the batch size."}
+        ],
+        "correct": "2",
+        "explanation": "Sutskever's seq2seq passes only the final encoder hidden state to the decoder; all source information must squeeze through that one vector — the canonical bottleneck."
+      },
+      {
+        "q": "Which statement about Sutskever et al. (2014) seq2seq is correct?",
+        "options": [
+          {"id": "1", "text": "The encoder and decoder share the same RNN weights."},
+          {"id": "2", "text": "The context vector is added as a bias at every decoder step."},
+          {"id": "3", "text": "The decoder is initialised with the final encoder hidden state ($h_0^{dec} = h_T^{enc}$); encoder and decoder are separate networks (LSTMs)."},
+          {"id": "4", "text": "The architecture uses attention to access every encoder state."}
+        ],
+        "correct": "3",
+        "explanation": "Sutskever uses separate encoder/decoder LSTMs; only $h_T^{enc}$ is passed to initialise the decoder. No attention. Per-step injection is the Kalchbrenner & Blunsom 2013 design."
+      }
+    ]
+  },
+  {
+    "lecture": "8",
+    "chunk_id": "L8-4",
+    "order": 4,
+    "title": "Attention: Scoring, Softmax, and Context Vectors",
+    "content_md": "**Attention** addresses the seq2seq bottleneck by giving the decoder direct access to *every* encoder hidden state, and letting it learn — at each decoding step — *which source positions are relevant right now*. Instead of compressing the whole source into one vector, the decoder dynamically builds a fresh context vector $c_t$ at every output step.\n\nThe mechanism is best memorised as **four steps**, performed at decoder step $t$ with current decoder hidden state $h_t$ and encoder states $h_s^{(1)}, \\dots, h_s^{(N)}$:\n\n**Step 1 — Score**. Compute a scalar compatibility score $e_i$ between $h_t$ and each encoder state $h_s^{(i)}$. The lecture lists three scoring functions:\n- *dot*: $e_i = h_t^\\top h_s^{(i)}$ (no parameters)\n- *general*: $e_i = h_t^\\top \\theta_a h_s^{(i)}$ (one learned matrix)\n- *concat (Bahdanau)*: $e_i = v_a^\\top \\tanh(\\theta_a [h_t, h_s^{(i)}])$ (a small MLP)\n\n**Step 2 — Softmax**. Normalise the scores into a probability distribution over source positions:\n\n$a_i = \\frac{\\exp(e_i)}{\\sum_j \\exp(e_j)}$\n\nThe weights $a_i$ are non-negative and sum to 1. Concretely, you might get $a = (0.85, 0.02, 0.06, 0.07)$, meaning the decoder is overwhelmingly attending to source position 1 at this step.\n\n**Step 3 — Context vector**. Take the weighted sum of encoder states:\n\n$c_t = \\sum_i a_i \\, h_s^{(i)}$\n\nThis is a *new* context vector computed fresh at every decoder step — that is the entire point. No bottleneck.\n\n**Step 4 — Output**. Concatenate $c_t$ with $h_t$ and run through the output layer:\n\n$y_t = \\text{softmax}(\\theta_{hy} [c_t, h_t])$\n\nNote the dimension change: $\\theta_{hy} \\in \\mathbb{R}^{2H \\times V}$ (rather than $H \\times V$) because of the concatenation.\n\nThe lecture also previews the **scaled dot-product attention** that will dominate Transformers (L9):\n\n$\\text{Attention}(Q, K, V) = \\text{softmax}\\!\\left(\\frac{QK^\\top}{\\sqrt{d_k}}\\right) V$\n\nIn this generalised form, $Q$ (queries), $K$ (keys), and $V$ (values) are all matrices. The $\\sqrt{d_k}$ scaling counters the variance growth of dot products in high dimensions (otherwise softmax saturates and gradients vanish). In RNN seq2seq attention, $Q$ corresponds to the decoder state $h_t$, $K$ and $V$ both correspond to encoder states $h_s^{(i)}$, and the softmax produces our attention weights.\n\n**Important caveats**:\n- Attention solves the **encoder bottleneck**, not the vanishing-gradient problem of long *decoder* generation.\n- Attention weights can sometimes be interpreted as soft alignment between source and target words (e.g., which English word a French word aligns to), but the lecture is careful to flag the controversy: *Attention is not Explanation* (Jain & Wallace 2019) vs *…not not Explanation* (Wiegreffe & Pinter 2019). Treat weights as suggestive, not definitive.\n- Attention does **not** remove the sequential bottleneck of the *decoder* — you still generate one token at a time. (Removing the encoder's sequential bottleneck takes a Transformer.)",
+    "checks": [
+      {
+        "q": "What problem does attention primarily solve in seq2seq?",
+        "options": [
+          {"id": "1", "text": "Vanishing gradients in the decoder."},
+          {"id": "2", "text": "The encoder information bottleneck — letting the decoder access all encoder hidden states rather than just the final one."},
+          {"id": "3", "text": "Slow softmax over large vocabularies."},
+          {"id": "4", "text": "Sequential generation in the decoder."}
+        ],
+        "correct": "2",
+        "explanation": "Attention's core purpose is to bypass the single-vector bottleneck. Each decoder step builds a fresh context vector from *all* encoder states."
+      },
+      {
+        "q": "In the four-step attention recipe, what immediately follows computing the scores $e_i$?",
+        "options": [
+          {"id": "1", "text": "Softmax to produce weights $a_i$ summing to 1."},
+          {"id": "2", "text": "Argmax to pick a single source position."},
+          {"id": "3", "text": "Multiply $h_t$ by the encoder state."},
+          {"id": "4", "text": "Concatenate $c_t$ with $h_t$."}
+        ],
+        "correct": "1",
+        "explanation": "Order is: score → softmax (weights $a_i$) → weighted sum (context $c_t$) → output. Argmax would defeat the purpose; we want a soft distribution."
+      },
+      {
+        "q": "In scaled dot-product attention, why divide by $\\sqrt{d_k}$?",
+        "options": [
+          {"id": "1", "text": "It makes the attention weights non-negative."},
+          {"id": "2", "text": "It enforces that the weights sum to 1."},
+          {"id": "3", "text": "Without scaling, dot products grow with $d_k$, pushing softmax into saturation regions where gradients vanish."},
+          {"id": "4", "text": "It is required for the matrix product $QK^\\top$ to be well-defined."}
+        ],
+        "correct": "3",
+        "explanation": "Dot-product variance grows with dimension; scaling by $\\sqrt{d_k}$ keeps the softmax in a healthy regime. Sum-to-1 comes from softmax itself, not the scaling."
+      }
+    ]
+  },
+  {
+    "lecture": "8",
+    "chunk_id": "L8-5",
+    "order": 5,
+    "title": "Decoding: Greedy, Beam Search, and Teacher Forcing",
+    "content_md": "Once a seq2seq model is trained, you still have to *decode* — generate an output sequence — at inference time. The decoder produces $P(y_t \\mid x, y_{<t})$ at each step; the question is how to turn this into a sequence.\n\n**Greedy decoding** is the simplest: at each step, pick $y_t = \\arg\\max_w P(w \\mid x, y_{<t})$. This is fast (one forward pass per step) but commits to each choice irrevocably. The lecture's canonical trap: translating *Ich ging nach Hause* (\"I went home\"), greedy might produce *I went **to** …* because *to* has highest probability after *went*; the model cannot then backtrack to fix that early mistake even if the rest of the sentence becomes hopeless. Greedy is **not optimal** in general.\n\n**Exhaustive search** would enumerate all $V^T$ sequences and pick the most probable one. This is mathematically optimal but computationally hopeless: with $V \\approx 50{,}000$ and $T = 20$, the count is astronomically larger than the number of atoms in the universe.\n\n**Beam search** is the practical compromise. At each step, keep the top-$k$ partial hypotheses (the *beam*, with $k$ called the *beam size*, typically 5–10). Each hypothesis is scored by cumulative log-probability (log to avoid floating-point underflow):\n\n$\\text{score}(y_1, \\dots, y_t) = \\sum_{i=1}^{t} \\log P(y_i \\mid x, y_1, \\dots, y_{i-1})$\n\nProcedure:\n1. Start with the initial hypothesis (just `<s>`).\n2. Expand each of the $k$ current hypotheses to its $k$ best successors → $k^2$ candidates.\n3. Prune to top $k$ by cumulative log-prob.\n4. If a hypothesis ends in `</s>`, set it aside as a *completed* hypothesis and reduce the active beam.\n5. Stop when $T$ steps reached or $n$ completed hypotheses collected.\n6. Return the best completed hypothesis (often with length normalisation to avoid bias toward short sequences).\n\nKey properties — and exam traps:\n- Beam search is **not optimal**. It is *less greedy* than argmax, but still a heuristic — the true best sequence can be pruned away if it has a low-scoring prefix.\n- Beam size $k=1$ is exactly greedy decoding.\n- Larger $k$ → better hypotheses *up to a point*, then quality often plateaus or even *degrades* (longer/blander sequences in MT — the \"beam search curse\").\n- Beam search trades **exhaustiveness for tractability**: between $V^T$ (exhaustive) and $1$-per-step (greedy), it explores $O(kT)$ hypotheses.\n\n**Teacher forcing** is a separate but related concept that applies during *training*, not inference. When training the decoder autoregressively, naively feeding the decoder its own previous output causes early errors to compound — the decoder learns from its own mistakes, training is unstable, and convergence is slow. Teacher forcing instead feeds the **ground-truth previous word** at each step, so the decoder learns to predict $y_t$ given the *correct* prefix. This stabilises training but creates a small **train-test mismatch** (exposure bias): at inference time the decoder sees its own predictions, not the gold prefix. Various remedies exist (scheduled sampling, etc.), but the lecture's main point is the simple idea of feeding gold tokens during training.\n\nQuick distinctions to keep straight: *greedy vs beam vs exhaustive* is about **inference**; *teacher forcing* is about **training**. Don't conflate them.",
+    "checks": [
+      {
+        "q": "Which statement about beam search is correct?",
+        "options": [
+          {"id": "1", "text": "Beam search is guaranteed to find the most probable sequence."},
+          {"id": "2", "text": "Beam search is a heuristic — better than greedy, much cheaper than exhaustive search, but not guaranteed optimal."},
+          {"id": "3", "text": "Beam search is exhaustive search restricted to length $T$."},
+          {"id": "4", "text": "Beam search with $k=1$ is exhaustive search."}
+        ],
+        "correct": "2",
+        "explanation": "Beam search prunes at every step, so the optimal sequence can be lost. It is a tractable middle ground, not optimal. $k=1$ is greedy, not exhaustive."
+      },
+      {
+        "q": "What is teacher forcing?",
+        "options": [
+          {"id": "1", "text": "An inference-time trick that picks the highest-probability output."},
+          {"id": "2", "text": "A regularisation technique that adds noise to the encoder."},
+          {"id": "3", "text": "A training technique that feeds the decoder the ground-truth previous token (instead of its own prediction) to stabilise training."},
+          {"id": "4", "text": "Another name for beam search with $k=1$."}
+        ],
+        "correct": "3",
+        "explanation": "Teacher forcing is a training-time technique. Feeding gold tokens prevents error compounding but introduces exposure bias (train/test mismatch)."
+      },
+      {
+        "q": "Why does beam search use the *log* of probabilities when scoring hypotheses?",
+        "options": [
+          {"id": "1", "text": "To convert products into sums and avoid floating-point underflow on long sequences."},
+          {"id": "2", "text": "Because softmax outputs are already log-probabilities."},
+          {"id": "3", "text": "To make the score non-negative."},
+          {"id": "4", "text": "Because log-probabilities are required for argmax."}
+        ],
+        "correct": "1",
+        "explanation": "Multiplying many small probabilities underflows. $\\log$ turns the product into a sum of negative numbers, which is numerically stable."
+      }
+    ]
+  }
+]

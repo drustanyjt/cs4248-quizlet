@@ -1,0 +1,190 @@
+[
+  {
+    "lecture": "1",
+    "chunk_id": "L1-1",
+    "order": 1,
+    "title": "What is NLP and the Analysis Hierarchy",
+    "content_md": "## NLP in one sentence\n\n**Natural Language Processing** sits at the intersection of linguistics, computer science, and artificial intelligence. Its core question is: *how do we get computers to process and analyze human language data?* That covers everything from spell-checkers to ChatGPT. A useful mental model is to think of NLP in terms of a **representation R** — an abstract internal model of the language and the world it describes. Going from natural language *into* R is called **analysis** (e.g., reading a sentence and figuring out who did what to whom). Going from R *out* to natural language is **generation** (e.g., turning a database row into a fluent sentence).\n\nHistorically, how humans communicate with machines has shifted from purely **symbolic** input (punch cards in the 50s–70s), to **formal** languages (programming, 80s onward), and now to **natural language** (chatbots, voice assistants). NLP is what enables that last step.\n\n## Applications you should be able to name\n\nThe slides list a wide range: machine translation, conversational agents (which themselves bundle speech recognition, language analysis, dialogue management, information retrieval, and TTS), question answering, summarization, text generation including image captioning, spelling correction, and document classification (spam, sentiment, authorship). Modern **LLMs** are notable for **emergent capabilities** — solving tasks they were never explicitly trained on. But the lecturer is firm: LLMs are *not* the end of NLP. They still suffer from hallucinations, high cost, non-determinism, poor interpretability, and weak domain performance. The course goal is to build the *foundations* of next-generation systems, not to teach prompt engineering.\n\n## The analysis hierarchy (memorize this)\n\nThe most exam-relevant scaffold from Lecture 1 is the five-layer analysis hierarchy, ordered shallow to deep:\n\n1. **Lexical** — operates on characters, morphemes, and words. Tasks: tokenization, normalization, stemming, lemmatization.\n2. **Syntactic** — phrases, clauses, sentences. Tasks: POS tagging, syntactic parsing (constituency or dependency).\n3. **Semantic** — meaning of words and sentences. Tasks: Word Sense Disambiguation (WSD), Named Entity Recognition (NER), Semantic Role Labeling (SRL — \"who did what to whom\").\n4. **Discourse** — paragraphs and documents. Tasks: coreference / anaphora resolution, ellipsis resolution, stance detection.\n5. **Pragmatic** — world knowledge and common sense. Tasks: textual entailment, intent recognition.\n\n## Common confusion: discourse vs. pragmatic\n\nA classic trap is mixing up the top two layers. **Discourse** stays *inside* the text — figuring out that \"she\" in sentence 3 refers to \"Alice\" in sentence 1 is discourse. **Pragmatic** requires information from *outside* the text: world knowledge, shared context, speaker intent. Recognizing that \"Can you pass the salt?\" is a request, not a yes/no question about your physical ability, is pragmatic. If a task can be solved by reading the document carefully without consulting the outside world, it is discourse; if it needs common sense or context, it is pragmatic.\n\nAnother subtle distinction: **WSD vs. NER**. WSD picks among known senses of an *already-identified* word (does \"bank\" mean financial institution or river bank?). NER instead identifies which spans of text are real-world entities and types them (PERSON, ORG, LOCATION, MONEY). They both live at the semantic layer but answer different questions.",
+    "checks": [
+      {
+        "q": "<p>You are building a system that, given a news article, decides whether the pronoun <em>\"he\"</em> in paragraph 4 refers to a person named earlier in the article. Which layer of the NLP analysis hierarchy does this primarily belong to?</p>",
+        "options": [
+          {"id": "1", "text": "Semantic"},
+          {"id": "2", "text": "Discourse"},
+          {"id": "3", "text": "Pragmatic"},
+          {"id": "4", "text": "Syntactic"}
+        ],
+        "correct": "2",
+        "explanation": "Linking a pronoun to its antecedent across sentences is coreference / anaphora resolution, which lives at the discourse layer because the resolution can be made from the text itself. Semantic deals with word and sentence meaning (WSD, NER, SRL). Pragmatic would require outside world knowledge, not just the article. Syntactic is about within-sentence structure like parsing."
+      },
+      {
+        "q": "<p>Which statement best reflects the lecturer's stance on LLMs in CS4248?</p>",
+        "options": [
+          {"id": "1", "text": "LLMs have essentially solved NLP, so the course will focus on prompt engineering."},
+          {"id": "2", "text": "LLMs are useful but still suffer from hallucinations, cost, non-determinism, and poor interpretability; the course aims at the foundations."},
+          {"id": "3", "text": "LLMs are too unreliable to use for any real NLP application."},
+          {"id": "4", "text": "LLMs are only good for generation tasks and cannot be used for analysis."}
+        ],
+        "correct": "2",
+        "explanation": "The lecturer explicitly rejects the \"NLP is solved\" framing and lists hallucinations, cost, non-determinism, interpretability, and weak domain performance as open issues. Option 1 is the trap. Option 3 overstates the criticism — LLMs are useful, just not finished. Option 4 is incorrect; LLMs handle both analysis and generation."
+      },
+      {
+        "q": "<p>A document classifier needs to decide whether <em>\"bank\"</em> in <em>\"I sat on the bank\"</em> means a financial institution or the side of a river. Which task is this, and at which layer?</p>",
+        "options": [
+          {"id": "1", "text": "NER, semantic layer"},
+          {"id": "2", "text": "WSD, semantic layer"},
+          {"id": "3", "text": "Coreference, discourse layer"},
+          {"id": "4", "text": "POS tagging, syntactic layer"}
+        ],
+        "correct": "2",
+        "explanation": "Choosing among known senses of a polysemous word is Word Sense Disambiguation (WSD), which sits at the semantic layer. NER would tag spans as PERSON/ORG/LOCATION etc., not pick a sense. Coreference links expressions referring to the same entity. POS tagging assigns part-of-speech labels and would not distinguish the two senses (both are nouns)."
+      }
+    ]
+  },
+  {
+    "lecture": "1",
+    "chunk_id": "L1-2",
+    "order": 2,
+    "title": "Building Blocks and Morphology",
+    "content_md": "## The compositional ladder of language\n\nWritten language is built up in layers, and exam questions often probe whether you can name them in order. From smallest to largest:\n\n**character → morpheme → word → phrase → clause → sentence → paragraph → document → corpus**\n\nA **character** is a single symbol. A **morpheme** is the smallest unit that carries meaning. A **word** is one or more morphemes that can stand on its own. A **phrase** is a group of related words (e.g., a noun phrase like \"the red cat\"). A **clause** is a phrase that contains both a subject and a verb. A **sentence** is one or more clauses. Above that, paragraphs aggregate into documents, and documents into a **corpus** (a collection used for analysis or training).\n\n## Morphemes: the meaning atoms\n\nA **morpheme** is the smallest meaning-bearing unit of language. A word can be decomposed into 1 or more **stems** plus 0 or more **affixes**. \"Cat\" is one morpheme. \"Cats\" is two: <code>cat</code> + <code>-s</code>. \"Defroster\" is three: <code>de-</code> + <code>frost</code> + <code>-er</code>.\n\nMorphemes split along two independent axes.\n\n**Free vs. bound** is about whether the morpheme can stand alone:\n- A **free** morpheme can appear by itself as a word (<code>cat</code>, <code>hope</code>, <code>frost</code>).\n- A **bound** morpheme must attach to something else (<code>-s</code>, <code>un-</code>, <code>-er</code>, <code>de-</code>).\n\n**Derivational vs. inflectional** is about *what the affix does*:\n- **Derivational** affixes change the meaning and/or part of speech of the stem. They can be either prefixes or suffixes. *un-happy* (negation, prefix), *de-frost-er* (prefix and suffix that change verb to noun), *hope-less* (adjective from noun, suffix).\n- **Inflectional** affixes only add a grammatical feature — tense, number, possession, comparison — without changing the part of speech. In English, inflectional affixes are **suffix-only**. *walk-ed* (past tense), *elephant-s* (plural), *Bob-'s* (possessive), *fast-er* (comparative).\n\n## Tokenization granularities\n\nWhen feeding text to a model, you must decide what counts as a unit. Three common choices:\n- **Character-based**: each character is a token. Robust to misspellings; sequences become long.\n- **Subword-based**: pieces between character and word, learned from data. The dominant modern approach.\n- **Word-based**: each whitespace-separated token. Suffers from out-of-vocabulary words and morphological sparsity.\n\nLecture 1 only sketches these; Lecture 2 returns to tokenization in detail.\n\n## Common confusions to flag\n\n**Free morpheme vs. stem.** Many students treat them as synonyms — they are not. A free morpheme *is* a stem that can stand alone, but not all stems are free. Some stems only ever appear bound (think of Latin/Greek roots that never appear as standalone English words). So \"every free morpheme is a stem\" is true; \"every stem is a free morpheme\" is **false**.\n\n**Derivational vs. inflectional.** This is the most common L1 trap. Two quick tests: (1) Did the part of speech or core meaning change? If yes, derivational. (2) Is the affix a prefix? If yes, in English it must be derivational, because inflectional affixes are suffix-only in English. So *un-* in *unhappy* is derivational; *-ed* in *walked* is inflectional. *Hope-less* (noun → adjective) is derivational even though it is a suffix, because the POS changed.",
+    "checks": [
+      {
+        "q": "<p>Classify the affix <code>-er</code> in the word <em>faster</em>.</p>",
+        "options": [
+          {"id": "1", "text": "Derivational, because it can also appear in <em>defroster</em>."},
+          {"id": "2", "text": "Inflectional, because it adds the grammatical feature of comparison without changing the part of speech."},
+          {"id": "3", "text": "Free morpheme, because it can stand alone."},
+          {"id": "4", "text": "A stem, because it carries the core meaning of the word."}
+        ],
+        "correct": "2",
+        "explanation": "In <em>faster</em>, <code>-er</code> marks the comparative degree of the adjective <em>fast</em> — same POS, just a grammatical feature added. That is the textbook definition of an inflectional affix. The fact that <code>-er</code> appears as a derivational suffix elsewhere (<em>defrost-er</em> turns a verb into a noun) doesn't change its role here; the same surface form can play different roles. <code>-er</code> is bound, not free, and it is an affix, not a stem."
+      },
+      {
+        "q": "<p>Which statement about morphology in English is correct?</p>",
+        "options": [
+          {"id": "1", "text": "Every stem is a free morpheme."},
+          {"id": "2", "text": "Inflectional affixes can be either prefixes or suffixes in English."},
+          {"id": "3", "text": "Derivational affixes can change the part of speech of the stem and may be prefixes or suffixes."},
+          {"id": "4", "text": "A morpheme is the same thing as a syllable."}
+        ],
+        "correct": "3",
+        "explanation": "Derivational affixes can be prefixes (<em>un-happy</em>) or suffixes (<em>hope-less</em>) and may change meaning and/or POS — that is exactly what option 3 says. Option 1 is the classic trap: not every stem is free; some only appear bound. Option 2 is wrong because English inflectional affixes are suffix-only. Option 4 confuses morpheme (smallest meaning-bearing unit) with syllable (phonological unit)."
+      }
+    ]
+  },
+  {
+    "lecture": "1",
+    "chunk_id": "L1-3",
+    "order": 3,
+    "title": "Why NLP is Hard — Ambiguity and Expressivity",
+    "content_md": "## The five (or six) characteristics that make language hard\n\nThe lecture frames NLP's difficulty around five core characteristics — **Ambiguity, Expressivity, Variation, Scale, Sparsity** — plus a sixth the lecturer adds, **Unmodeled representation**. The first two, ambiguity and expressivity, deserve the most attention because they show up everywhere, including in modern LLM failure modes.\n\n## Ambiguity: one form, many meanings\n\nAmbiguity means a single surface form (a word, a phrase, a sentence) maps to multiple possible interpretations. The lecture catalogues several flavours:\n\n- **Word sense ambiguity**: *bank* (financial vs. river), *spring* (season vs. coil vs. water source). Resolved by WSD.\n- **POS ambiguity**: *book* can be a noun or a verb depending on context.\n- **Syntactic ambiguity**: the same string of words admits multiple parse trees. The canonical example is the **PP-attachment** sentence *\"I see the man with a telescope\"* — does *with a telescope* attach to *the man* (he has the telescope) or to *see* (I am using the telescope)?\n- **Anaphoric ambiguity**: which entity does a pronoun refer to?\n- **Winograd Schema**: a sentence pair where swapping a single word flips what a pronoun refers to, requiring world knowledge to resolve. The canonical pair: *\"I poured water from the bottle into the cup until it was **full**\"* (it = cup) vs. *\"...until it was **empty**\"* (it = bottle). The syntax is identical; physics tells you which is which.\n- **Pragmatic ambiguity**: the same utterance does different things depending on context (request vs. question vs. sarcasm).\n\nA powerful canonical trap from the slides: *\"I killed all the children\"*. Spoken by a sysadmin terminating processes, this is routine. Spoken by anyone else, it is horrifying. The text alone is not enough — you need the **unmodeled representation** of who is speaking and where.\n\n## Expressivity: one meaning, many forms\n\nExpressivity is ambiguity's mirror: the same underlying meaning can be expressed in countless surface forms.\n\n- **Paraphrase**: *\"The cat sat on the mat\"* vs. *\"On the mat sat a cat\"*.\n- **Formality**: *\"I'd like to request your assistance\"* vs. *\"gimme a hand\"*.\n- **Idioms**: *\"raining cats and dogs\"* literally describes nothing meteorological. The slide-43 quick quiz makes this point with *\"After binge-eating cookies, I went cold turkey after Christmas\"* — the answer is *stopped eating cookies completely*; the literal-Turkey readings are distractors.\n- **Neologisms**: new words like *selfie*, *chillax*, *rizz* appear constantly and break dictionaries.\n- **Sarcasm and irony**: *\"Oh great, another meeting\"* — sentiment models that read surface words alone get this wrong.\n- **Algospeak**: terms invented to evade content moderation, e.g. *unalived* for \"killed\", *sewer slide* for \"suicide\". A model trained on yesterday's vocabulary will silently miss these.\n\n## Why this matters for evaluation\n\nThe slide-45 quick quiz — *\"I wish I would be on this plane flying through the clouds!\"* — has no defensible sentiment label without context. The takeaway is that even \"objective\" tasks like sentiment classification are **context-dependent**, which has consequences for how we collect labels and measure model accuracy.\n\n## Common confusion: ambiguity vs. expressivity\n\nMnemonic: **ambiguity is one-to-many in *interpretation* (one form, many meanings); expressivity is one-to-many in *production* (one meaning, many forms)**. They are duals of each other. A WSD task fights ambiguity; a paraphrase-detection task fights expressivity. Sarcasm sits awkwardly in between — it is a form whose surface meaning is the *opposite* of the intended meaning, so you can argue it as either, but the lecture files it under expressivity (one meaning expressed in a surprising form).",
+    "checks": [
+      {
+        "q": "<p>The sentence <em>\"I poured water from the bottle into the cup until it was empty\"</em> is a canonical example of which difficulty?</p>",
+        "options": [
+          {"id": "1", "text": "PP-attachment ambiguity"},
+          {"id": "2", "text": "A Winograd Schema, where one-word change flips the pronoun's referent and resolution requires world knowledge"},
+          {"id": "3", "text": "Algospeak"},
+          {"id": "4", "text": "Zipf's Law"}
+        ],
+        "correct": "2",
+        "explanation": "Swapping <em>full</em> ↔ <em>empty</em> flips whether <em>it</em> refers to the cup or the bottle, with identical syntax — that is exactly the Winograd Schema construction, and resolving it requires physical world knowledge. PP-attachment is about which phrase a prepositional phrase modifies (the <em>telescope</em> example). Algospeak is the moderation-evasion vocabulary phenomenon. Zipf's Law is a frequency-rank relationship, unrelated."
+      },
+      {
+        "q": "<p>Which of the following is best classified as <strong>expressivity</strong> rather than ambiguity?</p>",
+        "options": [
+          {"id": "1", "text": "<em>Bank</em> meaning either a financial institution or the side of a river."},
+          {"id": "2", "text": "<em>I see the man with a telescope</em> having two possible parse trees."},
+          {"id": "3", "text": "Saying <em>unalived</em> instead of <em>killed</em> to avoid content moderation."},
+          {"id": "4", "text": "A pronoun whose antecedent is unclear."}
+        ],
+        "correct": "3",
+        "explanation": "Algospeak (<em>unalived</em> for <em>killed</em>) is one meaning expressed in many surface forms — that is expressivity. Options 1, 2, and 4 are all forms of ambiguity: word-sense, syntactic (PP-attachment), and anaphoric respectively. Mnemonic: ambiguity = one form → many meanings; expressivity = one meaning → many forms."
+      },
+      {
+        "q": "<p>Why is the sysadmin example <em>\"I killed all the children\"</em> used to motivate the lecturer's <strong>unmodeled representation</strong> challenge?</p>",
+        "options": [
+          {"id": "1", "text": "Because the sentence has multiple valid parse trees."},
+          {"id": "2", "text": "Because its meaning depends on speaker context and shared world knowledge that the model is not given."},
+          {"id": "3", "text": "Because <em>killed</em> is a rare word that violates Zipf's Law."},
+          {"id": "4", "text": "Because it is an idiom, like <em>raining cats and dogs</em>."}
+        ],
+        "correct": "2",
+        "explanation": "The sentence is syntactically unambiguous; what changes its meaning is who is saying it (a sysadmin terminating processes vs. a literal speaker). That speaker context is part of the world model the system isn't given — hence \"unmodeled representation\". It isn't a parse-tree ambiguity, isn't about word frequency, and isn't an idiom (the words are used literally — they just refer to processes, not human children, in the sysadmin reading)."
+      }
+    ]
+  },
+  {
+    "lecture": "1",
+    "chunk_id": "L1-4",
+    "order": 4,
+    "title": "Variation, Scale, Sparsity, and Zipf's Law",
+    "content_md": "## The remaining language-difficulty axes\n\nBeyond ambiguity and expressivity, the lecture flags **Variation, Scale, and Sparsity** as the other core reasons NLP is hard. They are quantitative or distributional in flavour, and they all push back on the naïve hope that we could just enumerate every word and rule.\n\n## Variation: language is not one thing\n\nThere are roughly **6,500 living languages** organized into about **150 language families**. Even within a single language like English, there is huge variation across **domains** (legal text vs. tweets vs. medical notes), **dialects** (American vs. Singaporean English), **registers** (formal vs. casual), and **cultural conventions**. A model trained on Wikipedia will quietly underperform on Reddit, and a model trained on standard American English will underperform on Singlish. Variation is also the source of **bias**: if your training corpus over-represents one demographic, the model's behaviour will reflect that.\n\n## Scale: the vocabulary keeps growing\n\nA standard English dictionary contains around **470,000** words, but web-scale corpora reveal **more than a million** distinct word forms once you include neologisms, proper nouns, technical jargon, typos, and borrowings. There is no closed vocabulary. Any system that assumes a fixed word list will accumulate unknown-word errors as soon as it leaves the training distribution.\n\n## Sparsity and Zipf's Law\n\nScale by itself wouldn't be so bad if every word appeared often. The problem is that word frequencies are extremely **skewed**. **Zipf's Law** says:\n\n$$\\text{frequency}(w) \\propto \\frac{1}{\\text{rank}(w)}$$\n\nThe most frequent word (in English, *the*) appears roughly twice as often as the second-most-frequent word, three times as often as the third, and so on. On a log-log plot of frequency against rank, the relationship is approximately linear with negative slope.\n\nThe critical empirical observation from the slides (with three corpora plotted on the same axes) is that **this shape holds across all corpus sizes and domains** — small Twitter samples, novels, and giant web crawls all show the same Zipfian distribution. The takeaway is **not** \"small corpora are weird\"; it is \"no matter how much data you collect, the long tail of rare words never goes away\". You will *always* see words you've barely seen before. Sparsity is structural.\n\nThe textbook generalization $f(r) \\propto 1/r^s$ with a tunable exponent $s$ is *not* in the slides and is **not examinable beyond the inverse-rank form**.\n\n## Unmodeled representation: the lecturer's sixth axis\n\nThe lecturer adds one more challenge that doesn't fit the other five cleanly. Meaning depends on **shared world knowledge and context** that is not present in the text. The sysadmin example from the previous chunk — *\"I killed all the children\"* — illustrates this: the words are unambiguous, but the *interpretation* requires knowing the speaker's role and domain. Modern LLMs paper over this with massive pre-training, but they remain fragile when the required world model is unusual or recent.\n\n## Common confusions to flag\n\n**Sparsity vs. scale.** Scale is about the *size* of the vocabulary; sparsity is about how *unevenly* tokens are distributed across it. The two interact — a large vocabulary with a heavy tail means that even a huge corpus will have many words seen only once or twice — but they are distinct.\n\n**The Zipf trap.** A common exam misread is to assume that Zipf's Law is a property of *small* corpora that washes out with more data. Slide 47 explicitly refutes this: the same shape appears across three corpora of very different sizes. Adding data shifts the curve up and to the right but does not flatten the long tail.\n\n**Variation ≠ ambiguity.** Variation is about the diversity of the input distribution (different languages, domains, registers). Ambiguity is about a single input having multiple interpretations. A model can fail at one without failing at the other.",
+    "checks": [
+      {
+        "q": "<p>Which of the following best states what Zipf's Law tells us about real-world corpora?</p>",
+        "options": [
+          {"id": "1", "text": "Word frequency is approximately proportional to <em>1/rank</em>, and this shape holds across corpus sizes — so rare words are always present."},
+          {"id": "2", "text": "Word frequency is uniform across the vocabulary, so every word is equally likely."},
+          {"id": "3", "text": "Zipf's Law holds only for small corpora; with enough data, the distribution becomes uniform."},
+          {"id": "4", "text": "Word frequency grows exponentially with rank."}
+        ],
+        "correct": "1",
+        "explanation": "Zipf's Law is the inverse-rank relationship, and the lecture's key empirical point (slide 47, three corpora) is that the shape persists at all corpus sizes — the long tail of rare words is structural, not a small-sample artifact. Option 2 contradicts the very motivation for the law. Option 3 is the classic Zipf trap the lecture warns against. Option 4 has the relationship backwards (frequency decreases, not grows, with rank)."
+      },
+      {
+        "q": "<p>A team trains a sentiment model on Wikipedia and deploys it on Singaporean tweets. Performance drops sharply. Which language characteristic is the most direct cause?</p>",
+        "options": [
+          {"id": "1", "text": "Sparsity — Zipf's Law"},
+          {"id": "2", "text": "Variation — domain, register, and dialect differences between training and deployment data"},
+          {"id": "3", "text": "Scale — the dictionary is too small"},
+          {"id": "4", "text": "Ambiguity — every word has multiple senses"}
+        ],
+        "correct": "2",
+        "explanation": "The mismatch is between training distribution (formal Wikipedia English) and deployment distribution (informal Singaporean Twitter), which is exactly what variation describes — across domain, register, and dialect. Sparsity and scale are about vocabulary distribution and size in general, not the train/deploy mismatch. Ambiguity is about multiple interpretations of a single input, which isn't the issue here."
+      }
+    ]
+  },
+  {
+    "lecture": "1",
+    "chunk_id": "L1-5",
+    "order": 5,
+    "title": "Practical Challenges, Ethics, and the Big Picture",
+    "content_md": "## From language difficulty to data difficulty\n\nThe earlier chunks describe why *language itself* is hard. This final chunk covers the **practical** challenges that show up before a model ever sees a clean training example: collecting data, extracting it from messy formats, and ensuring quality and ethics. These topics will recur throughout the course because every modern NLP system stands on its data pipeline.\n\n## Data collection\n\nThree main routes are listed:\n\n1. **Public datasets** — convenient and well-studied, but can be saturated, biased, or licensed in ways that constrain use.\n2. **APIs** — e.g., social media or search APIs. Subject to rate limits, terms of service, and shifting access policies.\n3. **Web scraping** — maximally flexible but a **legal grey area**. Robots.txt, copyright, and jurisdiction-specific rules all matter; \"the data is on the web\" is *not* a sufficient legal argument.\n\nThe lecturer's framing: collection is rarely a pure engineering problem; it is also a legal and ethical one.\n\n## Data extraction\n\nReal documents arrive as PDFs, HTML, DOCX, scans, EPUBs, and so on. Turning them into **plain text or Markdown** is non-trivial — PDFs lose reading order, HTML mixes content with navigation, scans require OCR. Errors here propagate silently into every downstream task. A common student mistake is to underestimate this step; in practice, *extraction quality often dominates model quality* on real-world projects.\n\n## Data quality\n\nOnce extracted, data needs cleaning. The lecture lists the standard pipeline stages:\n\n- **Filtering** — heuristic (length, language ID), statistical (perplexity-based), or model-based (a classifier predicts \"clean vs. junk\").\n- **Deduplication** — exact and near-duplicate removal. Duplicates inflate apparent dataset size and bias models toward repeated content.\n- **Toxicity and bias mitigation** — explicit content, hate speech, demographic skew.\n- **PII control** — Personally Identifiable Information must be detected and removed or redacted (names, emails, phone numbers, addresses).\n- **Data decontamination** — making sure your training set does not overlap with your evaluation benchmarks; otherwise reported numbers are inflated.\n- **AI inbreeding / model collapse** — a newer concern: as more web text is itself LLM-generated, training new LLMs on that text causes quality to degrade over generations.\n\nThe optional notebook *Data Preparation for Training LLMs* expands on this pipeline; the slides note that practical pipeline details from the optional notebooks (Token Indexing, Data Batching, NumPy mechanics) are **not examinable** unless re-introduced in lecture.\n\n## The big picture\n\nNLP sits at the intersection of **Linguistics**, **Computer Science**, and **AI** — roughly equivalent to **computational linguistics**. The lecture frames the design space as a set of often-conflicting **desiderata**:\n\n- **Sensitivity** — does the system pick up subtle distinctions?\n- **Generality** — does it work across domains and languages?\n- **Formal guarantees** — can we prove anything about its behaviour?\n- **Accuracy** — how often is it right?\n- **Efficiency** — compute, memory, latency.\n- **Explainability** — can a human understand why it produced a given output?\n- **Ethics** — fairness, privacy, environmental cost, dual use.\n\nThese trade off against each other. A system optimized purely for accuracy on a benchmark may sacrifice explainability and ethical safeguards; a highly explainable rule-based system may lose accuracy. Recognizing the trade-offs is itself a learning outcome of the course.\n\n## Common confusions to flag\n\n**Data decontamination vs. deduplication.** Both involve removing duplicates, but they target different things. **Deduplication** removes repeated content *within* the training set. **Decontamination** ensures the training set does not overlap with the *evaluation* set. You can have a perfectly deduplicated training set that is still contaminated against your benchmark.\n\n**\"It's on the internet\" is not a license.** A common student misconception is that publicly accessible data is automatically free to scrape and redistribute. Copyright, terms of service, and privacy regulation (PII, GDPR-style rules) all still apply. The lecture treats this as an ethical and legal problem the field has not fully solved.\n\n**LLM-generated training data is now a quality issue, not just a novelty.** Model collapse / AI inbreeding is the phenomenon where each generation of LLMs trained on the previous generation's output drifts toward lower-diversity, lower-quality text. This is why decontamination is increasingly important even for *training* data, not just evaluation.",
+    "checks": [
+      {
+        "q": "<p>What is the difference between <strong>deduplication</strong> and <strong>data decontamination</strong> in an LLM training pipeline?</p>",
+        "options": [
+          {"id": "1", "text": "They are two names for the same operation."},
+          {"id": "2", "text": "Deduplication removes near-duplicates within the training set; decontamination ensures the training set does not overlap with evaluation benchmarks."},
+          {"id": "3", "text": "Deduplication removes PII; decontamination removes toxic content."},
+          {"id": "4", "text": "Deduplication is performed at extraction time; decontamination is performed at inference time."}
+        ],
+        "correct": "2",
+        "explanation": "Deduplication targets within-training-set duplicates, which inflate dataset size and bias the model. Decontamination targets train/eval overlap, which inflates reported benchmark scores. They are distinct problems often confused. PII control and toxicity filtering are separate stages of the quality pipeline. Decontamination is a training-time concern, not an inference-time one."
+      },
+      {
+        "q": "<p>Which of the following is <em>not</em> one of the desiderata listed for NLP systems in the \"Big Picture\" of Lecture 1?</p>",
+        "options": [
+          {"id": "1", "text": "Explainability"},
+          {"id": "2", "text": "Formal guarantees"},
+          {"id": "3", "text": "Maximum vocabulary size"},
+          {"id": "4", "text": "Ethics"}
+        ],
+        "correct": "3",
+        "explanation": "The lecture's desiderata list is: sensitivity, generality, formal guarantees, accuracy, efficiency, explainability, and ethics — and it stresses that these often conflict. \"Maximum vocabulary size\" is not a goal; in fact, large vocabularies create sparsity and OOV problems. Explainability, formal guarantees, and ethics are all on the list."
+      },
+      {
+        "q": "<p>What is meant by <strong>AI inbreeding</strong> / <strong>model collapse</strong> in the data-quality discussion?</p>",
+        "options": [
+          {"id": "1", "text": "Two different LLMs producing identical outputs on the same prompt."},
+          {"id": "2", "text": "Training successive generations of LLMs on the previous generation's outputs, causing quality and diversity to degrade over time."},
+          {"id": "3", "text": "Using the same model architecture across many research papers."},
+          {"id": "4", "text": "Overfitting an LLM to a single benchmark."}
+        ],
+        "correct": "2",
+        "explanation": "Model collapse / AI inbreeding is the phenomenon where, as more web text is itself LLM-generated, new models trained on scraped web data are effectively trained on prior model outputs, leading to drift toward lower-diversity, lower-quality text over generations. Option 1 describes determinism, not collapse. Option 3 is just convergence in research practice. Option 4 is benchmark overfitting, a separate problem related to decontamination."
+      }
+    ]
+  }
+]

@@ -1,0 +1,21 @@
+# Per-device progress / state — never commit
+results.json
+results.mixed-deck.json
+discussions.json
+WEAK_AREAS.md
+server.log
+*.bak
+*.swp
+
+# Backups
+questions.original.json
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# OS
+.DS_Store
+Thumbs.db

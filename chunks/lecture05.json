@@ -1,0 +1,159 @@
+[
+  {
+    "lecture": "5",
+    "chunk_id": "L5-1",
+    "order": 1,
+    "title": "Text Classification Setup and Naive Bayes Foundations",
+    "content_md": "Text classification is the task of mapping documents to labels. Formally, given a set of documents $X$ and a set of classes $Y$, we want to learn a hypothesis $h: X \\to Y$ such that $h(x) = y$. Applications are everywhere in NLP: language detection, spam filtering, subject or genre tagging, authorship attribution, and sentiment analysis. There are two broad approaches: rule-based systems where a human writes decision rules, and supervised learning where we learn from labeled $\\langle x, y \\rangle$ pairs. If a single document can carry several labels at once, we call it multilabel classification.\n\nBefore any classifier can run, we need a representation of the document. The simplest is **bag-of-words (BoW)**: treat the document as a multiset of tokens, keeping counts but throwing away order and grammar. The tokens you end up with depend heavily on tokenization and normalization choices (lowercasing, stemming, stopword removal). BoW is crude but surprisingly effective and is the standard input for Naive Bayes.\n\n**Naive Bayes** is a probabilistic classifier built directly on Bayes' rule. We want\n\n$$P(y \\mid w_1, \\dots, w_n) = \\frac{P(w_1, \\dots, w_n \\mid y)\\, P(y)}{P(w_1, \\dots, w_n)}.$$\n\nThe denominator does not depend on $y$, so for the $\\arg\\max$ we can drop it (using $\\propto$ instead of $=$ since the result is no longer a normalized probability). The remaining joint likelihood $P(w_1, \\dots, w_n \\mid y)$ is hopeless to estimate directly — too many word combinations. The **naive assumption** is that words are conditionally independent given the class:\n\n$$P(y \\mid w_1, \\dots, w_n) \\propto P(y) \\prod_{i=1}^{n} P(w_i \\mid y).$$\n\nThis is mathematically equivalent to treating each class as its own **unigram language model**: a separate distribution over the vocabulary, one per class, plus a class prior.\n\nWith MLE the estimates are\n\n$$\\hat{P}(y) = \\frac{N_y}{N}, \\qquad \\hat{P}(w_i \\mid y) = \\frac{\\text{Count}(w_i, y)}{\\sum_{w \\in V} \\text{Count}(w, y)}.$$\n\nNotice the denominator of the likelihood: it is the **total token count in class $y$**, not the number of documents in class $y$. This is one of the most common mistakes — the prior counts documents, the likelihood counts tokens.\n\nMLE has a fatal flaw: any unseen $(w_i, y)$ pair gives zero, which zeroes out the entire product. The fix is **add-$k$ smoothing** (Laplace when $k=1$):\n\n$$\\hat{P}(w_i \\mid y) = \\frac{\\text{Count}(w_i, y) + k}{\\sum_{w \\in V} \\text{Count}(w, y) + k|V|}, \\qquad \\hat{P}(y) = \\frac{N_y + k}{N + k|Y|}.$$\n\nThe pseudo-count gets added to every word in $V$ for the likelihood (hence $k|V|$ in the denominator), and to every class for the prior (hence $k|Y|$). Different sizes — easy to confuse on the exam.\n\nFinally, multiplying many small probabilities causes **floating-point underflow**. The standard trick is to work in **log space**:\n\n$$\\log P(y \\mid w_1, \\dots, w_n) \\propto \\log P(y) + \\sum_{i=1}^{n} \\log P(w_i \\mid y).$$\n\nProducts become sums, $\\arg\\max$ is preserved (log is monotonic), and arithmetic stays numerically stable.",
+    "checks": [
+      {
+        "q": "In the MLE estimate $\\hat{P}(w_i \\mid y) = \\text{Count}(w_i, y) / Z$, what is $Z$?",
+        "options": [
+          {"id": "1", "text": "The number of documents in class $y$."},
+          {"id": "2", "text": "The total number of tokens across all classes."},
+          {"id": "3", "text": "The total token count in class $y$ (sum over all words in the vocabulary)."},
+          {"id": "4", "text": "The number of distinct words appearing in class $y$."}
+        ],
+        "correct": "3",
+        "explanation": "The likelihood denominator sums Count(w, y) over all w in V — that is the total number of tokens (with multiplicity) in class y. The prior counts documents; the likelihood counts tokens."
+      },
+      {
+        "q": "Under add-$k$ smoothing, what is the correct denominator for $\\hat{P}(w_i \\mid y)$ and $\\hat{P}(y)$?",
+        "options": [
+          {"id": "1", "text": "$\\sum_w \\text{Count}(w, y) + k|Y|$ for the likelihood, $N + k|V|$ for the prior."},
+          {"id": "2", "text": "$\\sum_w \\text{Count}(w, y) + k|V|$ for the likelihood, $N + k|Y|$ for the prior."},
+          {"id": "3", "text": "Both denominators add $k|V|$."},
+          {"id": "4", "text": "Both denominators add $k|Y|$."}
+        ],
+        "correct": "2",
+        "explanation": "Likelihood smooths over the vocabulary (one pseudo-count per word, hence $k|V|$). Prior smooths over the classes (one pseudo-count per class, hence $k|Y|$)."
+      },
+      {
+        "q": "Why do we typically compute Naive Bayes scores in log space?",
+        "options": [
+          {"id": "1", "text": "Because logarithms turn the naive independence assumption into an exact equality."},
+          {"id": "2", "text": "Because the argmax of the log is different from the argmax of the original probability, and we want the log version."},
+          {"id": "3", "text": "To avoid floating-point underflow when multiplying many small probabilities, while preserving the argmax."},
+          {"id": "4", "text": "Because $P(x)$ in the denominator can only be canceled in log space."}
+        ],
+        "correct": "3",
+        "explanation": "Long documents produce products of many tiny numbers that underflow to zero in floating-point. Log is monotonic, so argmax is preserved while sums replace products and stay numerically stable."
+      }
+    ]
+  },
+  {
+    "lecture": "5",
+    "chunk_id": "L5-2",
+    "order": 2,
+    "title": "Naive Bayes Worked Example and Limitations",
+    "content_md": "Let us run Naive Bayes end-to-end on a tiny sentiment task with **Laplace smoothing** ($k=1$). The vocabulary is $V = \\{\\text{funny}, \\text{boring}, \\text{movie}, \\text{cast}, \\text{good}\\}$, so $|V| = 5$. We have $N = 7$ training documents, $N_{pos} = 4$ positive and $N_{neg} = 3$ negative. Suppose the per-class token totals are 11 (positive) and 14 (negative), with the following raw counts in the positive class: $\\text{Count}(\\text{funny}, pos) = 3$, $\\text{Count}(\\text{movie}, pos) = 3$, $\\text{Count}(\\text{cast}, pos) = 2$. In the negative class: $\\text{Count}(\\text{funny}, neg) = 0$, $\\text{Count}(\\text{movie}, neg) = 2$, $\\text{Count}(\\text{cast}, neg) = 2$.\n\n**Step 1 — Smoothed priors.** With $|Y|=2$ classes:\n\n$$P(pos) = \\frac{4+1}{7+2} = \\frac{5}{9}, \\qquad P(neg) = \\frac{3+1}{7+2} = \\frac{4}{9}.$$\n\n**Step 2 — Smoothed likelihoods.** The denominator becomes (token total) $+ |V| = 11 + 5 = 16$ for positive and $14 + 5 = 19$ for negative. For example,\n\n$$\\hat{P}(\\text{funny} \\mid pos) = \\frac{3+1}{11+5} = \\frac{4}{16}.$$\n\n**Step 3 — Score the test sentence** \"a funny movie and cast\". Drop out-of-vocabulary tokens (\"a\", \"and\") since they aren't in $V$. Then\n\n$$P(pos \\mid x) \\propto P(pos) \\cdot \\hat{P}(\\text{funny}|pos) \\cdot \\hat{P}(\\text{movie}|pos) \\cdot \\hat{P}(\\text{cast}|pos) = \\frac{5}{9} \\cdot \\frac{4}{16} \\cdot \\frac{4}{16} \\cdot \\frac{3}{16} \\approx 0.0065.$$\n\nUsing the negative-class numbers (after Laplace, the denominator is 19, and \"funny\" is unseen so its smoothed count is 1):\n\n$$P(neg \\mid x) \\propto \\frac{4}{9} \\cdot \\frac{1}{19} \\cdot \\frac{3}{19} \\cdot \\frac{3}{19} \\approx 0.0015.$$\n\nSince $0.0065 > 0.0015$, NB predicts **positive**. Smoothing rescued us: without it, $\\hat{P}(\\text{funny} \\mid neg) = 0$ would have collapsed the negative score to zero anyway, but for a different and dangerous reason.\n\n**Why does Naive Bayes work despite a clearly false assumption?** Conditional independence rarely holds — \"new\" and \"york\" are obviously correlated — yet NB is competitive because we only need the *ranking* of class scores to be right, not the absolute probabilities. NB is fast, interpretable, requires little data, and is a sensible baseline for any classification problem.\n\n**Limitations.**\n\n- **BoW throws away order.** \"good, not bad\" and \"bad, not good\" produce the same bag.\n- **Negation handling.** Removing \"not\" as a stopword is catastrophic for sentiment. A common fix is to prefix every token from a negation cue to the next punctuation with `NOT_`, e.g. \"didn't like the movie\" → \"didn't NOT_like NOT_the NOT_movie\".\n- **Independence is wrong.** NB tends to be overconfident; calibrated probabilities are not its strong suit.\n- **It's a unigram class-conditional LM.** You can extend NB to bigrams or trigrams, paying the usual sparsity cost (and needing the same smoothing tricks as in $n$-gram language models from Lecture 3).\n- **OOV at test time.** Words not in $V$ either get dropped or need a special handling scheme.",
+    "checks": [
+      {
+        "q": "In the worked example, the smoothed likelihood denominator for the positive class is $11 + 5 = 16$. What do these two numbers represent?",
+        "options": [
+          {"id": "1", "text": "11 = number of positive documents, 5 = number of classes squared."},
+          {"id": "2", "text": "11 = number of distinct words in positive docs, 5 = $k|Y|$."},
+          {"id": "3", "text": "11 = total token count in the positive class, 5 = $|V|$ (added because Laplace adds 1 to every vocabulary word)."},
+          {"id": "4", "text": "11 = $N$, 5 = $|V|$."}
+        ],
+        "correct": "3",
+        "explanation": "Likelihood denominator under add-$k$ is (sum of token counts in class) + $k|V|$. Here 11 is the positive-class token total and $|V|=5$ with $k=1$."
+      },
+      {
+        "q": "Why is removing \"not\" as a stopword a particularly bad idea for sentiment classification with Naive Bayes?",
+        "options": [
+          {"id": "1", "text": "It increases vocabulary size and slows training."},
+          {"id": "2", "text": "BoW already loses order, so dropping negation cues destroys the only remaining hint that polarity has been flipped."},
+          {"id": "3", "text": "It violates the conditional independence assumption."},
+          {"id": "4", "text": "It causes underflow during scoring."}
+        ],
+        "correct": "2",
+        "explanation": "BoW already discards order. The token \"not\" is one of the few signals that polarity is flipped; removing it makes \"not good\" and \"good\" look identical to NB. A standard fix is the NOT_ prefix heuristic."
+      }
+    ]
+  },
+  {
+    "lecture": "5",
+    "chunk_id": "L5-3",
+    "order": 3,
+    "title": "Evaluation: Confusion Matrix, Precision/Recall/F1, Imbalanced Data, Micro vs Macro",
+    "content_md": "Once a classifier is trained we need to measure how good it is. For a binary problem the **confusion matrix** records, for every test example, whether the prediction matched the gold label:\n\n- **TP** (true positive): predicted positive, actually positive.\n- **TN** (true negative): predicted negative, actually negative.\n- **FP** (false positive, **Type I error**): predicted positive, actually negative.\n- **FN** (false negative, **Type II error**): predicted negative, actually positive.\n\nFP and FN are not always equally costly. In a suicide-risk screener, a false negative (missing a person at risk) is far worse than a false positive, so we prefer **recall**. In a news category tagger, mislabeling articles is annoying, so we prefer **precision**. The right metric depends on the application.\n\n**Accuracy** is the most intuitive metric:\n\n$$\\text{Accuracy} = \\frac{TP + TN}{TP + FP + TN + FN}.$$\n\nBut it lies on **imbalanced** data. Suppose 2% of the population has COVID and your \"classifier\" always predicts negative — accuracy is 98%, yet the model is useless. This is *the* canonical trap.\n\nTo fix this we use class-specific metrics. **Precision** asks: of the items I predicted positive, how many actually were?\n\n$$\\text{Precision} = \\frac{TP}{TP + FP}.$$\n\n**Recall** asks: of the items that actually are positive, how many did I find?\n\n$$\\text{Recall} = \\frac{TP}{TP + FN}.$$\n\nThere is a tradeoff: predict positive for everything → recall = 1 but precision tanks. Predict positive only when extremely confident → precision rises but recall drops.\n\nWe often want a single number combining the two. The **F1 score** is the **harmonic mean** of precision and recall:\n\n$$F_1 = 2 \\cdot \\frac{\\text{Precision} \\cdot \\text{Recall}}{\\text{Precision} + \\text{Recall}}.$$\n\nThe harmonic mean is crucial here. Suppose precision = 1.0 and recall = 0.01. The arithmetic mean is 0.505 — looks decent. The harmonic mean is $\\approx 0.0198$ — correctly punishes the huge gap. Harmonic mean is dominated by the *smaller* of the two values; you cannot hide a terrible recall behind a great precision.\n\n**Multiclass evaluation.** For $k$ classes we build $k$ one-vs-rest binary confusion matrices (class $i$ vs not-$i$). To get a single score across all classes, two averaging schemes:\n\n- **Micro-averaging**: pool TP/FP/FN counts across all matrices first, then compute one precision, one recall, one F1. This favors **bigger classes** because their counts dominate the pool. On heavily imbalanced data, micro-F1 looks great even if rare classes are handled badly.\n- **Macro-averaging**: compute precision, recall, F1 *per class*, then take the unweighted mean. Every class counts equally, regardless of size — so poor performance on a small class drags the score down.\n\nWhich to report depends on whether you care about overall throughput (micro) or fairness across classes (macro). It is dishonest to report only micro-F1 on an imbalanced dataset and call the model \"good\".\n\nFinally, beware of comparing F1 across classifiers with different numbers of classes — the random baseline is 50% for binary but only ~10% for 10 classes, so absolute numbers are not directly comparable.",
+    "checks": [
+      {
+        "q": "A COVID classifier always predicts \"negative\" on a population with 2% prevalence and achieves 98% accuracy. What does this tell us?",
+        "options": [
+          {"id": "1", "text": "The classifier is excellent; 98% accuracy is hard to beat."},
+          {"id": "2", "text": "Accuracy is misleading on imbalanced data; recall on the positive class is 0, so the classifier is useless."},
+          {"id": "3", "text": "We should switch to micro-averaged accuracy."},
+          {"id": "4", "text": "The classifier has perfect precision, which compensates for poor recall."}
+        ],
+        "correct": "2",
+        "explanation": "TP = 0 means recall on the positive (COVID) class is 0 and precision is undefined. Accuracy is dominated by the 98% negative majority. Always check class-specific precision/recall on imbalanced data."
+      },
+      {
+        "q": "Precision = 1.0, recall = 0.01. What is the F1 score, and why does it look so different from the arithmetic mean?",
+        "options": [
+          {"id": "1", "text": "$F_1 \\approx 0.505$; F1 is the arithmetic mean."},
+          {"id": "2", "text": "$F_1 \\approx 0.0198$; F1 is the harmonic mean, which is dominated by the smaller value."},
+          {"id": "3", "text": "$F_1 = 1.0$; F1 only requires one of precision or recall to be high."},
+          {"id": "4", "text": "$F_1 = 0.0$; F1 is the geometric mean, which collapses when one value is small."}
+        ],
+        "correct": "2",
+        "explanation": "$F_1 = 2 \\cdot (1.0 \\cdot 0.01) / (1.0 + 0.01) \\approx 0.0198$. The harmonic mean punishes large gaps; arithmetic mean (0.505) would let the high precision mask the terrible recall."
+      },
+      {
+        "q": "On a heavily imbalanced multiclass dataset, which averaging scheme is more likely to *hide* poor performance on small classes?",
+        "options": [
+          {"id": "1", "text": "Macro-averaging — small classes dominate the average."},
+          {"id": "2", "text": "Micro-averaging — pooling counts means large classes dominate, masking failure on small ones."},
+          {"id": "3", "text": "Both schemes treat classes equally."},
+          {"id": "4", "text": "Neither — averaging cannot hide per-class behavior."}
+        ],
+        "correct": "2",
+        "explanation": "Micro-averaging pools TP/FP/FN across all per-class confusion matrices, so the big classes dominate. Macro-averaging takes an unweighted mean of per-class F1, giving small classes equal weight — which surfaces poor performance on them."
+      }
+    ]
+  },
+  {
+    "lecture": "5",
+    "chunk_id": "L5-4",
+    "order": 4,
+    "title": "Vector Space Model, TF-IDF, and Cosine Similarity",
+    "content_md": "The **Vector Space Model (VSM)** treats every document as a point in a $|V|$-dimensional space, where each axis corresponds to one vocabulary term. The document-term matrix has entries $w_{t,d}$ — the weight of term $t$ in document $d$. The simplest weighting is **binary** (1 if the term appears, else 0). A richer one is **term frequency** $tf_{t,d}$ (raw count). Document vectors are typically extremely sparse because any one document uses only a tiny slice of the vocabulary.\n\nRaw counts have a problem: a document containing \"the\" 50 times is not 50 times more about \"the\" than a document containing it once. Two fixes are layered together. First, **sublinear tf scaling** dampens the count with a log: $1 + \\log_{10} tf_{t,d}$ (and 0 if $tf_{t,d} = 0$). Second, **inverse document frequency** penalizes terms common across the corpus: if $df_t$ is the number of documents containing $t$ and $|D|$ is the corpus size, then\n\n$$idf_t = \\log_{10} \\frac{|D|}{df_t}.$$\n\nA term appearing in every document has $idf = 0$ — useless for distinguishing documents. A rare term has high $idf$. The combined **TF-IDF weight** (lecture form) is\n\n$$w_{t,d} = (1 + \\log_{10} tf_{t,d}) \\cdot \\log_{10} \\frac{|D|}{df_t}.$$\n\n**Worked TF-IDF.** Let $d_4 = $ \"dog watch dog tv\" with $|D|=5$. The term \"dog\" appears twice in $d_4$, in 3 documents overall: $w_{dog, d_4} = (1 + \\log_{10} 2) \\cdot \\log_{10}(5/3) \\approx 1.30 \\cdot 0.22 \\approx 0.29$. The term \"watch\" appears once and in only 1 document: $w_{watch, d_4} = (1 + 0) \\cdot \\log_{10} 5 \\approx 0.70$. A rarer word ends up with a *higher* weight than a more frequent but ubiquitous one — exactly what we want for distinguishing documents.\n\n**Document similarity.** The simplest measure is the **dot product** $v \\cdot w = \\sum_i v_i w_i$. But dot product overly favors documents with frequent words and long documents (more nonzero components → larger sums). The fix is to normalize by length, giving **cosine similarity**:\n\n$$\\cos(v, w) = \\frac{v \\cdot w}{|v|\\,|w|} = \\frac{\\sum_i v_i w_i}{\\sqrt{\\sum_i v_i^2} \\cdot \\sqrt{\\sum_i w_i^2}}.$$\n\nGeometrically this is the cosine of the angle between the vectors. For non-negative document vectors (counts and TF-IDF are non-negative) the cosine lies in $[0, 1]$; in general it lies in $[-1, 1]$. Cosine = 1 means same direction (perfectly similar), 0 means orthogonal (no shared terms), and negative would require negative components.\n\n**The cosine trap on paraphrases.** Consider \"The movie was funny\" and \"The flick was hilarious\". After stopword removal the content words are {movie, funny} and {flick, hilarious}. They share *no* words, so every $v_i w_i$ is zero, the dot product is zero, and the cosine is **0** — even though the sentences mean nearly the same thing. Classical VSM treats every word as an orthogonal axis. \"Cinema\" and \"theater\" sit on perpendicular axes; the model has no notion that they are related. This is the fundamental motivation for **dense word embeddings** in later lectures, where semantically similar words land near each other in a low-dimensional space and paraphrases acquire non-zero similarity.",
+    "checks": [
+      {
+        "q": "A term $t$ appears in every document of the corpus. What is its $idf_t = \\log_{10}(|D|/df_t)$, and what does that imply for its TF-IDF weight?",
+        "options": [
+          {"id": "1", "text": "$idf_t = 1$; the term gets the maximum weight."},
+          {"id": "2", "text": "$idf_t = \\log_{10}|D|$; the weight is large because the term is common."},
+          {"id": "3", "text": "$idf_t = 0$; the TF-IDF weight is 0 regardless of $tf_{t,d}$ — common-everywhere terms cannot distinguish documents."},
+          {"id": "4", "text": "$idf_t$ is undefined; the term is dropped from the vocabulary."}
+        ],
+        "correct": "3",
+        "explanation": "$df_t = |D|$ gives $idf_t = \\log_{10} 1 = 0$, multiplying the whole TF-IDF weight to 0. This is exactly the desired behavior: terms appearing everywhere carry no discriminative information."
+      },
+      {
+        "q": "Why is cosine similarity preferred over the raw dot product when comparing document vectors?",
+        "options": [
+          {"id": "1", "text": "Dot product cannot be computed for sparse vectors."},
+          {"id": "2", "text": "Dot product overly favors long documents and frequent terms; cosine normalizes by vector length, so it depends on direction (term proportions) rather than magnitude."},
+          {"id": "3", "text": "Cosine handles negative weights, which dot product cannot."},
+          {"id": "4", "text": "Cosine is always larger than dot product, making scores easier to read."}
+        ],
+        "correct": "2",
+        "explanation": "Long documents have larger vectors and inflate dot products even when topical overlap is moderate. Dividing by $|v||w|$ removes that magnitude effect, so cosine measures the angle (relative term composition) instead."
+      },
+      {
+        "q": "Two paraphrased sentences share no content words after stopword removal: {movie, funny} and {flick, hilarious}. What is their cosine similarity under classical VSM, and what does this reveal?",
+        "options": [
+          {"id": "1", "text": "Close to 1 because the sentences are paraphrases — VSM captures semantic similarity."},
+          {"id": "2", "text": "Negative, because the words are antonyms."},
+          {"id": "3", "text": "Exactly 0 — every term axis is orthogonal in classical VSM, so synonymy is invisible. This motivates dense word embeddings."},
+          {"id": "4", "text": "Undefined, because the vectors have different supports."}
+        ],
+        "correct": "3",
+        "explanation": "No shared dimensions means the dot product is 0, hence cosine is 0. Classical VSM treats every word as its own orthogonal axis, so it cannot see that \"movie\"/\"flick\" or \"funny\"/\"hilarious\" are synonyms — exactly the gap that word embeddings later fill."
+      }
+    ]
+  }
+]

@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>CS4248 Quizlet — Drill & Learn</title>
+<script>
+  window.MathJax = {
+    tex: {
+      inlineMath: [['$', '$'], ['\\(', '\\)']],
+      displayMath: [['$$', '$$'], ['\\[', '\\]']],
+      processEscapes: true
+    },
+    options: { skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'] },
+    startup: { typeset: false }
+  };
+</script>
+<script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<style>
+  :root {
+    --bg: #0f172a;
+    --panel: #1e293b;
+    --ink: #e2e8f0;
+    --muted: #94a3b8;
+    --accent: #38bdf8;
+    --good: #22c55e;
+    --good-bg: rgba(34,197,94,0.15);
+    --bad: #ef4444;
+    --bad-bg: rgba(239,68,68,0.15);
+    --select: rgba(56,189,248,0.25);
+    --border: #334155;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 16px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  header {
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 28px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex: 0 0 auto;
+    gap: 16px;
+  }
+  header h1 { margin: 0; font-size: 16px; font-weight: 600; flex: 0 0 auto; }
+  header .stats { display: flex; gap: 16px; font-size: 13px; }
+  .stat-pill {
+    background: rgba(255,255,255,0.06);
+    padding: 4px 12px;
+    border-radius: 999px;
+  }
+  .stat-pill.good { color: var(--good); }
+  .stat-pill.bad { color: var(--bad); }
+
+  /* tabs */
+  nav.tabs { display: flex; gap: 6px; flex: 1; justify-content: center; }
+  .tab {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    color: var(--ink);
+    padding: 6px 18px;
+    border-radius: 999px;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+  }
+  .tab:hover { background: rgba(255,255,255,0.1); }
+  .tab.active { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+
+  main {
+    flex: 1 1 auto;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 36px 28px;
+    overflow-y: auto;
+  }
+  .card {
+    width: 100%;
+    max-width: 760px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 30px 36px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+  }
+  .meta {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+    font-size: 12px;
+  }
+  .tag {
+    background: rgba(56,189,248,0.15);
+    color: var(--accent);
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .tag.diff-easy { background: rgba(34,197,94,0.15); color: var(--good); }
+  .tag.diff-medium { background: rgba(251,191,36,0.15); color: #fbbf24; }
+  .tag.diff-hard { background: rgba(239,68,68,0.15); color: var(--bad); }
+  .question {
+    font-size: 17px;
+    line-height: 1.6;
+    margin: 0 0 22px 0;
+  }
+  .question p { margin: 6px 0; }
+  .question code, .question pre {
+    background: #0b1220;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.94em;
+  }
+  .question pre { padding: 10px 14px; overflow-x: auto; }
+
+  .options { display: flex; flex-direction: column; gap: 10px; margin: 12px 0 18px 0; }
+  .option {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 12px 16px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    transition: all 0.1s;
+  }
+  .option .key {
+    flex: 0 0 auto;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.08);
+    color: var(--muted);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+    font-family: ui-monospace, monospace;
+  }
+  .option .text { flex: 1; }
+  .option.selected { background: var(--select); border-color: var(--accent); }
+  .option.selected .key { background: var(--accent); color: white; }
+  .option.correct-pick { background: var(--good-bg); border-color: var(--good); }
+  .option.correct-pick .key { background: var(--good); color: white; }
+  .option.wrong-pick { background: var(--bad-bg); border-color: var(--bad); }
+  .option.wrong-pick .key { background: var(--bad); color: white; }
+  .option.show-correct { background: var(--good-bg); border-color: var(--good); }
+  .option.show-correct .key { background: var(--good); color: white; }
+
+  .fitb-input {
+    width: 100%;
+    padding: 14px 16px;
+    background: #0b1220;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--ink);
+    font: inherit;
+    font-size: 16px;
+    outline: none;
+  }
+  .fitb-input:focus { border-color: var(--accent); }
+  .fitb-input.right { border-color: var(--good); background: var(--good-bg); }
+  .fitb-input.wrong { border-color: var(--bad); background: var(--bad-bg); }
+
+  .feedback {
+    margin-top: 18px;
+    padding: 14px 18px;
+    border-radius: 8px;
+    border-left: 4px solid var(--border);
+    background: rgba(255,255,255,0.03);
+    display: none;
+  }
+  .feedback.show { display: block; }
+  .feedback.right { border-left-color: var(--good); background: var(--good-bg); }
+  .feedback.wrong { border-left-color: var(--bad); background: var(--bad-bg); }
+  .feedback h3 {
+    margin: 0 0 6px 0;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .feedback.right h3 { color: var(--good); }
+  .feedback.wrong h3 { color: var(--bad); }
+  .feedback .explanation { font-size: 14px; line-height: 1.5; }
+  .feedback .explanation p { margin: 6px 0; }
+
+  footer {
+    flex: 0 0 auto;
+    padding: 12px 28px;
+    background: var(--panel);
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 13px;
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    font-family: ui-monospace, monospace;
+  }
+  footer .hint kbd {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-size: 12px;
+  }
+
+  .end-screen { text-align: center; padding: 60px 30px; }
+  .end-screen h2 { color: var(--accent); margin: 0 0 12px 0; }
+  .end-screen .big-stat { font-size: 48px; font-weight: 700; margin: 16px 0; }
+  .end-screen button {
+    background: var(--accent); color: var(--bg);
+    border: none; padding: 12px 28px; border-radius: 8px;
+    font: inherit; font-size: 14px; font-weight: 600;
+    cursor: pointer; margin: 6px 4px;
+  }
+  .end-screen button:hover { background: #0ea5e9; }
+
+  /* === Learn view === */
+  #learnView { width: 100%; max-width: 900px; margin: 0 auto; }
+  .lecture-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: 16px;
+    padding: 0;
+  }
+  .lecture-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px 20px;
+    text-decoration: none;
+    color: var(--ink);
+    transition: transform 0.1s, border-color 0.1s;
+    display: block;
+  }
+  .lecture-card:hover { transform: translateY(-2px); border-color: var(--accent); }
+  .lecture-num { font-size: 28px; font-weight: 700; color: var(--accent); }
+  .lecture-title { margin-top: 4px; font-size: 14px; font-weight: 500; }
+  .lecture-meta { margin-top: 8px; font-size: 12px; color: var(--muted); }
+
+  .breadcrumb { font-size: 13px; color: var(--muted); margin-bottom: 14px; }
+  .breadcrumb a { color: var(--muted); text-decoration: none; }
+  .breadcrumb a:hover { color: var(--accent); }
+
+  .chunk-list { list-style: none; padding: 0; margin: 16px 0; counter-reset: chunk-counter; }
+  .chunk-list li {
+    margin: 0 0 10px 0;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    counter-increment: chunk-counter;
+    position: relative;
+    transition: border-color 0.1s;
+  }
+  .chunk-list li:hover { border-color: var(--accent); }
+  .chunk-list li a {
+    display: block;
+    color: var(--ink);
+    text-decoration: none;
+    padding: 16px 18px 16px 56px;
+  }
+  .chunk-list li::before {
+    content: counter(chunk-counter);
+    position: absolute;
+    left: 16px; top: 14px;
+    width: 28px; height: 28px;
+    border-radius: 6px;
+    background: rgba(56,189,248,0.15);
+    color: var(--accent);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 13px;
+    font-family: ui-monospace, monospace;
+  }
+
+  .chunk-title { margin-bottom: 12px; font-size: 22px; }
+  .chunk-actions { margin-bottom: 18px; }
+  #askBtn {
+    background: rgba(56,189,248,0.15);
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    padding: 8px 18px;
+    border-radius: 8px;
+    font: inherit; font-size: 13px; font-weight: 600;
+    cursor: pointer;
+  }
+  #askBtn:hover { background: rgba(56,189,248,0.25); }
+
+  .chunk-body {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 26px 32px;
+    line-height: 1.65;
+    font-size: 16px;
+  }
+  .chunk-body h1, .chunk-body h2, .chunk-body h3 { margin: 1.2em 0 0.5em 0; }
+  .chunk-body h1 { font-size: 22px; }
+  .chunk-body h2 { font-size: 18px; }
+  .chunk-body h3 { font-size: 15px; }
+  .chunk-body code { background: #0b1220; padding: 2px 6px; border-radius: 4px; font-size: 0.94em; }
+  .chunk-body pre { background: #0b1220; padding: 12px 16px; border-radius: 6px; overflow-x: auto; }
+  .chunk-body p { margin: 0.8em 0; }
+  .chunk-body ul, .chunk-body ol { margin: 0.7em 0; padding-left: 24px; }
+  .chunk-body li { margin: 0.3em 0; }
+  .chunk-body strong { color: #fff; }
+  .chunk-body blockquote { border-left: 3px solid var(--accent); margin: 0.7em 0; padding: 4px 14px; color: var(--muted); }
+
+  .discussions { margin-top: 32px; }
+  .discussions h3 { font-size: 16px; color: var(--muted); margin-bottom: 12px; }
+  .disc {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin-bottom: 10px;
+  }
+  .disc-q { margin-bottom: 8px; }
+  .disc-a { margin-top: 8px; padding-top: 10px; border-top: 1px solid var(--border); font-size: 14px; line-height: 1.55; }
+  .disc-a p { margin: 0.5em 0; }
+  .disc-meta { margin-top: 6px; font-size: 11px; color: var(--muted); }
+
+  .checks-section { margin-top: 32px; }
+  .checks-section h3 { font-size: 16px; color: var(--muted); margin-bottom: 12px; }
+  .check {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 22px;
+    margin-bottom: 14px;
+  }
+  .check-q { font-weight: 500; margin-bottom: 12px; line-height: 1.5; }
+  .check-q p { margin: 0; }
+  .check-options { display: flex; flex-direction: column; gap: 8px; }
+  .check-option {
+    display: flex; gap: 12px; align-items: flex-start;
+    padding: 10px 14px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.1s;
+  }
+  .check-option:not(.disabled):hover { border-color: var(--accent); background: var(--select); }
+  .check-option.correct-pick { background: var(--good-bg); border-color: var(--good); }
+  .check-option.correct-pick .key { background: var(--good); color: white; }
+  .check-option.wrong-pick { background: var(--bad-bg); border-color: var(--bad); }
+  .check-option.wrong-pick .key { background: var(--bad); color: white; }
+  .check-option.show-correct { background: var(--good-bg); border-color: var(--good); }
+  .check-option.show-correct .key { background: var(--good); color: white; }
+  .check-option.disabled { cursor: default; }
+  .check-option .key {
+    flex: 0 0 auto; width: 24px; height: 24px;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.08);
+    color: var(--muted);
+    display: inline-flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 12px;
+    font-family: ui-monospace, monospace;
+  }
+  .check-feedback {
+    margin-top: 12px; padding: 12px 14px;
+    border-radius: 6px; font-size: 14px;
+    border-left: 3px solid var(--border);
+    background: rgba(255,255,255,0.03);
+  }
+  .check-feedback.right { border-left-color: var(--good); background: var(--good-bg); }
+  .check-feedback.wrong { border-left-color: var(--bad); background: var(--bad-bg); }
+
+  .btn-next {
+    display: inline-block;
+    margin-top: 28px;
+    padding: 12px 22px;
+    background: var(--accent);
+    color: var(--bg);
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 14px;
+  }
+  .btn-next:hover { background: #0ea5e9; }
+  .btn-next.muted-btn { background: rgba(255,255,255,0.06); color: var(--muted); }
+
+  /* Modal */
+  .overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.6);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 100;
+  }
+  .modal {
+    background: var(--panel);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    padding: 24px 28px;
+    width: 100%;
+    max-width: 540px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  }
+  .modal h3 { margin: 0 0 6px 0; }
+  .modal-sub { color: var(--muted); font-size: 13px; margin: 0 0 14px 0; }
+  .modal textarea {
+    width: 100%;
+    background: #0b1220;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    color: var(--ink);
+    font: inherit;
+    font-size: 14px;
+    resize: vertical;
+    min-height: 120px;
+    outline: none;
+  }
+  .modal textarea:focus { border-color: var(--accent); }
+  .modal-actions { margin-top: 14px; display: flex; gap: 8px; justify-content: flex-end; }
+  .btn-primary, .btn-secondary {
+    padding: 8px 18px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .btn-primary { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+  .btn-primary:hover { background: #0ea5e9; }
+  .btn-secondary { background: rgba(255,255,255,0.06); color: var(--ink); }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: var(--panel);
+    border: 1px solid var(--accent);
+    color: var(--ink);
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 13px;
+    z-index: 200;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+  }
+
+  .muted { color: var(--muted); }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>CS4248 NLP — Quizlet</h1>
+  <nav class="tabs">
+    <a class="tab" data-tab="drill" href="#drill">Drill</a>
+    <a class="tab" data-tab="learn" href="#learn">Learn</a>
+  </nav>
+  <div class="stats" id="drillStats">
+    <span class="stat-pill" id="progress">0 / 0</span>
+    <span class="stat-pill good" id="rightCount">✓ 0</span>
+    <span class="stat-pill bad" id="wrongCount">✗ 0</span>
+  </div>
+</header>
+
+<main id="main">
+  <div id="drillView">
+    <div class="card" id="card">
+      <div class="meta" id="meta"></div>
+      <div class="question" id="qtext"></div>
+      <div id="answerArea"></div>
+      <div class="feedback" id="feedback">
+        <h3 id="feedbackTitle"></h3>
+        <div class="explanation" id="explanation"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="learnView" hidden>
+    <div id="learnLectures"></div>
+    <div id="learnChunks" hidden></div>
+    <div id="learnChunk" hidden></div>
+  </div>
+</main>
+
+<footer>
+  <div class="hint" id="hint"></div>
+</footer>
+
+<div id="askOverlay" class="overlay" hidden>
+  <div class="modal">
+    <h3>Ask Claude</h3>
+    <p class="modal-sub" id="askContext"></p>
+    <textarea id="askText" placeholder="What's confusing? Type your question..." rows="6"></textarea>
+    <div class="modal-actions">
+      <button class="btn-secondary" id="askCancel">Cancel</button>
+      <button class="btn-primary" id="askSubmit">Submit</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast" hidden></div>
+
+<script>
+// === Globals ===
+let allQuestions = [];
+let order = [];
+let currentIdx = 0;
+let stats = { right: 0, wrong: 0 };
+let currentSelected = new Set();
+let currentInput = '';
+let phase = 'answering';
+let allChunks = [];
+let allDiscussions = [];
+let currentMode = 'drill';
+let drillReady = false;
+
+const $ = (id) => document.getElementById(id);
+
+const LECTURE_TITLES = {
+  '1': 'What is NLP?',
+  '2': 'Strings & Words',
+  '3': 'n-Gram Language Models',
+  '4': 'Structure in Language',
+  '5': 'Text Classification',
+  '6': 'Connectionist ML',
+  '7': 'Word Embeddings',
+  '8': 'Encoder-Decoder',
+  '9': 'Transformers',
+  '10': 'BERT, GPT & LLMs',
+  '11': 'Augmenting LLMs',
+  '12': 'Efficient LLMs'
+};
+
+function typeset(el) {
+  if (window.MathJax && MathJax.typesetPromise) {
+    MathJax.typesetPromise(el ? [el] : undefined).catch(() => {});
+  } else {
+    setTimeout(() => typeset(el), 80);
+  }
+}
+
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function showToast(msg, ms=4000) {
+  $('toast').textContent = msg;
+  $('toast').hidden = false;
+  clearTimeout(window.__toastTimer);
+  window.__toastTimer = setTimeout(() => { $('toast').hidden = true; }, ms);
+}
+
+// === Hash routing ===
+function parseHash() {
+  const hash = window.location.hash.slice(1);
+  if (!hash) return { mode: 'drill' };
+  const parts = hash.split('/');
+  if (parts[0] === 'learn') {
+    return { mode: 'learn', lecture: parts[1] || null, chunkId: parts[2] || null };
+  }
+  return { mode: 'drill' };
+}
+
+async function routeFromHash() {
+  const r = parseHash();
+  setActiveTab(r.mode);
+  if (r.mode === 'drill') {
+    showDrillView();
+  } else {
+    await ensureLearnLoaded();
+    showLearnView(r.lecture, r.chunkId);
+  }
+}
+
+function setActiveTab(mode) {
+  document.querySelectorAll('.tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.tab === mode);
+  });
+  currentMode = mode;
+  $('drillStats').style.visibility = (mode === 'drill') ? 'visible' : 'hidden';
+}
+
+window.addEventListener('hashchange', routeFromHash);
+
+// === Drill view (existing logic) ===
+async function initDrill() {
+  if (drillReady) return;
+  let qs;
+  try { qs = await fetch('/questions').then(r => r.json()); }
+  catch (e) { qs = []; }
+  const params = new URLSearchParams(window.location.search);
+  const lectureFilter = params.get('lecture');
+  allQuestions = lectureFilter ? qs.filter(q => String(q.lecture) === lectureFilter) : qs;
+  if (allQuestions.length === 0) {
+    $('drillView').innerHTML = `<div class="card end-screen"><h2>No drill questions available</h2><p class="muted">Switch to Learn tab.</p></div>`;
+    drillReady = true;
+    return;
+  }
+  order = allQuestions.map((_, i) => i);
+  for (let i = order.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [order[i], order[j]] = [order[j], order[i]];
+  }
+  currentIdx = 0;
+  renderCurrent();
+  drillReady = true;
+}
+
+function showDrillView() {
+  $('drillView').hidden = false;
+  $('learnView').hidden = true;
+  if (!drillReady) initDrill();
+}
+
+function getQ() { return allQuestions[order[currentIdx]]; }
+
+function renderCurrent() {
+  if (currentIdx >= order.length) { renderDone(); return; }
+  const q = getQ();
+  phase = 'answering';
+  currentSelected = new Set();
+  currentInput = '';
+
+  $('progress').textContent = `${currentIdx + 1} / ${order.length}`;
+  $('rightCount').textContent = `✓ ${stats.right}`;
+  $('wrongCount').textContent = `✗ ${stats.wrong}`;
+
+  const meta = $('meta');
+  meta.innerHTML = `
+    <span class="tag">L${q.lecture}</span>
+    <span class="tag">${q.topic}</span>
+    <span class="tag">${q.type.toUpperCase()}</span>
+    <span class="tag diff-${q.difficulty}">${q.difficulty}</span>
+  `;
+
+  $('qtext').innerHTML = q.q;
+  $('feedback').classList.remove('show', 'right', 'wrong');
+
+  const ans = $('answerArea');
+  ans.innerHTML = '';
+
+  if (q.type === 'mcq' || q.type === 'mrq') {
+    const wrap = document.createElement('div');
+    wrap.className = 'options';
+    q.options.forEach((o) => {
+      const div = document.createElement('div');
+      div.className = 'option';
+      div.dataset.id = o.id;
+      div.id = `opt-${o.id}`;
+      div.innerHTML = `<span class="key">${o.id}</span><span class="text">${o.text}</span>`;
+      wrap.appendChild(div);
+    });
+    ans.appendChild(wrap);
+  } else if (q.type === 'fitb') {
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'fitb-input';
+    input.placeholder = 'Type your answer, then press Enter…';
+    input.id = 'fitbInput';
+    input.autocomplete = 'off';
+    input.spellcheck = false;
+    input.addEventListener('input', (e) => { currentInput = e.target.value; });
+    ans.appendChild(input);
+    setTimeout(() => input.focus(), 0);
+  }
+
+  typeset($('card'));
+  updateHint();
+}
+
+function updateHint() {
+  if (currentMode !== 'drill') { $('hint').innerHTML = ''; return; }
+  const q = getQ();
+  let hint = '';
+  if (!q) { $('hint').innerHTML = ''; return; }
+  if (phase === 'answering') {
+    if (q.type === 'mcq')      hint = `<kbd>1</kbd>–<kbd>${q.options.length}</kbd> select • <kbd>Enter</kbd> submit`;
+    else if (q.type === 'mrq') hint = `<kbd>1</kbd>–<kbd>${q.options.length}</kbd> toggle (multi-select) • <kbd>Enter</kbd> submit`;
+    else if (q.type === 'fitb')hint = `Type answer • <kbd>Enter</kbd> submit • <kbd>Tab</kbd> skip / reveal`;
+  } else if (phase === 'revealed') {
+    hint = `<kbd>Enter</kbd> next question • <kbd>S</kbd> skip remaining`;
+  } else if (phase === 'done') {
+    hint = `<kbd>R</kbd> restart`;
+  }
+  $('hint').innerHTML = hint;
+}
+
+function handleNumberKey(n) {
+  const q = getQ();
+  if (!q || q.type === 'fitb') return;
+  const id = String(n);
+  if (!q.options.find(o => o.id === id)) return;
+  if (q.type === 'mcq') { currentSelected.clear(); currentSelected.add(id); }
+  else if (q.type === 'mrq') {
+    if (currentSelected.has(id)) currentSelected.delete(id);
+    else currentSelected.add(id);
+  }
+  document.querySelectorAll('#drillView .option').forEach((el) => {
+    el.classList.toggle('selected', currentSelected.has(el.dataset.id));
+  });
+}
+
+function fitbCorrect(userAns, accepted) {
+  const norm = (s) => String(s || '').toLowerCase().replace(/[^\w\s+\-*/=().,^]/g, '').replace(/\s+/g, ' ').trim();
+  const ua = norm(userAns);
+  if (!ua) return false;
+  for (const a of accepted) {
+    const na = norm(a);
+    if (ua === na) return true;
+    if (ua.includes(na)) return true;
+    if (na.includes(ua) && ua.length >= Math.max(3, na.length - 3)) return true;
+  }
+  return false;
+}
+
+function submitAnswer() {
+  if (phase !== 'answering') return;
+  const q = getQ();
+  let userAnswer, isCorrect;
+
+  if (q.type === 'mcq') {
+    if (currentSelected.size === 0) return;
+    userAnswer = [...currentSelected][0];
+    isCorrect = userAnswer === q.correct;
+  } else if (q.type === 'mrq') {
+    if (currentSelected.size === 0) return;
+    userAnswer = [...currentSelected].sort();
+    const correctSet = new Set(q.correct);
+    isCorrect = currentSelected.size === correctSet.size &&
+                [...currentSelected].every(x => correctSet.has(x));
+  } else if (q.type === 'fitb') {
+    userAnswer = currentInput.trim();
+    if (!userAnswer) return;
+    isCorrect = fitbCorrect(userAnswer, q.correct);
+  }
+
+  if (q.type === 'mcq' || q.type === 'mrq') {
+    const correctSet = q.type === 'mcq' ? new Set([q.correct]) : new Set(q.correct);
+    document.querySelectorAll('#drillView .option').forEach((el) => {
+      el.classList.remove('selected');
+      const id = el.dataset.id;
+      if (currentSelected.has(id) && correctSet.has(id)) el.classList.add('correct-pick');
+      else if (currentSelected.has(id) && !correctSet.has(id)) el.classList.add('wrong-pick');
+      else if (correctSet.has(id)) el.classList.add('show-correct');
+    });
+  } else if (q.type === 'fitb') {
+    const inp = $('fitbInput');
+    if (inp) { inp.classList.add(isCorrect ? 'right' : 'wrong'); inp.disabled = true; }
+  }
+
+  if (isCorrect) stats.right++;
+  else stats.wrong++;
+  $('rightCount').textContent = `✓ ${stats.right}`;
+  $('wrongCount').textContent = `✗ ${stats.wrong}`;
+
+  const fb = $('feedback');
+  fb.classList.add('show');
+  fb.classList.add(isCorrect ? 'right' : 'wrong');
+  $('feedbackTitle').textContent = isCorrect ? '✓ CORRECT' : `✗ INCORRECT — Answer: ${formatCorrect(q)}`;
+  $('explanation').innerHTML = q.explanation || '';
+  typeset($('feedback'));
+
+  phase = 'revealed';
+  updateHint();
+
+  fetch('/answer', {
+    method: 'POST',
+    headers: {'content-type': 'application/json'},
+    body: JSON.stringify({
+      qid: q.id,
+      user_answer: typeof userAnswer === 'object' ? JSON.stringify(userAnswer) : userAnswer,
+      correct: isCorrect,
+      lecture: q.lecture,
+      topic: q.topic,
+      type: q.type
+    })
+  }).catch(() => {});
+}
+
+function formatCorrect(q) {
+  if (q.type === 'mcq') return q.correct;
+  if (q.type === 'mrq') return q.correct.join(', ');
+  if (q.type === 'fitb') return Array.isArray(q.correct) ? q.correct[0] : q.correct;
+  return '?';
+}
+
+function goNext() { currentIdx++; renderCurrent(); }
+
+function renderDone() {
+  phase = 'done';
+  const total = stats.right + stats.wrong;
+  const pct = total ? Math.round(100 * stats.right / total) : 0;
+  $('drillView').innerHTML = `
+    <div class="card end-screen">
+      <h2>Drill complete</h2>
+      <div class="big-stat">${stats.right} / ${total}  (${pct}%)</div>
+      <p style="color: var(--muted)">Results saved to disk. Press R to restart, or switch to Learn tab.</p>
+      <button onclick="location.reload()">Restart (re-shuffle)</button>
+    </div>
+  `;
+  $('progress').textContent = `${total} / ${total}`;
+  updateHint();
+}
+
+// === Learn view ===
+async function ensureLearnLoaded() {
+  if (allChunks.length === 0) {
+    try { allChunks = await fetch('/chunks').then(r => r.json()); }
+    catch (e) { allChunks = []; }
+  }
+  await loadDiscussions();
+}
+
+async function loadDiscussions() {
+  try { allDiscussions = await fetch('/discussions').then(r => r.json()); }
+  catch (e) { allDiscussions = []; }
+}
+
+function showLearnView(lecture, chunkId) {
+  $('drillView').hidden = true;
+  $('learnView').hidden = false;
+  if (chunkId) showChunk(lecture, chunkId);
+  else if (lecture) showLectureChunks(lecture);
+  else showLecturesGrid();
+}
+
+function showLecturesGrid() {
+  $('learnLectures').hidden = false;
+  $('learnChunks').hidden = true;
+  $('learnChunk').hidden = true;
+  const byLecture = new Map();
+  for (const c of allChunks) {
+    if (!byLecture.has(c.lecture)) byLecture.set(c.lecture, []);
+    byLecture.get(c.lecture).push(c);
+  }
+  const lectures = [...byLecture.keys()].sort((a, b) => parseInt(a) - parseInt(b));
+  if (lectures.length === 0) {
+    $('learnLectures').innerHTML = `<p class="muted">No chunks loaded yet. Server may still be generating content.</p>`;
+    return;
+  }
+  $('learnLectures').innerHTML = `
+    <h2 style="margin-top:0">Pick a lecture</h2>
+    <p class="muted" style="margin-top:-6px">Each lecture is split into 3-5 sub-chunks. Read, ask Claude clarifying questions, then test understanding.</p>
+    <div class="lecture-grid" style="margin-top:18px">
+      ${lectures.map(l => `
+        <a class="lecture-card" href="#learn/L${l}">
+          <div class="lecture-num">L${l}</div>
+          <div class="lecture-title">${LECTURE_TITLES[l] || ''}</div>
+          <div class="lecture-meta">${byLecture.get(l).length} chunks</div>
+        </a>
+      `).join('')}
+    </div>
+  `;
+  window.scrollTo(0, 0);
+}
+
+function showLectureChunks(lecture) {
+  const lec = String(lecture).replace(/^L/i, '');
+  const chunks = allChunks.filter(c => c.lecture === lec).sort((a, b) => a.order - b.order);
+  $('learnLectures').hidden = true;
+  $('learnChunks').hidden = false;
+  $('learnChunk').hidden = true;
+  if (chunks.length === 0) {
+    $('learnChunks').innerHTML = `
+      <div class="breadcrumb"><a href="#learn">← Lectures</a></div>
+      <h2>Lecture ${lec}</h2>
+      <p class="muted">No chunks for this lecture yet.</p>
+    `;
+    return;
+  }
+  $('learnChunks').innerHTML = `
+    <div class="breadcrumb"><a href="#learn">← Lectures</a></div>
+    <h2>Lecture ${lec} — ${LECTURE_TITLES[lec] || ''}</h2>
+    <ol class="chunk-list">
+      ${chunks.map(c => `
+        <li><a href="#learn/L${lec}/${c.chunk_id}">${escapeHtml(c.title)}</a></li>
+      `).join('')}
+    </ol>
+  `;
+  window.scrollTo(0, 0);
+}
+
+function showChunk(lecture, chunkId) {
+  const chunk = allChunks.find(c => c.chunk_id === chunkId);
+  if (!chunk) { showLecturesGrid(); return; }
+  const lec = chunk.lecture;
+  const sibs = allChunks.filter(c => c.lecture === lec).sort((a, b) => a.order - b.order);
+  const idx = sibs.findIndex(c => c.chunk_id === chunkId);
+  const next = sibs[idx + 1];
+
+  $('learnLectures').hidden = true;
+  $('learnChunks').hidden = true;
+  $('learnChunk').hidden = false;
+
+  const md = chunk.content_md || '';
+  const bodyHtml = (window.marked ? marked.parse(md) : md.replace(/\n/g, '<br>'));
+
+  const checks = (chunk.checks || []).map((c, i) => `
+    <div class="check" data-idx="${i}">
+      <div class="check-q">${c.q}</div>
+      <div class="check-options">
+        ${c.options.map(o => `
+          <div class="check-option" data-id="${o.id}">
+            <span class="key">${o.id}</span>
+            <span class="text">${o.text}</span>
+          </div>
+        `).join('')}
+      </div>
+      <div class="check-feedback" hidden></div>
+    </div>
+  `).join('');
+
+  const discs = allDiscussions.filter(d => d.chunk_id === chunkId);
+  const discsHtml = discs.length ? discs.map(d => `
+    <div class="disc">
+      <div class="disc-q"><strong>You asked:</strong> ${escapeHtml(d.question)}</div>
+      <div class="disc-a">
+        ${d.answer
+          ? `<strong>Claude:</strong> ${window.marked ? marked.parse(d.answer) : escapeHtml(d.answer)}`
+          : '<em class="muted">⏳ Pending — Claude will answer next session. Reload the page to check for replies.</em>'}
+      </div>
+      <div class="disc-meta">Asked ${d.asked_at}${d.answered_at ? ' • Answered ' + d.answered_at : ''}</div>
+    </div>
+  `).join('') : '<p class="muted">No questions yet for this chunk. Hit "Ask Claude" if anything is unclear.</p>';
+
+  const nextHtml = next
+    ? `<a class="btn-next" href="#learn/L${lec}/${next.chunk_id}">Next chunk: ${escapeHtml(next.title)} →</a>`
+    : `<a class="btn-next muted-btn" href="#learn/L${lec}">← Back to chunk list</a>`;
+
+  $('learnChunk').innerHTML = `
+    <div class="breadcrumb">
+      <a href="#learn">Lectures</a> ›
+      <a href="#learn/L${lec}">L${lec} — ${LECTURE_TITLES[lec] || ''}</a> ›
+      ${escapeHtml(chunk.title)}
+    </div>
+    <h2 class="chunk-title">${escapeHtml(chunk.title)}</h2>
+    <div class="chunk-actions">
+      <button id="askBtn">💬 Ask Claude about this chunk</button>
+    </div>
+    <div class="chunk-body">${bodyHtml}</div>
+
+    <div class="discussions">
+      <h3>Discussions</h3>
+      ${discsHtml}
+    </div>
+
+    <div class="checks-section">
+      <h3>Check your understanding</h3>
+      <div class="checks">${checks || '<p class="muted">No checks for this chunk.</p>'}</div>
+    </div>
+
+    ${nextHtml}
+  `;
+
+  $('learnChunk').querySelectorAll('.check').forEach(checkEl => {
+    checkEl.querySelectorAll('.check-option').forEach(optEl => {
+      optEl.addEventListener('click', () => {
+        if (checkEl.classList.contains('answered')) return;
+        const idx = parseInt(checkEl.dataset.idx);
+        const optId = optEl.dataset.id;
+        submitCheck(chunk, idx, optId, checkEl);
+      });
+    });
+  });
+
+  $('askBtn').addEventListener('click', () => openAskModal(chunk));
+
+  typeset($('learnChunk'));
+  window.scrollTo(0, 0);
+}
+
+function submitCheck(chunk, idx, optId, checkEl) {
+  const check = chunk.checks[idx];
+  const correct = check.correct;
+  const isCorrect = optId === correct;
+
+  checkEl.classList.add('answered');
+  checkEl.querySelectorAll('.check-option').forEach(el => {
+    el.classList.add('disabled');
+    if (el.dataset.id === optId && isCorrect) el.classList.add('correct-pick');
+    else if (el.dataset.id === optId && !isCorrect) el.classList.add('wrong-pick');
+    else if (el.dataset.id === correct) el.classList.add('show-correct');
+  });
+
+  const fb = checkEl.querySelector('.check-feedback');
+  fb.hidden = false;
+  fb.className = 'check-feedback ' + (isCorrect ? 'right' : 'wrong');
+  fb.innerHTML = `<strong>${isCorrect ? '✓ Correct.' : '✗ Incorrect.'}</strong> ${check.explanation || ''}`;
+  typeset(fb);
+}
+
+// === Ask modal ===
+function openAskModal(chunk) {
+  $('askContext').textContent = `About: ${chunk.title} (L${chunk.lecture})`;
+  $('askText').value = '';
+  $('askOverlay').hidden = false;
+  $('askText').focus();
+  $('askOverlay').dataset.chunkId = chunk.chunk_id;
+  $('askOverlay').dataset.lecture = chunk.lecture;
+  $('askOverlay').dataset.chunkTitle = chunk.title;
+}
+
+function closeAskModal() { $('askOverlay').hidden = true; }
+
+async function submitAsk() {
+  const text = $('askText').value.trim();
+  if (!text) return;
+  const chunkId = $('askOverlay').dataset.chunkId;
+  const lecture = $('askOverlay').dataset.lecture;
+  const chunkTitle = $('askOverlay').dataset.chunkTitle;
+  try {
+    const res = await fetch('/discussions', {
+      method: 'POST',
+      headers: {'content-type': 'application/json'},
+      body: JSON.stringify({ chunk_id: chunkId, lecture, chunk_title: chunkTitle, question: text })
+    });
+    const json = await res.json();
+    if (json.ok) {
+      closeAskModal();
+      showToast('Question saved. Tell Claude in chat: "answer my pending discussions" — answers appear here on refresh.', 6000);
+      await loadDiscussions();
+      const r = parseHash();
+      if (r.chunkId) showChunk(r.lecture, r.chunkId);
+    } else {
+      showToast('Error: ' + (json.error || 'unknown'));
+    }
+  } catch (e) {
+    showToast('Network error');
+  }
+}
+
+document.getElementById('askCancel').addEventListener('click', closeAskModal);
+document.getElementById('askSubmit').addEventListener('click', submitAsk);
+document.getElementById('askOverlay').addEventListener('click', (e) => {
+  if (e.target.id === 'askOverlay') closeAskModal();
+});
+
+// === Keyboard handler ===
+document.addEventListener('keydown', (e) => {
+  // Modal: Esc closes, Cmd+Enter submits
+  if (!$('askOverlay').hidden) {
+    if (e.key === 'Escape') { closeAskModal(); return; }
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { submitAsk(); return; }
+    return;
+  }
+
+  // Drill keybindings only in drill mode
+  if (currentMode !== 'drill') return;
+
+  const inFitb = e.target.tagName === 'INPUT' && e.target.classList.contains('fitb-input');
+
+  if (phase === 'answering') {
+    if (e.key === 'Enter') { e.preventDefault(); submitAnswer(); return; }
+    if (!inFitb && /^[1-9]$/.test(e.key)) {
+      e.preventDefault();
+      handleNumberKey(parseInt(e.key));
+      return;
+    }
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      const q = getQ();
+      currentSelected = new Set();
+      currentInput = '';
+      stats.wrong++;
+      $('wrongCount').textContent = `✗ ${stats.wrong}`;
+      const fb = $('feedback');
+      fb.classList.add('show', 'wrong');
+      $('feedbackTitle').textContent = `Skipped — Answer: ${formatCorrect(q)}`;
+      $('explanation').innerHTML = q.explanation || '';
+      typeset($('feedback'));
+      if (q.type === 'mcq' || q.type === 'mrq') {
+        const correctSet = q.type === 'mcq' ? new Set([q.correct]) : new Set(q.correct);
+        document.querySelectorAll('#drillView .option').forEach((el) => {
+          if (correctSet.has(el.dataset.id)) el.classList.add('show-correct');
+        });
+      } else if (q.type === 'fitb') {
+        const inp = $('fitbInput');
+        if (inp) inp.disabled = true;
+      }
+      phase = 'revealed';
+      updateHint();
+      fetch('/answer', {
+        method: 'POST',
+        headers: {'content-type': 'application/json'},
+        body: JSON.stringify({
+          qid: q.id, user_answer: '__SKIPPED__', correct: false,
+          lecture: q.lecture, topic: q.topic, type: q.type
+        })
+      }).catch(() => {});
+    }
+  } else if (phase === 'revealed') {
+    if (e.key === 'Enter') { e.preventDefault(); goNext(); }
+    if (e.key === 's' || e.key === 'S') {
+      currentIdx = order.length;
+      renderCurrent();
+    }
+  } else if (phase === 'done') {
+    if (e.key === 'r' || e.key === 'R') { location.reload(); }
+  }
+});
+
+// === Init ===
+(async function init() {
+  await routeFromHash();
+  if (currentMode === 'drill') await initDrill();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,212 @@
+[
+  {
+    "lecture": "4",
+    "chunk_id": "L4-1",
+    "order": 1,
+    "title": "Sequence Tasks and POS Tagging",
+    "content_md": "Lecture 4 starts by reminding us that bag-of-words representations throw away order, and order matters: \"Bob kills mosquitoes\" and \"Mosquitoes kill Bob\" share the same words but mean very different things. To handle order, we treat language as a *sequence*, and many NLP problems become sequence tasks.\n\nIt helps to organise sequence tasks by the input/output cardinality. **Classification** is N-to-1: a whole sentence maps to one label, like sentiment polarity. **Labeling / Tagging** is N-to-N: each input token gets its own label, like POS tagging or named entity recognition (NER). **Translation** is N-to-M: input and output are both sequences but of (generally) different length, like machine translation or summarisation. **Generation** is 1-to-N: from a single trigger (an image, a topic) we produce a sequence, like image captioning. POS tagging is the case study for this lecture because it is the simplest non-trivial labeling task and it exposes the key issue: ambiguity.\n\n**Part of speech (POS)** is the syntactic category of a word — its word-class. Traditional English grammar lists 8 classes; the **Penn Treebank** tagset, which is what most English NLP uses, refines this to **36 base tags plus 12 punctuation tags**. Tags like <code>NN</code> (singular noun), <code>NNS</code> (plural noun), <code>VB</code> (verb base), <code>VBZ</code> (verb 3sg present), <code>JJ</code> (adjective), <code>DT</code> (determiner), <code>IN</code> (preposition) cover most of what you will see.\n\nA crucial distinction is **closed class vs open class**. *Closed class* words are function words: prepositions, pronouns, determiners, conjunctions. The set is small and basically fixed — we do not invent new prepositions. *Open class* words are nouns, verbs, adjectives, adverbs — new members are constantly added (\"to google\", \"selfie\"). Open classes are where ambiguity and out-of-vocabulary problems live.\n\nWhy is tagging hard? Because of **lexical ambiguity**. The word *book* can be <code>NN</code> (\"a good book\") or <code>VB</code> (\"book the flight\"). The lecture's quoted statistic is striking: about **85% of word *types* are unambiguous** (each appears with only one tag in the corpus), but only about **35-45% of word *tokens* are unambiguous** — i.e. **55-65% of tokens are ambiguous**. The ambiguous words are the *common* ones, so they dominate running text. Swap these two statistics and you fail the question: types vs tokens is a classic exam trap.\n\nA helpful concept is the **anchor word**: a word that has only one possible POS tag. Anchor words are useful for *unsupervised* tagging, where we can use them to seed clusters of similar contexts.\n\nThe simplest **baseline POS tagger** is: assign each word its most frequent tag in training data, and tag unknown words as nouns. This already reaches roughly **92% accuracy**, while state-of-the-art neural taggers reach about **97-98%**. It is tempting to dismiss the gap as small, but the lecture warns: errors are *imbalanced* (rare classes get hit hardest) and they *propagate* downstream into parsers, NER systems, and IE pipelines.",
+    "checks": [
+      {
+        "q": "Which statement about POS ambiguity statistics is correct?",
+        "options": [
+          {"id": "1", "text": "About 85% of tokens and 55% of types are ambiguous."},
+          {"id": "2", "text": "About 85% of types are unambiguous, but 55-65% of tokens are ambiguous."},
+          {"id": "3", "text": "Both types and tokens are roughly 85% unambiguous."},
+          {"id": "4", "text": "Tokens are mostly unambiguous; types are mostly ambiguous."}
+        ],
+        "correct": "2",
+        "explanation": "Most word types appear with only one tag, but the ambiguous types are very frequent words, so on a token basis the majority are ambiguous. Swapping types and tokens is a common trap."
+      },
+      {
+        "q": "Which group is a *closed* class?",
+        "options": [
+          {"id": "1", "text": "Nouns"},
+          {"id": "2", "text": "Verbs"},
+          {"id": "3", "text": "Determiners"},
+          {"id": "4", "text": "Adjectives"}
+        ],
+        "correct": "3",
+        "explanation": "Determiners (along with prepositions, pronouns, conjunctions) are closed-class function words: the set is small and fixed. Nouns, verbs, adjectives, adverbs are open-class because new members are added constantly."
+      },
+      {
+        "q": "What is the baseline tagger described in the lecture, and roughly what accuracy does it reach?",
+        "options": [
+          {"id": "1", "text": "Assign each word its most frequent tag (unknowns as nouns); ~92%."},
+          {"id": "2", "text": "Train a Bi-LSTM on Penn Treebank; ~97-98%."},
+          {"id": "3", "text": "Use Viterbi over an HMM; ~95%."},
+          {"id": "4", "text": "Tag every word as a noun; ~70%."}
+        ],
+        "correct": "1",
+        "explanation": "The baseline picks the most frequent tag per word and falls back to noun for unknowns. It is already ~92%, which is why the lecture stresses imbalanced errors and downstream propagation rather than the headline number."
+      }
+    ]
+  },
+  {
+    "lecture": "4",
+    "chunk_id": "L4-2",
+    "order": 2,
+    "title": "POS Tagging Models: HMM Concept, Bi-LSTM, CRF, Transformers",
+    "content_md": "Once we accept POS tagging as a labeling task, the question becomes: which model? Lecture 4 walks through a short tour, but with a very specific scope warning that you must remember for the exam.\n\n**Hidden Markov Model (HMM) — concept only.** An HMM models a sequence as a chain of *hidden states* emitting *observations*. For POS tagging, the **hidden states are the POS tags** and the **observations are the words**. The intuition: at each time step the tagger is in some \"tag state\" (say <code>DT</code>), which produces a word (\"the\") and then transitions to another tag state (say <code>NN</code>) which produces \"flight\". Two distributions matter — transition probabilities $P(t_i \\mid t_{i-1})$ and emission probabilities $P(w_i \\mid t_i)$ — and decoding finds the tag sequence that maximises their joint probability.\n\n**Crucial scope note**: Lecture 4 covers only this conceptual HMM setup. The **Viterbi algorithm**, Forward-Backward, and Baum-Welch math are in the *optional notebook*, not in lecture proper, so they are **NOT examinable from this lecture**. If a multiple-choice question asks you to compute a Viterbi cell on an L4-style exam, the question is almost certainly testing whether you know the scope. Be confident about the conceptual mapping (states = tags, observations = words) but do not memorise transition tables.\n\n**Bi-LSTM tagger.** A bidirectional LSTM reads the sentence left-to-right and right-to-left, concatenates the two hidden states at each position, and runs a softmax over the tagset for each token. The advantage over a feed-forward network is that the LSTM hidden state encodes context from arbitrarily far away on both sides — useful for resolving \"book\" between <code>NN</code> and <code>VB</code> based on the surrounding words. Bi-LSTMs treat each tag decision *independently* given the hidden states, which can produce inconsistent tag sequences (e.g. predicting <code>I-PER</code> with no preceding <code>B-PER</code> in BIO-tagging).\n\n**Bi-LSTM + CRF.** To fix the independence problem we stack a **Conditional Random Field (CRF)** layer on top of the Bi-LSTM. The CRF scores entire tag sequences using both the per-token Bi-LSTM scores and learned tag-to-tag transition scores, then decodes the highest-scoring sequence (with Viterbi-style dynamic programming, but for the CRF, not the HMM). The CRF math itself is *not* required by the lecture — only that it adds global consistency and handles label dependencies that a softmax cannot. Bi-LSTM+CRF was the dominant tagger architecture before transformers.\n\n**Transformers / BERT.** The current SOTA is to feed the sentence through a pretrained transformer (BERT and friends), use the contextual embeddings at each position, and add a classification head — sometimes still with a CRF on top. The lecture mentions transformers as a black-box drop-in for the encoder; the deep transformer math is in later lectures.\n\nThe story across these models is a steady tightening of two ideas: (1) richer context (window → bidirectional RNN → full attention), and (2) joint structure on the output side (per-token softmax → CRF over tag sequences).",
+    "checks": [
+      {
+        "q": "In an HMM-based POS tagger, what are the hidden states and observations?",
+        "options": [
+          {"id": "1", "text": "Hidden states are words; observations are POS tags."},
+          {"id": "2", "text": "Hidden states are POS tags; observations are words."},
+          {"id": "3", "text": "Hidden states are sentences; observations are characters."},
+          {"id": "4", "text": "Hidden states are syntactic trees; observations are POS tags."}
+        ],
+        "correct": "2",
+        "explanation": "We see the words but not the tags, so tags are the hidden chain we infer and words are the observed emissions. The reverse mapping is a classic confusion."
+      },
+      {
+        "q": "Which of the following is in the *optional* material and NOT examinable from Lecture 4?",
+        "options": [
+          {"id": "1", "text": "The conceptual mapping that hidden states equal tags."},
+          {"id": "2", "text": "The Viterbi algorithm and its dynamic-programming derivation."},
+          {"id": "3", "text": "That Bi-LSTM+CRF adds global tag-sequence consistency."},
+          {"id": "4", "text": "That open-class words include nouns and verbs."}
+        ],
+        "correct": "2",
+        "explanation": "Lecture 4 covers only the conceptual HMM setup. Viterbi, Forward-Backward, and Baum-Welch math live in the optional notebook and are explicitly flagged as not examinable from this lecture."
+      },
+      {
+        "q": "Why do we add a CRF on top of a Bi-LSTM tagger?",
+        "options": [
+          {"id": "1", "text": "To replace the LSTM with a faster recurrent unit."},
+          {"id": "2", "text": "To pretrain on unlabelled corpora."},
+          {"id": "3", "text": "To score whole tag sequences with learned tag-to-tag transitions, enforcing global consistency."},
+          {"id": "4", "text": "To convert observations into hidden states."}
+        ],
+        "correct": "3",
+        "explanation": "The CRF adds learned transitions between tags so the model scores the entire output sequence jointly, fixing the independence assumption of a per-token softmax."
+      }
+    ]
+  },
+  {
+    "lecture": "4",
+    "chunk_id": "L4-3",
+    "order": 3,
+    "title": "Constituency Parsing and Context-Free Grammars",
+    "content_md": "POS tagging tells us about words; **constituency parsing** tells us how words group into phrases and how phrases nest into a tree.\n\nA **constituent** is a contiguous group of words that behaves as a single syntactic unit. We do not just declare a span a constituent — we *test* it. Three classic tests:\n\n- **Topicalization**: can the span move to the front? \"This week, all students learned about syntactic parsing\" works, so \"this week\" is a constituent.\n- **Proform substitution**: can a pronoun/proform replace it? \"All students learned about it this week\" — \"it\" replaces \"syntactic parsing\".\n- **Fragment answer**: can it stand alone as the answer to a question? Q: \"When?\" A: \"This week.\"\n\nIn the slide example \"All students learned about syntactic parsing this week\", the spans \"all students\", \"learned about syntactic parsing\", and \"this week\" all pass the tests. The span \"learned about syntactic\" is **not** a constituent — it slices through the VP arbitrarily, fails topicalization (\"*Learned about syntactic, all students this week parsing\" is gibberish), and cannot stand as a fragment.\n\nTo describe constituency formally we use a **Context-Free Grammar (CFG)**. A CFG is a 4-tuple $\\langle N, \\Sigma, R, S \\rangle$:\n\n- $N$ is a finite set of **non-terminals** (phrase categories like <code>S</code>, <code>NP</code>, <code>VP</code>, <code>PP</code>, and POS tags treated as pre-terminals).\n- $\\Sigma$ is a finite set of **terminals** (the actual words). $N$ and $\\Sigma$ are disjoint.\n- $R$ is a set of rules of the form $A \\to \\alpha$, where the **left-hand side $A$ is a *single* non-terminal** and the right-hand side $\\alpha$ is any string of terminals and non-terminals.\n- $S \\in N$ is the **start symbol**.\n\nThe LHS constraint is what *makes* the grammar context-free. Two ways to break it (slide 40 quiz):\n\n- A rule like <code>VP NP &rarr; Verb NP</code> has **two non-terminals on the LHS** — illegal.\n- A rule like <code>the &rarr; Det</code> has a **terminal on the LHS** — illegal (and direction is wrong; we want <code>Det &rarr; the</code>).\n\nA **derivation** is a sequence of rule applications starting from $S$ and rewriting non-terminals until only terminals remain. The same derivation drawn as a tree is a **parse tree**, and the leaves spell out the sentence.\n\nCFGs are strictly more powerful than regular expressions because they handle **recursion** — an <code>NP</code> can contain a <code>PP</code> that contains another <code>NP</code> (\"the flight to the city in the south\"). They simultaneously capture **constituency** (which words group together) and **ordering** (the right-hand side is a sequence, not a set), which is exactly what bag-of-words and n-gram models lack.\n\nThe relationship to POS tagging: POS tags appear as **pre-terminals** in the parse tree — non-terminals whose only children are terminals. A constituency parser's input often *starts* from POS tags (or learns them jointly), reinforcing why Lecture 4 stacks tagging then parsing.",
+    "checks": [
+      {
+        "q": "Which rule violates the definition of a Context-Free Grammar?",
+        "options": [
+          {"id": "1", "text": "<code>NP &rarr; Det N</code>"},
+          {"id": "2", "text": "<code>S &rarr; NP VP</code>"},
+          {"id": "3", "text": "<code>VP NP &rarr; Verb NP</code>"},
+          {"id": "4", "text": "<code>N &rarr; flight</code>"}
+        ],
+        "correct": "3",
+        "explanation": "A CFG rule must have exactly one non-terminal on the LHS. <code>VP NP &rarr; Verb NP</code> has two non-terminals on the LHS, breaking context-freeness."
+      },
+      {
+        "q": "In the sentence \"All students learned about syntactic parsing this week\", which span is NOT a constituent?",
+        "options": [
+          {"id": "1", "text": "all students"},
+          {"id": "2", "text": "learned about syntactic parsing"},
+          {"id": "3", "text": "this week"},
+          {"id": "4", "text": "learned about syntactic"}
+        ],
+        "correct": "4",
+        "explanation": "\"Learned about syntactic\" cuts across the VP arbitrarily — it fails topicalization, proform substitution, and fragment-answer tests, so it is not a constituent."
+      },
+      {
+        "q": "Which is a valid constituency test?",
+        "options": [
+          {"id": "1", "text": "Counting how many words the span contains."},
+          {"id": "2", "text": "Checking whether the span can be a fragment answer to a question."},
+          {"id": "3", "text": "Checking whether the span has more nouns than verbs."},
+          {"id": "4", "text": "Checking whether the span starts with a determiner."}
+        ],
+        "correct": "2",
+        "explanation": "Fragment-answer, topicalization, and proform substitution are the standard constituency tests; raw word counts and POS counts are not tests for constituency."
+      }
+    ]
+  },
+  {
+    "lecture": "4",
+    "chunk_id": "L4-4",
+    "order": 4,
+    "title": "PCFGs, Parsing Algorithms, and Structural Ambiguity",
+    "content_md": "A plain CFG can produce **multiple** parse trees for the same sentence — that is **structural ambiguity**. Two flavours dominate:\n\n- **Attachment ambiguity**: where does a modifier attach? \"I book the flight through Singapore\" admits two parses — \"through Singapore\" can attach to the NP \"the flight\" (a flight that *goes via* Singapore) or to the VP \"book\" (booking *via* a Singapore agent).\n- **Coordination ambiguity**: what is the scope of \"and\"/\"or\"? \"old men and women\" can mean \"[old men] and [women]\" or \"old [men and women]\".\n\nCFGs cannot decide between these on their own. The fix is a **Probabilistic Context-Free Grammar (PCFG)**: a CFG where every rule $A \\to \\alpha$ carries a probability, estimated from a treebank by\n\n$$P(A \\to \\alpha) = P(\\alpha \\mid A) = \\frac{\\text{Count}(A \\to \\alpha)}{\\text{Count}(A)}$$\n\nThe **normalization constraint** is per-LHS: for every non-terminal $A$, $\\sum_\\alpha P(A \\to \\alpha) = 1$. This is a per-LHS sum, *not* a sum over the whole grammar — a classic exam trap.\n\nThe probability of a parse tree $T$ over sentence $S$ is the **product** of all rule probabilities used in the derivation:\n\n$$P(T, S) = \\prod_{i=1}^{n} P(A_i \\to \\alpha_i)$$\n\nIn practice we sum log-probabilities to avoid underflow. The PCFG picks the highest-probability parse, *not* the parse with the fewest nodes or the deepest tree.\n\nFor \"I book the flight through Singapore\" with the toy grammar from the slides, the NP-attachment parse evaluates to roughly $7.1 \\times 10^{-7}$ and the VP-attachment parse to roughly $2.4 \\times 10^{-7}$. The PCFG prefers the NP-attachment reading because its product of rule probabilities is larger.\n\n**Parsing algorithms.** Given a grammar and a sentence, two classical symbolic parsers are mentioned:\n\n- **CYK (Cocke-Younger-Kasami)** is **bottom-up** dynamic programming. It fills a chart asking, for every substring, \"which non-terminals could have generated this span?\" It requires the grammar in Chomsky Normal Form (binary rules) but the lecture only mentions this in passing — the binarization details are not examinable.\n- **Earley** is **top-down**. It predicts what non-terminals are expected next from $S$ and tries to match them against the input.\n\nBoth are **rule-based and symbolic**: the input is the *text plus the grammar*, and there is **no training step** at parse time — the grammar (and any probabilities) is given. This contrasts sharply with neural parsers we will see later.\n\nFinally, do not confuse the per-LHS normalization with anything global, and do not confuse \"highest-probability parse\" with \"smallest tree\". A PCFG can prefer a *deeper* tree if its rules happen to be highly probable; conversely, an unusual rewrite drags probability mass down.",
+    "checks": [
+      {
+        "q": "What is the normalization constraint for a PCFG?",
+        "options": [
+          {"id": "1", "text": "All rule probabilities in the grammar sum to 1."},
+          {"id": "2", "text": "For every LHS non-terminal $A$, $\\sum_\\alpha P(A \\to \\alpha) = 1$."},
+          {"id": "3", "text": "Each rule probability equals $1/|R|$."},
+          {"id": "4", "text": "Probabilities of all parse trees of a sentence sum to 1."}
+        ],
+        "correct": "2",
+        "explanation": "Probabilities are normalized per left-hand side: rules sharing an LHS form a probability distribution. Summing over the entire grammar would not equal 1 in general."
+      },
+      {
+        "q": "Which best describes the contrast between CYK and Earley?",
+        "options": [
+          {"id": "1", "text": "CYK is top-down; Earley is bottom-up."},
+          {"id": "2", "text": "CYK is bottom-up dynamic programming; Earley is top-down."},
+          {"id": "3", "text": "Both are neural parsers trained on a treebank."},
+          {"id": "4", "text": "CYK works on dependency grammars; Earley works on CFGs."}
+        ],
+        "correct": "2",
+        "explanation": "CYK fills a chart of which non-terminals could have generated each substring (bottom-up). Earley predicts expected non-terminals from the start symbol downward (top-down). Both are symbolic and rule-based, with no training step."
+      },
+      {
+        "q": "For \"I book the flight through Singapore\", a PCFG assigns the NP-attachment parse probability $7.1 \\times 10^{-7}$ and the VP-attachment parse $2.4 \\times 10^{-7}$. Which parse does the PCFG prefer, and why?",
+        "options": [
+          {"id": "1", "text": "VP-attachment, because it has fewer nodes."},
+          {"id": "2", "text": "VP-attachment, because the verb \"book\" is the head of the sentence."},
+          {"id": "3", "text": "NP-attachment, because it has the higher product of rule probabilities."},
+          {"id": "4", "text": "Neither — the PCFG returns both parses with equal weight."}
+        ],
+        "correct": "3",
+        "explanation": "A PCFG picks the parse maximising the product (or sum of logs) of the rule probabilities used. NP-attachment scores higher here, so it wins. Node count and head identity are irrelevant to the PCFG criterion."
+      }
+    ]
+  },
+  {
+    "lecture": "4",
+    "chunk_id": "L4-5",
+    "order": 5,
+    "title": "Dependency Parsing: Heads, Dependents, and UD Relations",
+    "content_md": "Constituency parsing groups words into phrases. **Dependency parsing** instead expresses a sentence as a set of *directed binary relations* between tokens. There is no extra phrase-level node — the tokens themselves are the nodes, and each labeled arc connects a **head** (governor) to a **dependent** (modifier).\n\nThe canonical example: in \"Chris eats burger\", **eats** is the head — it is the verb, the syntactic and semantic centre of the clause. **Chris** depends on \"eats\" with the relation <code>nsubj</code> (nominal subject). **burger** depends on \"eats\" with <code>dobj</code> (direct object). The arrows go *from head to dependent*, so an arrow labeled <code>nsubj</code> goes from \"eats\" to \"Chris\", not the other way around.\n\nA very common student error is to call \"Chris\" the head because it appears first or because it is the topic of the sentence. **The verb is the head**, not the subject. Reading order and topicality have nothing to do with dependency direction.\n\nWhy is the verb the head? Linguists (Zwicky and Hudson) propose **head criteria**: H determines the syntactic and semantic category of the construction (a clause headed by a verb is verbal); H is obligatory (you can drop \"burger\" but not \"eats\"); H selects D (verbs select their arguments and assign them roles); the form/position of D depends on H (case, agreement). Apply these tests and the verb wins.\n\nDependency relations come from a **fixed, language-general set** — the **Universal Dependencies (UD)** inventory — which standardises labels across languages. Common labels include <code>nsubj</code>, <code>dobj</code>, <code>iobj</code>, <code>amod</code> (adjectival modifier), <code>det</code> (determiner), <code>case</code> (preposition), <code>nmod</code> (nominal modifier), <code>conj</code> and <code>cc</code> (coordination), <code>root</code> (the head of the whole sentence, attached to a virtual ROOT).\n\nThe lecture distinguishes a few **dependency types** by how tightly the dependent is required:\n\n- **Head-complement**: D is required by H. Verbs require their objects (\"devour *what?*\"); a transitive verb without its object is incomplete.\n- **Head-modifier**: D is optional. Adjectives modifying nouns, adverbs modifying verbs — droppable without breaking grammaticality.\n- **Head-specifier**: like determiner-noun. Some frameworks call the determiner the specifier of the noun.\n- **Coordination**: which of \"X and Y\" is the head is genuinely ambiguous across frameworks; UD picks the first conjunct as head and labels the others <code>conj</code>.\n\nDependency parses are useful precisely because they expose **predicate-argument structure** directly. A downstream **information extraction** pipeline can pull knowledge-graph triples by reading off the verb and its <code>nsubj</code>/<code>dobj</code> dependents — \"Chris eats burger\" yields ⟨Chris, eats, burger⟩ almost for free. Dependency relations also drive **text simplification** (removing apposition, splitting relative clauses) and feed downstream NER, QA, and grammar-checking systems.\n\nFinally, remember: **constituency and dependency are different formalisms**, not two levels of the same parse. A CFG produces a constituency tree with phrase nodes; a dependency grammar produces a labeled-arc graph over tokens. Both can be derived from the same sentence, but they are independent representations.",
+    "checks": [
+      {
+        "q": "In the sentence \"Chris eats burger\", which word is the head, and what is the relation between \"Chris\" and that head?",
+        "options": [
+          {"id": "1", "text": "\"Chris\" is the head; \"eats\" is its dobj."},
+          {"id": "2", "text": "\"eats\" is the head; \"Chris\" is its nsubj dependent."},
+          {"id": "3", "text": "\"burger\" is the head; \"Chris\" is its nmod dependent."},
+          {"id": "4", "text": "The whole sentence has no head — dependency parsing produces an unlabeled tree."}
+        ],
+        "correct": "2",
+        "explanation": "The verb is the head of the clause. \"Chris\" depends on \"eats\" as its nominal subject (<code>nsubj</code>). Calling \"Chris\" the head because it appears first is a classic mistake."
+      },
+      {
+        "q": "Which statement about constituency vs. dependency parsing is correct?",
+        "options": [
+          {"id": "1", "text": "Dependency parsing is just constituency parsing with the phrase nodes removed."},
+          {"id": "2", "text": "They are different formalisms producing different representations of the same sentence."},
+          {"id": "3", "text": "Dependency parsing uses CFGs; constituency parsing uses dependency grammars."},
+          {"id": "4", "text": "Constituency parsing is always done before dependency parsing in a pipeline."}
+        ],
+        "correct": "2",
+        "explanation": "CFG-based constituency parsing and dependency grammar are independent formalisms. They are not levels of the same parse, and neither requires the other as a preprocessing step."
+      },
+      {
+        "q": "Which is a *head-modifier* dependency (D optional) rather than a head-complement (D required)?",
+        "options": [
+          {"id": "1", "text": "A transitive verb and its direct object."},
+          {"id": "2", "text": "A preposition and the noun it governs."},
+          {"id": "3", "text": "An adjective modifying a noun (amod)."},
+          {"id": "4", "text": "A finite verb and its nominal subject."}
+        ],
+        "correct": "3",
+        "explanation": "Adjectival modification (<code>amod</code>) is optional: \"the (red) flight\" is grammatical with or without \"red\". Direct objects, prepositional complements, and subjects are typically required by their heads."
+      }
+    ]
+  }
+]

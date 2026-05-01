@@ -1,0 +1,223 @@
+[
+  {
+    "lecture": "6",
+    "chunk_id": "L6-1",
+    "order": 1,
+    "title": "Generative vs. Discriminative + Logistic Regression Setup",
+    "content_md": "Classifiers come in two philosophical flavors. A **generative classifier** learns the joint distribution $P(x,y)$ and then applies Bayes' rule, $P(y\\mid x) = P(x\\mid y)P(y)/P(x)$, to recover the posterior. Naive Bayes from earlier lectures is the prototypical example: it models *what each class looks like* in feature space. A **discriminative classifier**, by contrast, learns $P(y\\mid x)$ directly and only models the decision boundary between classes. Logistic Regression is the canonical discriminative counterpart to Naive Bayes.\n\nWhy bother with discriminative models? Generative models waste capacity describing $P(x)$ — the structure of the inputs themselves — when all we need is to pick a label. Discriminative models concentrate every parameter on the boundary, and they tend to win when training data is plentiful and feature engineering is good.\n\nLogistic Regression's job is to map a feature vector $x \\in \\mathbb{R}^n$ to a probability $\\hat{y} = P(y=1\\mid x,\\theta) \\in (0,1)$. We start with a linear score $\\theta^T x = \\theta_0 + \\theta_1 x_1 + \\dots + \\theta_n x_n$. The **bias trick** sets $x_0 = 1$ so the bias term $\\theta_0$ folds neatly into the dot product. But $\\theta^T x$ ranges over all of $\\mathbb{R}$ — we need to squash it into a probability.\n\nEnter the **sigmoid (logistic) function**:\n\n$$\\sigma(z) = \\frac{1}{1 + e^{-z}}.$$\n\nIt is S-shaped, monotonically increasing, with $\\sigma(0)=0.5$, $\\sigma(\\infty)=1$, $\\sigma(-\\infty)=0$. Critically, the range is the **open** interval $(0,1)$ — the function never actually reaches 0 or 1. The full LR hypothesis is therefore\n\n$$\\hat{y} = h_\\theta(x) = \\sigma(\\theta^T x).$$\n\nThis gives a *linear decision boundary*: we predict class 1 when $\\theta^T x \\geq 0$ (equivalently $\\hat{y} \\geq 0.5$) and class 0 otherwise.\n\n**Worked sentiment example.** Consider a movie review with 6 hand-crafted features: $x_1 = $ # positive lexicon words ($=3$), $x_2 = $ # negative lexicon words ($=2$), $x_3 = $ contains \"no\" (1/0), $x_4 = $ # first/second-person pronouns, $x_5 = $ contains \"!\", $x_6 = \\log(\\text{length})$. With trained $\\theta$ values, suppose $\\theta^T x = 0.833$. Then $\\hat{y} = \\sigma(0.833) \\approx 0.7$. Since $0.7 > 0.5$, we classify the review as **positive** with 70% confidence.\n\nLR is **discriminative**, **linear** (in the parameters and decision boundary), and **probabilistic** (outputs calibrated probabilities, not just labels). Compared with Naive Bayes, LR does not assume conditional feature independence — it can handle correlated features gracefully, at the cost of needing more data and an iterative training procedure.\n\nA last subtlety: scaling features (e.g., dividing every $x_i$ by 1000) changes the learned $\\theta$ values but not LR's predictive performance. The model adapts $\\theta_i$ to compensate. This is a classic exam trap.",
+    "checks": [
+      {
+        "q": "Which statement best distinguishes a discriminative classifier from a generative one?",
+        "options": [
+          {"id": "1", "text": "Generative models output probabilities; discriminative models output only labels."},
+          {"id": "2", "text": "Generative models learn $P(x,y)$ and use Bayes' rule; discriminative models learn $P(y\\mid x)$ directly."},
+          {"id": "3", "text": "Discriminative models always assume feature independence; generative models do not."},
+          {"id": "4", "text": "Discriminative models cannot handle multiclass problems."}
+        ],
+        "correct": "2",
+        "explanation": "Generative classifiers (e.g., Naive Bayes) model the joint distribution and recover $P(y\\mid x)$ via Bayes; discriminative classifiers (e.g., LR) skip the joint and learn the conditional directly."
+      },
+      {
+        "q": "What is the range of the sigmoid function $\\sigma(z) = 1/(1+e^{-z})$?",
+        "options": [
+          {"id": "1", "text": "$[0,1]$, closed interval — it can output exactly 0 or 1."},
+          {"id": "2", "text": "$(0,1)$, open interval — it never outputs exactly 0 or 1."},
+          {"id": "3", "text": "$[-1,1]$, like tanh."},
+          {"id": "4", "text": "$(-\\infty, \\infty)$ — sigmoid is unbounded."}
+        ],
+        "correct": "2",
+        "explanation": "Sigmoid asymptotes at 0 and 1 but never reaches them, so the range is the OPEN interval $(0,1)$. This has the important consequence that cross-entropy loss is never exactly zero."
+      },
+      {
+        "q": "If you scale every feature $x_i$ by a constant (e.g., divide all features by 100), what happens to logistic regression's predictive performance?",
+        "options": [
+          {"id": "1", "text": "Performance degrades because the decision boundary shifts."},
+          {"id": "2", "text": "Performance improves because gradients become better conditioned."},
+          {"id": "3", "text": "Performance is unchanged; learned $\\theta$ values rescale to compensate."},
+          {"id": "4", "text": "LR will fail to converge."}
+        ],
+        "correct": "3",
+        "explanation": "Feature scaling changes the magnitudes of $\\theta$ but not the predictive behavior of LR — the parameters absorb the rescaling. Optimization speed may differ, but predictions are equivalent."
+      }
+    ]
+  },
+  {
+    "lecture": "6",
+    "chunk_id": "L6-2",
+    "order": 2,
+    "title": "Cross-Entropy Loss",
+    "content_md": "Once we have a hypothesis $\\hat{y} = \\sigma(\\theta^T x)$, we need a *loss function* that tells us how badly $\\hat{y}$ disagrees with the true label $y \\in \\{0,1\\}$. We will derive the **cross-entropy loss** from a probabilistic foundation rather than pull it from thin air.\n\n**Bernoulli likelihood.** A binary label is a Bernoulli random variable. Combine the two cases ($y=0$ and $y=1$) into a single expression:\n\n$$P(y\\mid x,\\theta) = \\hat{y}^{\\,y}\\,(1-\\hat{y})^{1-y}.$$\n\nWhen $y=1$, this collapses to $\\hat{y}$; when $y=0$, it collapses to $1-\\hat{y}$. We want $\\theta$ that *maximizes* this likelihood across the training set. Taking logs (a monotonic transformation that turns products into sums) gives the **log-likelihood**, and negating it gives a quantity we can minimize — the **negative log-likelihood**, a.k.a. binary cross-entropy:\n\n$$L_{CE}(\\hat{y}, y) = -\\bigl[y\\log\\hat{y} + (1-y)\\log(1-\\hat{y})\\bigr].$$\n\nAcross $m$ samples, average to keep the loss scale invariant to dataset size:\n\n$$L_{CE} = -\\frac{1}{m}\\sum_{j=1}^m \\bigl[y^{(j)}\\log\\hat{y}^{(j)} + (1 - y^{(j)})\\log(1-\\hat{y}^{(j)})\\bigr].$$\n\n**Intuition.** When $y=1$, only the $\\log\\hat{y}$ term survives. If $\\hat{y}$ is near 1 (correct, confident), $\\log\\hat{y} \\approx 0$ and loss is near 0. If $\\hat{y}$ is near 0 (wrong, confident), $\\log\\hat{y} \\to -\\infty$ and loss explodes. Cross-entropy *punishes confident wrong predictions much more harshly than mild errors* — a desirable property.\n\n**Worked example.** With $\\hat{y} = 0.7$ on the sentiment example:\n- If true $y=1$: $L_{CE} = -\\log(0.7) \\approx 0.36$. \"Mostly right\" → small loss.\n- If true $y=0$: $L_{CE} = -\\log(0.3) \\approx 1.20$. \"Confidently wrong\" → big loss.\n\n**Why log-space?** Three reasons. First, products of many small probabilities underflow numerically; sums of logs do not. Second, the log turns the gradient into a clean form (we will see in the next chunk that $\\nabla L = \\frac{1}{m}X^T(\\hat{y}-y)$ — astonishingly simple). Third, log-likelihood has the right convexity properties: $L_{CE}$ is **convex** in $\\theta$ for logistic regression, meaning gradient descent finds the **unique global minimum**. (This convexity disappears once we go to neural networks — a major theme of later lectures.)\n\n**Critical trap: cross-entropy is never exactly zero.** Because $\\sigma(z) \\in (0,1)$ — open interval — $\\hat{y}$ can approach 1 but never reach it. So $-\\log\\hat{y} > 0$ strictly even on a perfectly classified example. Slide 43 is careful to say \"loss will be small,\" not \"loss is zero.\" In practice this matters: training never literally drives loss to 0, and any claim that \"the model achieved zero cross-entropy on training\" is suspicious.\n\n**Convex in LR, non-convex in NNs.** The convexity of $L_{CE}$ for LR comes from composing sigmoid with a linear function. In a neural network, hidden layers introduce additional non-linear compositions, and the loss surface develops local minima, saddle points, and plateaus. This is why training NNs is harder and why initialization, learning rate schedules, and adaptive optimizers matter so much.",
+    "checks": [
+      {
+        "q": "Why is the cross-entropy loss for logistic regression never exactly equal to zero, even on a perfectly classified training example?",
+        "options": [
+          {"id": "1", "text": "Because numerical floating-point error always introduces a small residual."},
+          {"id": "2", "text": "Because the sigmoid output is in the open interval $(0,1)$ — $\\hat{y}$ can approach but never equal 1, so $-\\log\\hat{y} > 0$ always."},
+          {"id": "3", "text": "Because regularization adds a constant penalty that lifts the floor above zero."},
+          {"id": "4", "text": "Because the bias trick adds an extra term to the loss."}
+        ],
+        "correct": "2",
+        "explanation": "Sigmoid asymptotes at 1 but never reaches it, so $\\hat{y} < 1$ strictly, so $-\\log\\hat{y} > 0$ strictly. The loss can be made arbitrarily small but is never exactly zero."
+      },
+      {
+        "q": "Cross-entropy loss is derived from which probabilistic principle?",
+        "options": [
+          {"id": "1", "text": "Maximum a posteriori with a Gaussian prior on $\\theta$."},
+          {"id": "2", "text": "Negative log-likelihood of a Bernoulli distribution."},
+          {"id": "3", "text": "KL divergence between two Gaussians."},
+          {"id": "4", "text": "Mean squared error of the residuals."}
+        ],
+        "correct": "2",
+        "explanation": "Combining $P(y\\mid x) = \\hat{y}^y(1-\\hat{y})^{1-y}$ over the dataset, taking the negative log, and averaging gives binary cross-entropy directly."
+      },
+      {
+        "q": "Which property of the cross-entropy loss does logistic regression enjoy that neural networks generally do NOT?",
+        "options": [
+          {"id": "1", "text": "Differentiability."},
+          {"id": "2", "text": "Convexity (unique global minimum)."},
+          {"id": "3", "text": "Boundedness from below."},
+          {"id": "4", "text": "Existence of a closed-form solution."}
+        ],
+        "correct": "2",
+        "explanation": "$L_{CE}$ is convex in $\\theta$ for LR, so gradient descent reaches the global minimum. NN losses are non-convex with local minima/saddles. (LR also has no closed-form, so option 4 is wrong.)"
+      }
+    ]
+  },
+  {
+    "lecture": "6",
+    "chunk_id": "L6-3",
+    "order": 3,
+    "title": "Gradient Descent: Algorithm, Learning Rate, and Variants",
+    "content_md": "We have a loss $L(\\theta)$ that is convex but has **no closed-form solution** for $\\nabla L = 0$. So we minimize iteratively. The **gradient** $\\nabla_\\theta L$ is a vector whose components are partial derivatives $\\partial L/\\partial \\theta_i$; geometrically it points in the direction of steepest *ascent*. To minimize, we step in the opposite direction:\n\n$$\\theta \\leftarrow \\theta - \\eta\\,\\nabla_\\theta L,$$\n\nwhere $\\eta > 0$ is the **learning rate**. For logistic regression specifically, the gradient has a beautifully clean vectorized form:\n\n$$\\nabla_\\theta L_{CE} = \\frac{1}{m}X^T\\bigl[\\sigma(X\\theta) - y\\bigr] = \\frac{1}{m}X^T(\\hat{y} - y).$$\n\nThe gradient is the average of feature vectors weighted by the prediction error $(\\hat{y}-y)$. If we are over-predicting ($\\hat{y} > y$) on examples with positive $x_i$, then $\\theta_i$ gets nudged down; this is the linear-error feedback that makes LR train.\n\n**Worked example.** On the sentiment review with initial loss $L = 0.36$ and $\\eta = 0.1$, one GD step drops the loss to about $0.12$, and another step to $0.075$. Loss decreases monotonically because LR is convex and $\\eta$ is small enough.\n\n**Learning-rate effects** (illustrated on the toy $L = x^2$, $\\partial L/\\partial x = 2x$, 20 steps from some $x_0$):\n- $\\eta = 0.2$: smooth convergence to $x = 0$.\n- $\\eta = 0.8$: still converges, but slower (overshoots, comes back).\n- $\\eta = 1.0$: stuck oscillating between $+x_0$ and $-x_0$ — no progress.\n- $\\eta = 1.01$: **diverges** outward to infinity.\n\nTypical practical $\\eta$ values are $10^{-2}$ to $10^{-4}$, often decayed over training. Too small = slow training; too large = oscillation or divergence. Modern practice uses adaptive optimizers (Adam, RMSProp) that adjust $\\eta$ per-parameter.\n\n**GD variants** differ in *how much data* you use to compute each gradient estimate:\n- **Batch GD**: uses the entire dataset of $m$ examples per step. Smooth, accurate gradient, but every step is expensive. Best for small datasets.\n- **Stochastic GD (SGD)** in the textbook sense: one sample at a time. Cheap per-step, but very noisy — the loss curve is choppy and may not monotonically decrease.\n- **Mini-batch GD**: a middle ground, e.g., 32 or 256 samples. In practice the deep-learning community calls this \"SGD\" too. Best of both worlds: stable enough to make progress, cheap enough to fit in GPU memory.\n\nThe noise in mini-batch/SGD is not always bad: it can help escape narrow local minima in non-convex losses (a benefit only relevant once we get to NNs).\n\n**Stop conditions** for GD include: (a) gradient norm $\\|\\nabla L\\|$ below a threshold, (b) loss change between epochs below a threshold, (c) validation loss starts increasing (early stopping — a form of regularization), (d) max number of epochs reached.\n\n**Why not closed-form?** For linear regression with squared loss we have the normal equations $\\theta = (X^TX)^{-1}X^Ty$. For LR, the gradient $\\nabla L = \\frac{1}{m}X^T(\\sigma(X\\theta)-y)$ depends on $\\theta$ through the sigmoid, which is non-linear. There is no algebraic way to solve $\\nabla L = 0$ in closed form. Iterative GD (or Newton's method) is required.",
+    "checks": [
+      {
+        "q": "On the toy loss $L = x^2$ with update $x \\leftarrow x - \\eta \\cdot 2x$, which learning rate causes the iterate to oscillate forever between two values without converging or diverging?",
+        "options": [
+          {"id": "1", "text": "$\\eta = 0.2$"},
+          {"id": "2", "text": "$\\eta = 0.8$"},
+          {"id": "3", "text": "$\\eta = 1.0$"},
+          {"id": "4", "text": "$\\eta = 1.01$"}
+        ],
+        "correct": "3",
+        "explanation": "At $\\eta = 1.0$, the update becomes $x \\leftarrow x - 2x = -x$, flipping sign every step and never moving toward 0. Below 1 it converges; above 1 it diverges."
+      },
+      {
+        "q": "Why does logistic regression require iterative gradient descent rather than a closed-form solution like linear regression?",
+        "options": [
+          {"id": "1", "text": "LR's loss is non-convex, so closed-form solutions don't apply."},
+          {"id": "2", "text": "The sigmoid makes $\\nabla L = 0$ a transcendental equation in $\\theta$ with no algebraic solution."},
+          {"id": "3", "text": "LR has too many parameters for matrix inversion to be feasible."},
+          {"id": "4", "text": "Cross-entropy loss is not differentiable."}
+        ],
+        "correct": "2",
+        "explanation": "$\\nabla L = X^T(\\sigma(X\\theta)-y)/m$ involves a non-linear sigmoid of $\\theta$, so setting it to zero gives no closed-form algebraic solution. LR is convex AND differentiable — just not analytically solvable."
+      },
+      {
+        "q": "In modern deep-learning practice, what does \"SGD\" typically refer to?",
+        "options": [
+          {"id": "1", "text": "Strict per-sample stochastic gradient descent (one example per step)."},
+          {"id": "2", "text": "Mini-batch gradient descent with a small batch (e.g., 32-256 samples)."},
+          {"id": "3", "text": "Full-batch gradient descent on the entire dataset."},
+          {"id": "4", "text": "Second-order gradient descent using the Hessian."}
+        ],
+        "correct": "2",
+        "explanation": "Although classical SGD means one sample at a time, in deep-learning practice 'SGD' has come to mean mini-batch GD, balancing per-step cost and gradient stability."
+      }
+    ]
+  },
+  {
+    "lecture": "6",
+    "chunk_id": "L6-4",
+    "order": 4,
+    "title": "Overfitting, Regularization, Multiclass and Softmax",
+    "content_md": "When a model has too much capacity relative to the training signal, it begins to memorize **artifacts** of the training set rather than the underlying pattern — this is **overfitting**. In LR, overfitting often manifests as a few $|\\theta_i|$ growing very large to fit a quirk of the training data. For example, if your sentiment training set happens to contain many positive reviews that use first-person pronouns, LR may learn a huge $\\theta$ on the pronoun feature — useless or harmful at test time.\n\nA common misconception (Slide 54 trap A): \"You cannot overfit with only one feature.\" **False.** Even a 1-feature LR can overfit if the training set is small and noisy — the single $\\theta_1$ can be tuned to memorize idiosyncratic samples.\n\n**Regularization** counteracts overfitting by adding a penalty on $\\theta$ to the loss. Two standard forms:\n\n- **L2 regularization (Ridge)**: $L + \\lambda \\sum_{i=1}^n \\theta_i^2$. The gradient adds $+2\\lambda\\theta_i/n$, gently shrinking every weight toward zero. Prefers small but non-zero weights — \"distribute responsibility.\"\n- **L1 regularization (Lasso)**: $L + \\lambda \\sum_{i=1}^n |\\theta_i|$. The (sub)gradient is $\\lambda\\,\\mathrm{sign}(\\theta_i)$. Drives weights *exactly* to zero — produces **sparse** solutions, useful for feature selection.\n\nThe hyperparameter $\\lambda > 0$ controls strength: $\\lambda \\to 0$ recovers vanilla LR; $\\lambda \\to \\infty$ forces all $\\theta_i \\to 0$ (underfit). It is tuned on validation data.\n\nA subtle exam point: regularization typically **worsens training loss** (it constrains $\\theta$ away from the unconstrained minimum) but **improves generalization** (test/validation loss). If you ever see a homework table where regularization improves *training* loss, double-check.\n\n**Multiclass with softmax.** With $C > 2$ classes, sigmoid is not enough. We give each class its own parameter vector $\\theta_c$ and define the **softmax**:\n\n$$P(y = c \\mid x) = \\frac{\\exp(\\theta_c^T x)}{\\sum_{i=1}^C \\exp(\\theta_i^T x)}.$$\n\nProperties: outputs are non-negative and sum to 1 (a proper distribution); softmax is **monotonic** in each score (ranking is preserved); it is **shift-invariant** (subtracting a constant from every score does not change the result, useful for numerical stability); and crucially **softmax with $C=2$ reduces to sigmoid** — multiclass generalizes binary, not the other way around.\n\nThe **generalized cross-entropy** for multiclass is\n\n$$L_{CE}(\\hat{y}, y) = -\\sum_{i=1}^C y_i \\log \\hat{y}_i,$$\n\nwhere $y$ is a one-hot vector ($y_i = 1$ for the true class, else 0). Since only one $y_i$ is non-zero, this collapses to $-\\log \\hat{y}_{\\text{true}}$ — exactly the cross-entropy on the correct-class probability. The gradient retains the LR-friendly form $\\nabla_{\\theta_c} L = \\frac{1}{m}\\sum_j (\\hat{y}_c^{(j)} - y_c^{(j)})\\,x^{(j)}$.\n\n**Putting it together.** A multiclass LR classifier with L2 regularization minimizes\n\n$$L = -\\frac{1}{m}\\sum_{j=1}^m \\sum_{c=1}^C y_c^{(j)} \\log \\hat{y}_c^{(j)} + \\lambda \\sum_c \\sum_i \\theta_{c,i}^2,$$\n\ntrained by mini-batch gradient descent. This is the recipe behind countless real NLP baselines and the building block we will stack into a neural network in the next chunk.",
+    "checks": [
+      {
+        "q": "Which regularization term tends to produce sparse solutions (many $\\theta_i$ exactly zero)?",
+        "options": [
+          {"id": "1", "text": "L2 (Ridge): $\\lambda \\sum \\theta_i^2$"},
+          {"id": "2", "text": "L1 (Lasso): $\\lambda \\sum |\\theta_i|$"},
+          {"id": "3", "text": "Dropout"},
+          {"id": "4", "text": "Early stopping"}
+        ],
+        "correct": "2",
+        "explanation": "L1's constant subgradient $\\lambda\\,\\mathrm{sign}(\\theta_i)$ pushes weights through zero and pins them there, yielding sparsity. L2 only shrinks; weights stay non-zero."
+      },
+      {
+        "q": "Which statement about softmax is TRUE?",
+        "options": [
+          {"id": "1", "text": "Softmax with $C=2$ is fundamentally different from sigmoid."},
+          {"id": "2", "text": "Softmax with $C=2$ reduces to sigmoid; it is the multiclass generalization."},
+          {"id": "3", "text": "Softmax outputs can sum to any positive number."},
+          {"id": "4", "text": "Softmax is non-monotonic in its inputs."}
+        ],
+        "correct": "2",
+        "explanation": "Softmax is the natural generalization of sigmoid to $C \\geq 2$ classes; setting $C=2$ recovers the sigmoid (after a constant shift). Outputs are non-negative and sum to 1, and softmax is monotonic in each input score."
+      },
+      {
+        "q": "What is the typical effect of adding L2 regularization on training loss vs. validation/test loss?",
+        "options": [
+          {"id": "1", "text": "Both training and validation loss decrease."},
+          {"id": "2", "text": "Training loss decreases; validation loss increases."},
+          {"id": "3", "text": "Training loss typically increases (worsens); validation loss typically decreases (improves generalization)."},
+          {"id": "4", "text": "Both training and validation loss are unaffected."}
+        ],
+        "correct": "3",
+        "explanation": "Regularization constrains $\\theta$ away from the unconstrained training minimum, so training loss usually goes UP slightly. The benefit shows up at test time: better generalization."
+      }
+    ]
+  },
+  {
+    "lecture": "6",
+    "chunk_id": "L6-5",
+    "order": 5,
+    "title": "From Logistic Regression to Neural Networks",
+    "content_md": "Logistic Regression is powerful but **linear**: its decision boundary is a hyperplane in feature space. The classic counterexample is **XOR**:\n\n| $x_1$ | $x_2$ | XOR |\n|---|---|---|\n| 0 | 0 | 0 |\n| 0 | 1 | 1 |\n| 1 | 0 | 1 |\n| 1 | 1 | 0 |\n\nNo single line in the $(x_1, x_2)$ plane separates the 1-labeled points from the 0-labeled points. So no single LR unit can solve XOR. But notice an algebraic identity:\n\n$$\\text{XOR}(x_1, x_2) = \\text{OR}(x_1, x_2) \\;\\text{AND}\\; \\text{NAND}(x_1, x_2).$$\n\nEach of OR, AND, NAND **is** a linearly separable function — each can be computed by a single perceptron-style LR unit. By **stacking** them into two layers (first compute OR and NAND in parallel, then AND their results), we solve XOR. This is the foundational insight of neural networks: stacking linear-then-nonlinear units lets us approximate functions that no single linear unit can.\n\n**Feedforward neural network architecture.** A feedforward NN is a directed acyclic graph organized into layers. Each layer $l$ computes\n\n$$x^{[l]} = a^{[l]} = g\\bigl(\\theta^{[l]} \\, x^{[l-1]}\\bigr),$$\n\nwhere $\\theta^{[l]} \\in \\mathbb{R}^{d^{[l]} \\times d^{[l-1]}}$ is a weight matrix, and $g$ is an **activation function** applied element-wise. **Depth** = number of layers; **width** = number of neurons in a layer. The first layer takes the input features; the last layer produces the output (sigmoid for binary classification, softmax for multiclass, identity for regression).\n\n**The non-linearity is non-negotiable for hidden layers.** This is the central exam trap. Suppose all activations $g$ are the identity (linear). Then\n\n$$y = \\theta^{[3]}\\theta^{[2]}\\theta^{[1]} x = (\\theta^{[3]}\\theta^{[2]}\\theta^{[1]}) x = \\theta' x.$$\n\nA stack of linear layers collapses into a single linear transformation $\\theta'$. No matter how deep the network, it is no more expressive than a single linear layer — and certainly cannot solve XOR. Non-linear activations are what give NNs their representational power; the Universal Approximation Theorem requires them.\n\n**Common activation functions:**\n- **Sigmoid** $\\sigma(z) = 1/(1+e^{-z})$: range $(0,1)$. Saturates at extremes (gradient $\\to 0$), causing vanishing-gradient problems in deep nets.\n- **Tanh** $\\tanh(z)$: range $(-1,1)$, zero-centered (slightly nicer than sigmoid for training), still saturates.\n- **ReLU** $\\max(0,z)$: cheap, no saturation on the positive side, the modern default for hidden layers. Can suffer \"dying ReLU\" (units stuck at 0).\n- **Leaky ReLU** $\\max(\\alpha z, z)$ with small $\\alpha$ (e.g., 0.01): fixes dying ReLU.\n- **Sign / step function**: not differentiable; was used in the original perceptron. Stacked LR units with a step function are technically perceptrons, not LR units.\n\n**Output-layer activation depends on task:**\n- **Binary classification** → sigmoid + binary cross-entropy.\n- **Multiclass classification** → softmax + categorical cross-entropy.\n- **Regression** → linear (identity) + MSE.\n\n**Cost of going deep.** Compared to LR, NNs lose convexity (the loss surface has local minima, saddle points, and plateaus), require careful initialization, and have many more hyperparameters (depth, width, activation, learning-rate schedule, regularization). They also overfit more readily — \"more neurons = more capacity = more overfitting risk\" — which is why dropout, weight decay, and early stopping become essential. But once tuned, even a 2-hidden-layer NN can represent decision functions far beyond LR's linear reach, and the same gradient-descent recipe (now via backpropagation, the topic of Lecture 7) trains the whole stack end-to-end.",
+    "checks": [
+      {
+        "q": "If every activation function in a deep neural network is the identity (linear), what is the network equivalent to?",
+        "options": [
+          {"id": "1", "text": "A universal function approximator."},
+          {"id": "2", "text": "A single linear transformation $y = \\theta' x$, regardless of depth."},
+          {"id": "3", "text": "A logistic regression model on the input features."},
+          {"id": "4", "text": "A nearest-neighbor classifier."}
+        ],
+        "correct": "2",
+        "explanation": "Composition of linear maps is linear: $\\theta^{[3]}\\theta^{[2]}\\theta^{[1]} = \\theta'$. The whole network collapses to one linear layer — no expressive gain from depth. Hidden layers MUST use non-linear activations."
+      },
+      {
+        "q": "Why does the XOR problem motivate neural networks?",
+        "options": [
+          {"id": "1", "text": "XOR has too many features for logistic regression to handle."},
+          {"id": "2", "text": "XOR is not linearly separable, so no single LR unit can solve it; but stacking LR units (e.g., OR, NAND, then AND) can."},
+          {"id": "3", "text": "XOR requires probabilistic outputs, which only NNs provide."},
+          {"id": "4", "text": "XOR is unsolvable by any model, including neural networks."}
+        ],
+        "correct": "2",
+        "explanation": "XOR's class regions are not separable by any single line. But XOR = OR AND NAND, and each component is linearly separable, so a 2-layer feedforward NN solves it — the founding example of why we stack."
+      },
+      {
+        "q": "Which output-layer activation is most appropriate for a 5-class text classification task?",
+        "options": [
+          {"id": "1", "text": "Sigmoid"},
+          {"id": "2", "text": "Tanh"},
+          {"id": "3", "text": "Softmax"},
+          {"id": "4", "text": "ReLU"}
+        ],
+        "correct": "3",
+        "explanation": "Softmax produces a proper probability distribution over $C=5$ classes (non-negative, sums to 1) and pairs naturally with categorical cross-entropy. Sigmoid is for binary; ReLU/tanh are for hidden layers."
+      },
+      {
+        "q": "Which of the following is TRUE about the loss surface of a neural network compared to logistic regression?",
+        "options": [
+          {"id": "1", "text": "Both are convex with a unique global minimum."},
+          {"id": "2", "text": "LR is convex; NN loss is non-convex with local minima and saddle points."},
+          {"id": "3", "text": "LR is non-convex; NN loss is convex due to the activation functions."},
+          {"id": "4", "text": "Neither has a well-defined gradient."}
+        ],
+        "correct": "2",
+        "explanation": "LR's cross-entropy is convex in $\\theta$ — GD finds the global minimum. NN loss is non-convex due to nested non-linearities, leading to local minima, saddles, and plateaus that complicate training."
+      }
+    ]
+  }
+]

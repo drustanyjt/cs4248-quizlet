@@ -1,0 +1,212 @@
+[
+  {
+    "lecture": "12",
+    "chunk_id": "L12-1",
+    "order": 1,
+    "title": "Why Efficiency Matters & Mixed-Precision Training",
+    "content_md": "Modern LLMs are enormous, and the cost of running them dominates real-world deployment. A single LLM text generation is roughly **150x more expensive than a Google search**, and the chief driver of inference cost is the **number of tokens generated** — every step has to push the full set of parameters through the GPU. Model size and architecture matter too, but if you halve generated length, you almost halve cost.\n\nThe **scaling laws** tell us loss falls as a *power law* in the number of parameters, but with strongly diminishing returns. For a fixed compute budget there is an *optimal* model size — bigger is not automatically better. This motivates the entire efficiency toolkit: **quantization, KV-caching, MoE, and distillation** all aim to deliver the most capability per FLOP and per byte of VRAM.\n\nA second pressure point is **training memory**. Each parameter normally needs (a) the weight itself, (b) the gradient, and (c) optimizer state (Adam keeps two moments). In fp32, that's 16 bytes/parameter — a 7B model already needs ~112 GB just for state. **Mixed-precision training** is the standard fix.\n\nThe recipe: keep a **master copy of weights in fp32**, but during the forward and backward passes use **fp16 (or bf16) working copies**. Multiplications in fp16 are ~2x faster on tensor cores and use half the memory. The problem is that fp16's tiny dynamic range can underflow gradients to zero. So the loss is **scaled up** before backprop (so small gradients land in fp16's representable range), and gradients are **rescaled back to fp32** before the optimizer update touches the master weights.\n\n**bf16** (brain-float) keeps fp32's 8 exponent bits but drops mantissa precision; this trades precision for range and avoids most of the underflow drama at the cost of slightly noisier weights. fp16 has more precision but smaller range, hence the loss-scaling trick.\n\nWhy bother with the master fp32 copy? Repeated tiny updates ($w \\leftarrow w - \\eta g$) lose information when $\\eta g$ is below the fp16 ULP — the update becomes a no-op. Keeping the master in fp32 preserves these small updates, while the fp16 working copy gets you the speed.\n\nThe theme to remember: **efficiency techniques exploit redundancy.** Networks are over-parameterized, so we can quantize weights, share heads, route to subsets, or distill into smaller students — all with limited accuracy loss. The rest of this lecture is a tour of those four levers.",
+    "checks": [
+      {
+        "q": "What is the dominant factor in LLM inference cost?",
+        "options": [
+          {"id": "1", "text": "Vocabulary size"},
+          {"id": "2", "text": "Number of tokens generated"},
+          {"id": "3", "text": "Number of attention heads"},
+          {"id": "4", "text": "Tokenizer choice"}
+        ],
+        "correct": "2",
+        "explanation": "Each generation step pushes the whole model through the GPU, so total cost scales primarily with how many tokens you produce."
+      },
+      {
+        "q": "In mixed-precision training, why is a master copy of the weights kept in fp32?",
+        "options": [
+          {"id": "1", "text": "fp16 cannot represent negative numbers"},
+          {"id": "2", "text": "GPU tensor cores only accept fp32 inputs"},
+          {"id": "3", "text": "Tiny weight updates would underflow in fp16 and be lost"},
+          {"id": "4", "text": "fp32 weights take less memory than fp16"}
+        ],
+        "correct": "3",
+        "explanation": "Updates of size eta*g often fall below fp16's ULP. Keeping a master fp32 copy preserves them; fp16 working copies provide the speed."
+      },
+      {
+        "q": "Why are gradients rescaled before being applied to the fp32 master weights?",
+        "options": [
+          {"id": "1", "text": "To compensate for the loss-scaling factor used to keep gradients in fp16's range"},
+          {"id": "2", "text": "To enforce sparsity on the gradient vector"},
+          {"id": "3", "text": "To convert gradients into integer form"},
+          {"id": "4", "text": "To match the dimensionality of the optimizer state"}
+        ],
+        "correct": "1",
+        "explanation": "We multiply the loss up so small gradients survive in fp16, then divide them back down in fp32 before the update — otherwise the optimizer step is biased."
+      }
+    ]
+  },
+  {
+    "lecture": "12",
+    "chunk_id": "L12-2",
+    "order": 2,
+    "title": "Quantization: Asymmetric Quant and the Outlier Trap",
+    "content_md": "**Quantization** trades numerical precision for memory and speed: store weights (and sometimes activations) in low-bit integers like int8 instead of fp16/fp32. Because deep nets are heavily over-parameterized (the same intuition behind LoRA's low-rank claim), small precision losses don't usually move the needle on accuracy.\n\nThe most common method is **asymmetric quantization**, which linearly maps the float range $[\\min(X), \\max(X)]$ onto a signed $b$-bit integer range. Two parameters fully describe the mapping — a **scale** $s$ and a **zero-point** $z$:\n\n$$s = \\frac{2^b - 1}{\\max(X) - \\min(X)}, \\quad z = -\\text{round}(\\min(X)\\cdot s) - 2^{b-1}$$\n\n$$X_{quant} = \\text{round}(X\\cdot s + z), \\quad X_{dequant} = (X_{quant} - z)/s$$\n\nThe scale stretches the range to fill the integer interval; the zero-point shifts it so that the float 0 lands on an exact integer (important for ReLU, padding, masking).\n\n**Worked example (slide 12).** A weight matrix has $\\min = -9.553$, $\\max = 7.929$, $b = 8$.\n- $s = 255 / (7.929 - (-9.553)) = 14.586$\n- $z = -\\text{round}(-9.553 \\cdot 14.586) - 128 = 11$\n\nSo a value like $0.5$ maps to $\\text{round}(0.5\\cdot 14.586) + 11 = 18$.\n\n**The outlier trap.** Replace the smallest entry $-9.553$ with an outlier $-999.999$. Now the range explodes:\n- $s \\approx 0.253$\n- Almost every \"normal\" value (everything between roughly $-1$ and $+8$) ends up rounded to the same integer (e.g., 125). You've **collapsed dozens of distinct floats onto one int** — catastrophic information loss.\n\nThis is the canonical PTQ failure mode and is why **clipping with calibration** is standard practice. You either pick clip thresholds with a static dataset before deployment, or compute them dynamically per layer from running activation statistics. In the example above, $\\text{clip}(X, -10, 10)$ rescues the mapping.\n\n**PTQ vs QAT vs QT.** **Post-Training Quantization** (PTQ) is fast and common — quantize a finished model, possibly with a brief calibration pass — but suffers most degradation. **Quantization-Aware Training** (QAT) simulates quantization in the forward pass while still backpropagating in full precision, letting the model adapt. **Quantized Training** (QT) keeps everything in low precision but is rare and brittle.\n\n**Straight-Through Estimator (STE).** QAT has a calculus problem: $\\text{round}(\\cdot)$ has zero (or undefined) gradient almost everywhere. STE fixes this by *pretending* the (de)quantizer is the identity inside the clipping range — gradient $= 1$ inside, $0$ outside. The forward pass still uses the real round, but gradients flow as if it weren't there. STE is exactly the trick that lets gradient descent see through a non-differentiable bottleneck.\n\nKey takeaways: asymmetric quant is two numbers ($s$, $z$); outliers blow up $s$ and crush dynamic range; clipping is the fix; STE is what makes QAT trainable.",
+    "checks": [
+      {
+        "q": "Why does a single outlier value catastrophically degrade asymmetric quantization?",
+        "options": [
+          {"id": "1", "text": "It causes integer overflow in the zero-point"},
+          {"id": "2", "text": "It enlarges max - min, shrinking the scale s and collapsing many distinct floats onto the same integer"},
+          {"id": "3", "text": "It forces the use of fp32 throughout the network"},
+          {"id": "4", "text": "It changes the sign of the zero-point"}
+        ],
+        "correct": "2",
+        "explanation": "A huge value blows up the float range, so s = (2^b - 1)/range becomes tiny. Nearby normal values round to the same int — massive information loss."
+      },
+      {
+        "q": "What is the role of the zero-point z in asymmetric quantization?",
+        "options": [
+          {"id": "1", "text": "It sets the learning rate during quantization-aware training"},
+          {"id": "2", "text": "It shifts the integer mapping so that the float 0 corresponds to an exact integer"},
+          {"id": "3", "text": "It selects which layers get quantized"},
+          {"id": "4", "text": "It is the bias added to the loss function"}
+        ],
+        "correct": "2",
+        "explanation": "The zero-point is the integer that float 0 maps to, ensuring 0 is exactly representable — important for ReLU, masks, and padding."
+      },
+      {
+        "q": "Why does QAT need the Straight-Through Estimator?",
+        "options": [
+          {"id": "1", "text": "Because softmax is non-monotonic"},
+          {"id": "2", "text": "Because round() has zero or undefined gradient, so backprop cannot flow through it without help"},
+          {"id": "3", "text": "Because int8 multiplications are non-associative"},
+          {"id": "4", "text": "Because the loss must be quantized too"}
+        ],
+        "correct": "2",
+        "explanation": "round() has gradient 0 (or undefined) almost everywhere. STE pretends the quantizer is the identity inside the clip range so gradients can flow."
+      }
+    ]
+  },
+  {
+    "lecture": "12",
+    "chunk_id": "L12-3",
+    "order": 3,
+    "title": "KV-Cache: Trading Memory for Inference Speed",
+    "content_md": "Autoregressive decoding has a redundancy problem. At step $t$, attention recomputes $K = XW_K$ and $V = XW_V$ over the **entire prefix** even though those rows were already computed at steps $1, 2, \\ldots, t-1$ — only the new token's row is fresh. The fix is the **KV cache**: store the previous $K$ and $V$ matrices in VRAM, and at each step append only the new token's row.\n\nWith a KV cache, the per-step computation collapses dramatically. At step $t = 7$ of generating a sentence, the query $Q$ is only the **single new row** ($1 \\times 512$ instead of $6 \\times 512$), and we attend it against the cached $K, V$. Compute drops from quadratic-in-prefix to linear-in-prefix per step — a huge win.\n\nThe price: **VRAM**. The cache holds $K$ and $V$ for every past token at every layer for every head. The formula is\n\n$$\\text{VRAM} = 2 \\cdot p \\cdot b \\cdot n \\cdot h \\cdot d \\cdot t$$\n\nwhere $2$ accounts for both $K$ and $V$, $p$ is bytes/element, $b$ batch size, $n$ layers, $h$ heads, $d$ head dim, $t$ sequence length.\n\n**Worked example: LLaMA-7B (slide 30).** With $p=2$ (fp16), $b=32$, $n=32$, $h=32$, $d=128$, $t=500$:\n\n$\\text{VRAM} = 2 \\cdot 2 \\cdot 32 \\cdot 32 \\cdot 32 \\cdot 128 \\cdot 500 \\approx 7.82\\,\\text{GB}$\n\nthat's *on top of* the ~14–16 GB the weights themselves occupy. So the cache is non-negligible — and it grows linearly with both $t$ and $b$.\n\n**Knobs to shrink the cache.** You can use a smaller model (cuts $n, h, d$), smaller batch ($b$), shorter context ($t$), or lower precision ($p$). Beyond that there are **attention architecture variants**:\n\n- **Sliding-window attention.** Attend only to the last $k$ tokens. Cache size becomes $O(k)$ instead of $O(t)$.\n- **Multi-Query Attention (MQA).** All query heads share **one** $K/V$ head. The cache shrinks by a factor of $1/h$. Note: $d = d_{model}/h$, so per-head dim grows when $h$ shrinks; the *compute* roughly balances, but the *cache* is genuinely smaller.\n- **Grouped-Query Attention (GQA).** A middle ground: $m$ shared $K/V$ heads serve $m$ groups of query heads. Trades quality vs cache more smoothly than MQA.\n- **Multi-Head Latent Attention (MLA, DeepSeek).** Project $K, V$ down to a low-rank latent $r \\ll d$ via $W^{down} \\in \\mathbb{R}^{d \\times r}$, cache only the latent, then up-project with $W^{up}$ at attention time. This reuses LoRA's low-rank intuition specifically for the cache.\n\n**The crucial trap to internalize:** the KV cache **does not save compute relative to a hypothetical no-cache baseline that recomputes from scratch** — it saves compute *because* it caches. It is a memory-vs-compute tradeoff. If you're VRAM-bound, you may need to give some of that compute back via shorter contexts, smaller batch, MQA/GQA/MLA, or by quantizing the cache itself to int8.",
+    "checks": [
+      {
+        "q": "What is the primary tradeoff introduced by a KV cache?",
+        "options": [
+          {"id": "1", "text": "Saves compute but costs additional VRAM"},
+          {"id": "2", "text": "Saves VRAM but costs more compute"},
+          {"id": "3", "text": "Saves both compute and VRAM at no cost"},
+          {"id": "4", "text": "Improves accuracy at the cost of latency"}
+        ],
+        "correct": "1",
+        "explanation": "By storing K and V from previous steps you skip recomputing them, but those matrices live in VRAM and grow linearly with t and b."
+      },
+      {
+        "q": "Multi-Query Attention reduces KV-cache size by approximately what factor (with h heads)?",
+        "options": [
+          {"id": "1", "text": "1/2"},
+          {"id": "2", "text": "1/h"},
+          {"id": "3", "text": "1/log(h)"},
+          {"id": "4", "text": "1/sqrt(h)"}
+        ],
+        "correct": "2",
+        "explanation": "MQA shares a single K/V head across all h query heads, so the cache shrinks by 1/h."
+      },
+      {
+        "q": "For LLaMA-7B with p=2, b=32, n=32, h=32, d=128, t=500, the KV-cache VRAM is closest to:",
+        "options": [
+          {"id": "1", "text": "~0.8 GB"},
+          {"id": "2", "text": "~7.8 GB"},
+          {"id": "3", "text": "~78 GB"},
+          {"id": "4", "text": "~150 MB"}
+        ],
+        "correct": "2",
+        "explanation": "VRAM = 2*2*32*32*32*128*500 ≈ 7.82 GB, on top of weight storage."
+      }
+    ]
+  },
+  {
+    "lecture": "12",
+    "chunk_id": "L12-4",
+    "order": 4,
+    "title": "Mixture of Experts: Sparse Routing and Load Balancing",
+    "content_md": "**Mixture of Experts (MoE)** replaces a transformer block (typically the FFN) with $n$ parallel **expert** subnetworks plus a **gate** that decides which experts to run. The output is a weighted sum:\n\n$$y = \\sum_{i=1}^{n} G(x)_i\\, E_i(x)$$\n\nThe gate $G$ produces a probability distribution over experts; the router uses those probabilities to pick experts.\n\n**Dense MoE.** Every expert runs every step; output is the soft-weighted sum. This is easy to train but **gives no efficiency gain** — you've added experts without saving any compute. Capacity goes up; FLOPs go up too.\n\n**Sparse MoE (Top-k).** Only the top-$k$ experts (commonly $k=2$) actually run; their probabilities are softmax-renormalized and the others contribute nothing. Now the model can have hundreds of experts, but each token only activates a small handful — capacity scales with $n$ while inference compute scales with $k$. The gating can be written as\n\n$$G(x) = \\text{Softmax}(\\text{TopK}(W_{gate} x,\\, k))$$\n\nThis is the trick behind models like Mixtral and Switch Transformer.\n\n**The crucial trap to internalize.** All $n$ experts still **live in memory** even though only $k$ are *active per token*. So MoE saves **compute**, not VRAM. A 47B-parameter sparse MoE may activate only 13B per token but still requires VRAM for all 47B.\n\n**Gate collapse.** Sparse gates love to over-pick a few prominent experts. The popular ones train fast, the unpopular ones never see data, and you collapse to a tiny effective ensemble. Mitigations:\n\n- **Stochastic (noisy) routing.** Add tunable Gaussian noise to the gate logits:\n\n$$H(x) = W_{gate} x + \\mathcal{N}(0,1) \\cdot \\text{SoftPlus}(W_{noise} x)$$\n\nSoftPlus is a smooth, always-positive ReLU substitute that scales the noise standard deviation per token. The noise gives all experts occasional chances — passive load balancing.\n\n- **Load-balancing auxiliary loss.** Add\n\n$$L_{aux} = w_{aux} \\cdot N \\cdot \\sum_{i=1}^{n} f_i \\cdot P_i$$\n\nwhere $f_i$ is the fraction of tokens routed to expert $i$ and $P_i$ is the average gate probability for expert $i$. The product is minimized when both are uniform — actively pressuring the gate to spread the load.\n\n- **Entropy regularization** (encourage high-entropy gate distributions) and **soft routing** (use weighted top-$k$ rather than a hard pick) are softer alternatives.\n\n**Why isn't the discrete top-k a backprop disaster?** It is theoretically discontinuous, but the original Shazeer et al. paper observed empirically that this isn't a real problem — gradients still flow through the chosen experts and through the softmax over the top-$k$ logits, which is enough to learn good routing.\n\nThe overall picture: MoE is a way to **decouple capacity from per-token compute**. You pay for it with (a) all-experts-in-memory VRAM, (b) extra training-time bookkeeping for load balance, and (c) sometimes flakier optimization.",
+    "checks": [
+      {
+        "q": "What is the key efficiency property of sparse Top-k MoE?",
+        "options": [
+          {"id": "1", "text": "Only the active experts are stored in memory"},
+          {"id": "2", "text": "All experts live in memory but only k are active per token, so compute (not VRAM) scales sub-linearly in n"},
+          {"id": "3", "text": "The router replaces self-attention entirely"},
+          {"id": "4", "text": "It eliminates the need for a softmax in the gate"}
+        ],
+        "correct": "2",
+        "explanation": "All n experts must be loaded; sparsity only saves compute by activating k of them per token."
+      },
+      {
+        "q": "Why does Dense MoE provide essentially no efficiency gain?",
+        "options": [
+          {"id": "1", "text": "It uses fp32 throughout"},
+          {"id": "2", "text": "It cannot be parallelized across GPUs"},
+          {"id": "3", "text": "All experts run for every input, so adding experts adds compute proportionally"},
+          {"id": "4", "text": "Its gate is non-differentiable"}
+        ],
+        "correct": "3",
+        "explanation": "Dense MoE runs every expert every step. Capacity grows but so does compute — there is no sparsity to exploit."
+      },
+      {
+        "q": "What does the load-balancing auxiliary loss L_aux = w*N*sum(f_i * P_i) discourage?",
+        "options": [
+          {"id": "1", "text": "Long input sequences"},
+          {"id": "2", "text": "Gate collapse onto a few popular experts"},
+          {"id": "3", "text": "The use of softmax in the gate"},
+          {"id": "4", "text": "Multi-head attention"}
+        ],
+        "correct": "2",
+        "explanation": "The product f_i * P_i is minimized when both fractions and probabilities are uniform — directly pushing the router to spread tokens across experts."
+      }
+    ]
+  },
+  {
+    "lecture": "12",
+    "chunk_id": "L12-5",
+    "order": 5,
+    "title": "Knowledge Distillation: Teacher to Student",
+    "content_md": "**Knowledge distillation** compresses a big, accurate **teacher** model into a smaller, cheaper **student** model. The transfer always flows **teacher to student** — never the other way around. (A common exam trap: the smaller model is the student that *learns from* the teacher's outputs.)\n\nThree flavors, in increasing order of richness and complexity:\n\n**1. Response distillation.** The simplest. Run the teacher over a corpus, collect its predicted **hard labels**, and train the student on those labels with a normal cross-entropy loss. This is essentially \"use the teacher as a free annotator.\" Pros: dead simple, no teacher needed at student-train time after labeling. Cons: hard labels throw away all of the teacher's *uncertainty* — if the teacher was 51%/49% torn between two classes, the student only sees the winner.\n\n**2. Logits distillation (Hinton-style).** Match the **soft probability distributions**. Concretely, minimize the KL divergence between the teacher's and student's output distributions (often with a temperature $T > 1$ that softens both):\n\n$$L_{KD} = \\text{KL}(p_T(x) \\,\\|\\, p_S(x))$$\n\nUsually combined with the student's standard supervised loss (a weighted sum of $L_{KD}$ and $L_{CE}$). Soft labels carry **dark knowledge** — relative similarities between classes — that hard labels cannot. A teacher that's 70% \"dog\", 25% \"wolf\", 5% \"cat\" is teaching the student something about class structure that a one-hot \"dog\" label can't.\n\n**3. Feature distillation.** Match the teacher's **internal representations** at one or more hidden layers. The student is forced to imitate the teacher's intermediate activations, typically with L1, L2, cosine, or KL-style losses, sometimes after a learned linear projection so dimensions align. Almost always layered *on top of* logits distillation rather than used alone. Most expressive, but also the most architectural plumbing — the student must have hooks at the right layers.\n\nAcross the three, the trend is clear: **more accuracy at the cost of more complexity** — both in the loss formulation and in keeping the teacher around during student training.\n\n**Why does this work?** Smaller networks have enough capacity to fit the function the teacher learned; what they lack is the *inductive ease* of finding it from raw labels. The teacher's soft outputs and intermediate features provide a much smoother optimization target than one-hot ground truth, similar in spirit to label smoothing but informed by an actual model.\n\n**Connection to scaling laws.** Scaling laws say bigger models reach lower loss but with diminishing returns; distillation is one of the main ways the field *operationalizes* big-model investments — train one giant teacher, distill many smaller deployable students from it. This complements **quantization** (precision compression) and **MoE** (capacity-vs-compute decoupling) as part of the standard efficiency toolkit. Where fine-tuning adapts a large model to a task, distillation produces a *new, smaller* model — the right tool when latency or memory, not just behavior, is the constraint.\n\n**Exam-ready summary.** Direction: teacher to student. Response uses hard labels (cheap, lossy). Logits matches soft distributions via KL (carries uncertainty). Feature matches internal activations (richest). Trade: accuracy up, complexity up.",
+    "checks": [
+      {
+        "q": "In knowledge distillation, which direction does information flow?",
+        "options": [
+          {"id": "1", "text": "Student to teacher"},
+          {"id": "2", "text": "Teacher to student"},
+          {"id": "3", "text": "Bidirectional, with alternating updates"},
+          {"id": "4", "text": "Both models train independently, then are averaged"}
+        ],
+        "correct": "2",
+        "explanation": "Distillation always transfers the teacher's behavior into a smaller student — the student learns from the teacher's outputs or features."
+      },
+      {
+        "q": "Why does logits (soft-label) distillation usually outperform response (hard-label) distillation?",
+        "options": [
+          {"id": "1", "text": "It avoids using a softmax"},
+          {"id": "2", "text": "Soft probability distributions encode the teacher's uncertainty and inter-class similarities (dark knowledge)"},
+          {"id": "3", "text": "It allows the student to be larger than the teacher"},
+          {"id": "4", "text": "It eliminates the need for any labeled data"}
+        ],
+        "correct": "2",
+        "explanation": "Hard labels collapse all of the teacher's relative confidence into a single argmax. Soft labels (especially with temperature) preserve the relative class structure the teacher learned."
+      },
+      {
+        "q": "Which distillation flavor matches the teacher's internal hidden activations?",
+        "options": [
+          {"id": "1", "text": "Response distillation"},
+          {"id": "2", "text": "Logits distillation"},
+          {"id": "3", "text": "Feature distillation"},
+          {"id": "4", "text": "Quantization-aware distillation"}
+        ],
+        "correct": "3",
+        "explanation": "Feature distillation aligns intermediate representations using L1/L2/cosine/KL losses, usually layered on top of logits distillation."
+      }
+    ]
+  }
+]
